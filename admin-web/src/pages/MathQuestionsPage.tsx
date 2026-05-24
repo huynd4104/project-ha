@@ -204,7 +204,7 @@ export function MathQuestionsPage() {
       <div className="toolbar">
         <h1>{moduleConfig.title}: câu hỏi</h1>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Câu Hỏi</button>
         </div>
@@ -280,7 +280,7 @@ export function MathQuestionsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(880px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? `Cập Nhật Câu Hỏi ${moduleConfig.prefix}` : `Thêm Câu Hỏi ${moduleConfig.prefix} Mới`}</h2>
+              <h2>{editingItem ? `Chỉnh sửa câu hỏi ${moduleConfig.prefix}` : `Thêm câu hỏi ${moduleConfig.prefix}`}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -452,7 +452,7 @@ export function MathQuestionsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

@@ -66,7 +66,7 @@ const columnLabels: Record<string, string> = {
   maxUses: "Lượt dùng tối đa",
   name: "Tên",
   note: "Ghi chú",
-  npcId: "ID NPC",
+  npcId: "ID nhân vật",
   orderIndex: "Thứ tự",
   primaryDifficulty: "Khó khăn chính",
   programId: "ID chương trình",

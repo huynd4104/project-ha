@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase/firebase";
+import { uiLabel } from "../utils/adminLabels";
 
 export function PremiumPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -99,7 +100,7 @@ export function PremiumPage() {
     e.preventDefault();
     if (!selectedUser) return;
     if (plan === "TRIAL" && !expiresAt) {
-      alert("Gói TRIAL bắt buộc phải cấu hình ngày hết hạn.");
+      alert("Gói dùng thử bắt buộc phải cấu hình ngày hết hạn.");
       return;
     }
 
@@ -182,7 +183,10 @@ export function PremiumPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Quản lý Premium (Demo)</h1>
+        <div>
+          <h1>Quản lý gói Premium</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Cấp, thu hồi và kiểm tra quyền Premium trong môi trường giả lập. Không có thanh toán thật.</p>
+        </div>
       </div>
 
       {/* Warning Banner */}
@@ -219,7 +223,7 @@ export function PremiumPage() {
           className={activeTab === "transactions" ? "" : "secondary"}
           onClick={() => setActiveTab("transactions")}
         >
-          Lịch sử giao dịch mock ({transactions.length})
+          Lịch sử giao dịch giả lập ({transactions.length})
         </button>
       </div>
 
@@ -253,9 +257,9 @@ export function PremiumPage() {
                 style={{ width: "130px", padding: "8px" }}
               >
                 <option value="ALL">Tất cả</option>
-                <option value="FREE">FREE</option>
-                <option value="PREMIUM">PREMIUM</option>
-                <option value="TRIAL">TRIAL</option>
+                <option value="FREE">Miễn phí</option>
+                <option value="PREMIUM">Premium</option>
+                <option value="TRIAL">Dùng thử</option>
               </select>
             </div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -267,9 +271,9 @@ export function PremiumPage() {
               >
                 <option value="ALL">Tất cả</option>
                 <option value="NONE">Chưa kích hoạt</option>
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="CANCELED">CANCELED</option>
-                <option value="EXPIRED">EXPIRED</option>
+                <option value="ACTIVE">Đang bật</option>
+                <option value="CANCELED">Đã hủy</option>
+                <option value="EXPIRED">Hết hạn</option>
               </select>
             </div>
           </div>
@@ -330,7 +334,7 @@ export function PremiumPage() {
                         <td>{user.email}</td>
                         <td>
                           <span className={`badge ${user.role === "ADMIN" ? "info" : ""}`}>
-                            {user.role}
+                            {user.role === "ADMIN" ? "Quản trị" : "Người dùng"}
                           </span>
                         </td>
                         <td>
@@ -343,7 +347,7 @@ export function PremiumPage() {
                                 : "inactive"
                             }`}
                           >
-                            {plan}
+                            {uiLabel(plan)}
                           </span>
                         </td>
                         <td>
@@ -358,7 +362,7 @@ export function PremiumPage() {
                                 : "inactive"
                             }`}
                           >
-                            {isUserExpired ? "EXPIRED" : status}
+                            {isUserExpired ? "Hết hạn" : uiLabel(status)}
                           </span>
                         </td>
                         <td>{expiresAtStr}</td>
@@ -366,9 +370,9 @@ export function PremiumPage() {
                           {summary?.entitlements ? (
                             <ul style={{ margin: 0, paddingLeft: "14px" }}>
                               {summary.entitlements.premiumContent && <li>Mở khóa nội dung</li>}
-                              {summary.entitlements.voiceQuiz && <li>AI Voice Quiz</li>}
+                              {summary.entitlements.voiceQuiz && <li>Câu hỏi giọng nói</li>}
                               {summary.entitlements.advancedReports && <li>Báo cáo chi tiết</li>}
-                              {summary.entitlements.premiumNpcs && <li>NPC Premium</li>}
+                              {summary.entitlements.premiumNpcs && <li>Nhân vật Premium</li>}
                             </ul>
                           ) : (
                             "—"
@@ -380,7 +384,7 @@ export function PremiumPage() {
                               className="secondary"
                               onClick={() => openGrantModal(user)}
                             >
-                              Cấp Gói
+                              Cấp gói
                             </button>
                             {plan !== "FREE" && (
                               <button
@@ -411,7 +415,7 @@ export function PremiumPage() {
               <div style={{ fontSize: "40px", marginBottom: "12px" }}>💳</div>
               <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Không có giao dịch nào</h3>
               <p style={{ color: "var(--text-muted)", margin: "0", fontSize: "14px" }}>
-                Chưa có giao dịch mô phỏng (mock) nào được ghi nhận trên hệ thống.
+                Chưa có giao dịch giả lập nào được ghi nhận trên hệ thống.
               </p>
             </div>
           ) : (
@@ -438,7 +442,7 @@ export function PremiumPage() {
                       </td>
                       <td style={{ fontSize: "13px" }}>{getUserEmail(t.userId)}</td>
                       <td>
-                        <span className="badge info">{t.provider}</span>
+                      <span className="badge info">{uiLabel(t.provider)}</span>
                       </td>
                       <td>
                         <code>{t.productId}</code>
@@ -448,7 +452,7 @@ export function PremiumPage() {
                       </td>
                       <td>
                         <span className={`badge ${t.status === "SUCCESS" ? "active" : "inactive"}`}>
-                          {t.status}
+                          {uiLabel(t.status)}
                         </span>
                       </td>
                       <td style={{ fontSize: "13px" }}>{formatDateTime(t.createdAt)}</td>
@@ -470,7 +474,7 @@ export function PremiumPage() {
             style={{ width: "min(500px, 95vw)" }}
           >
             <div className="modal-header">
-              <h2>Cấp quyền Premium / Trial</h2>
+              <h2>Cấp quyền Premium / Dùng thử</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>
                 &times;
               </button>
@@ -495,8 +499,8 @@ export function PremiumPage() {
                         value={plan}
                         onChange={(e) => setPlan(e.target.value as "PREMIUM" | "TRIAL")}
                       >
-                        <option value="PREMIUM">PREMIUM</option>
-                        <option value="TRIAL">TRIAL</option>
+                        <option value="PREMIUM">Premium</option>
+                        <option value="TRIAL">Dùng thử</option>
                       </select>
                     </div>
 
@@ -513,7 +517,7 @@ export function PremiumPage() {
 
                   <div className="field">
                     <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>
-                      Quyền lợi (Entitlements)
+                      Quyền lợi
                     </label>
                     <div
                       style={{
@@ -533,7 +537,7 @@ export function PremiumPage() {
                           onChange={(e) => setPremiumContent(e.target.checked)}
                         />
                         <label htmlFor="premiumContent" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          premiumContent (Mở khóa nội dung Premium)
+                          Mở khóa nội dung Premium
                         </label>
                       </div>
 
@@ -545,7 +549,7 @@ export function PremiumPage() {
                           onChange={(e) => setVoiceQuiz(e.target.checked)}
                         />
                         <label htmlFor="voiceQuiz" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          voiceQuiz (AI Voice Quiz)
+                          Câu hỏi giọng nói
                         </label>
                       </div>
 
@@ -557,7 +561,7 @@ export function PremiumPage() {
                           onChange={(e) => setAdvancedReports(e.target.checked)}
                         />
                         <label htmlFor="advancedReports" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          advancedReports (Xem báo cáo phân tích sâu)
+                          Xem báo cáo phân tích sâu
                         </label>
                       </div>
 
@@ -569,7 +573,7 @@ export function PremiumPage() {
                           onChange={(e) => setPremiumNpcs(e.target.checked)}
                         />
                         <label htmlFor="premiumNpcs" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          premiumNpcs (Nhân vật Mascot VIP)
+                          Nhân vật Premium
                         </label>
                       </div>
                     </div>
@@ -586,7 +590,7 @@ export function PremiumPage() {
                   Hủy
                 </button>
                 <button type="submit" disabled={submitting}>
-                  {submitting ? "Đang xử lý..." : "Cấp Quyền"}
+                  {submitting ? "Đang xử lý..." : "Cấp quyền"}
                 </button>
               </div>
             </form>

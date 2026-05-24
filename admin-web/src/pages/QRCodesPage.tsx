@@ -120,7 +120,7 @@ export function QRCodesPage() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     
-    const npcName = npcs.find((n) => n.id === previewCode.npcId)?.name || "Mascot";
+    const npcName = npcs.find((n) => n.id === previewCode.npcId)?.name || "Nhân vật";
 
     printWindow.document.write(`
       <html>
@@ -179,7 +179,7 @@ export function QRCodesPage() {
     const errs: Record<string, string> = {};
     if (!label.trim()) errs.label = "Nhãn nhãn dán không được để trống.";
     if (!code.trim()) errs.code = "Mã code QR không được để trống.";
-    if (!npcId) errs.npcId = "Vui lòng chọn nhân vật Mascot liên kết.";
+    if (!npcId) errs.npcId = "Vui lòng chọn nhân vật liên kết.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -226,7 +226,7 @@ export function QRCodesPage() {
       <div className="toolbar">
         <h1>Mã QR Đồ Chơi/Thẻ Học</h1>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal}>➕ Thêm Mã QR</button>
         </div>
@@ -257,7 +257,7 @@ export function QRCodesPage() {
                   <tr>
                     <th>Nhãn thẻ/đồ chơi</th>
                     <th>Mã định danh</th>
-                    <th>Mascot liên kết</th>
+                    <th>Nhân vật liên kết</th>
                     <th>Lượt dùng</th>
                     <th style={{ width: "110px" }}>Trạng thái</th>
                     <th style={{ width: "230px" }}>Thao tác</th>
@@ -319,7 +319,7 @@ export function QRCodesPage() {
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "6px", textAlign: "left", width: "100%" }}>
                   <p>• Code: <code>{previewCode.code}</code></p>
-                  <p>• Mascot: {getNpcInfo(previewCode.npcId)?.name || "Chưa gắn"}</p>
+                  <p>• Nhân vật: {getNpcInfo(previewCode.npcId)?.name || "Chưa gắn"}</p>
                 </div>
               </div>
             </div>
@@ -332,7 +332,7 @@ export function QRCodesPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(500px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập Nhật Mã QR" : "Thêm Mã QR Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa mã QR cũ" : "Thêm mã QR cũ"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -354,7 +354,7 @@ export function QRCodesPage() {
                   <div style={{ display: "flex", gap: "8px" }}>
                     <input
                       type="text"
-                      placeholder="Mã code (Ví dụ: Mascot_MIMI_01)"
+                      placeholder="Mã code (Ví dụ: NHANVAT_MIMI_01)"
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       style={{ flex: 1 }}
@@ -366,9 +366,9 @@ export function QRCodesPage() {
                 </div>
 
                 <div className="field">
-                  <label>Nhân vật Mascot liên kết *</label>
+                  <label>Nhân vật liên kết *</label>
                   <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
-                    <option value="">-- Chọn Mascot --</option>
+                    <option value="">-- Chọn nhân vật --</option>
                     {npcs.map((n) => (
                       <option key={n.id} value={n.id}>
                         {n.name}
@@ -402,7 +402,7 @@ export function QRCodesPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

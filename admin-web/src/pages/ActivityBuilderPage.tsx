@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
 import { validateActivityRequired } from "../utils/publishValidation";
+import { ACTIVITY_TYPE_LABELS, uiLabel } from "../utils/adminLabels";
 import type { Activity, ActivityType, Lesson, AccessType } from "../types/firebaseModels";
 
 const ACTIVITY_TYPES: ActivityType[] = [
@@ -9,19 +10,6 @@ const ACTIVITY_TYPES: ActivityType[] = [
   "VOICE_ANSWER", "EMOTION_RECOGNITION", "DAILY_LIFE_SCENARIO",
   "PARENT_MARK_RESULT", "HEAR_AND_REPEAT", "MATCH_OBJECTS", "FLASHCARD_REVIEW"
 ];
-
-const ACTIVITY_TYPE_LABELS: Record<string, string> = {
-  MULTIPLE_CHOICE: "Trắc nghiệm",
-  LISTEN_AND_CHOOSE_IMAGE: "Nghe & chọn hình",
-  LOOK_AND_CHOOSE_WORD: "Nhìn & chọn từ",
-  VOICE_ANSWER: "Trả lời bằng giọng nói",
-  EMOTION_RECOGNITION: "Nhận biết cảm xúc",
-  DAILY_LIFE_SCENARIO: "Tình huống thực tế",
-  PARENT_MARK_RESULT: "Phụ huynh đánh giá",
-  HEAR_AND_REPEAT: "Nghe & nhắc lại",
-  MATCH_OBJECTS: "Ghép đôi",
-  FLASHCARD_REVIEW: "Xem flashcard"
-};
 
 interface OptionItem { text: string; imageUrl?: string; isCorrect: boolean }
 
@@ -208,7 +196,10 @@ export function ActivityBuilderPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Xây dựng hoạt động</h1>
+        <div>
+          <h1>Hoạt động trong bài học</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Tạo từng câu hỏi hoặc nhiệm vụ nhỏ trong một bài học.</p>
+        </div>
       </div>
 
       <div className="drawer-container">
@@ -217,7 +208,7 @@ export function ActivityBuilderPage() {
           <div className="panel" style={{ padding: "12px" }}>
             <input type="text" placeholder="Tìm bài học..." value={lessonSearch} onChange={(e) => setLessonSearch(e.target.value)} style={{ marginBottom: "12px" }} />
             <div style={{ maxHeight: "480px", overflowY: "auto" }}>
-              {loading ? <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Đang tải...</p> : filteredLessons.map((l) => (
+              {loading ? <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Đang tải dữ liệu...</p> : filteredLessons.map((l) => (
                 <div
                   key={l.id}
                   onClick={() => setSelectedLessonId(l.id)}
@@ -229,7 +220,7 @@ export function ActivityBuilderPage() {
                   }}
                 >
                   {l.title}
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{l.lessonType || l.type}</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{uiLabel(l.lessonType || l.type)}</div>
                 </div>
               ))}
             </div>
@@ -254,7 +245,7 @@ export function ActivityBuilderPage() {
                     <strong>{selectedLesson.title}</strong>
                     <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{selectedLesson.lessonType || selectedLesson.type}</span>
                   </div>
-                  <button onClick={openAddModal}>➕ Thêm Hoạt Động</button>
+                  <button onClick={openAddModal}>➕ Thêm hoạt động</button>
                 </div>
               )}
 
@@ -279,7 +270,7 @@ export function ActivityBuilderPage() {
                             {ACTIVITY_TYPE_LABELS[act.activityType] || act.activityType}
                           </span>
                           <span className={`badge ${act.accessType === "PREMIUM" ? "premium" : "free"}`}>
-                            {act.accessType || "FREE"}
+                            {uiLabel(act.accessType || "FREE")}
                           </span>
                           {act.options?.length ? <span>{act.options.length} lựa chọn</span> : ""}
                         </small>
@@ -304,7 +295,7 @@ export function ActivityBuilderPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(820px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingActivity ? "Cập nhật Hoạt Động" : "Thêm Hoạt Động"}</h2>
+              <h2>{editingActivity ? "Chỉnh sửa hoạt động" : "Thêm hoạt động"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -331,14 +322,14 @@ export function ActivityBuilderPage() {
                     </div>
 
                     <div className="field">
-                      <label>Hướng dẫn (instruction)</label>
+                      <label>Hướng dẫn ngắn</label>
                       <input type="text" placeholder="Gợi ý ngắn cho trẻ" value={instruction} onChange={(e) => setInstruction(e.target.value)} />
                     </div>
 
                     {/* Media fields */}
                     {(activityType === "LISTEN_AND_CHOOSE_IMAGE" || activityType === "HEAR_AND_REPEAT" || needsVoice) && (
                       <div className="field">
-                        <label>Audio URL</label>
+                        <label>Đường dẫn âm thanh</label>
                         <input type="text" placeholder="https://..." value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} />
                       </div>
                     )}
@@ -361,7 +352,7 @@ export function ActivityBuilderPage() {
                           <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
                             <input type="text" placeholder={`Lựa chọn ${String.fromCharCode(65 + i)}`} value={opt.text} onChange={(e) => updateOption(i, "text", e.target.value)} style={{ flex: 1 }} />
                             {(activityType === "LISTEN_AND_CHOOSE_IMAGE" || activityType === "EMOTION_RECOGNITION") && (
-                              <input type="text" placeholder="Image URL" value={opt.imageUrl || ""} onChange={(e) => updateOption(i, "imageUrl", e.target.value)} style={{ width: "160px" }} />
+                              <input type="text" placeholder="Đường dẫn hình ảnh" value={opt.imageUrl || ""} onChange={(e) => updateOption(i, "imageUrl", e.target.value)} style={{ width: "160px" }} />
                             )}
                             <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", whiteSpace: "nowrap" }}>
                               <input type="checkbox" checked={opt.isCorrect} onChange={(e) => updateOption(i, "isCorrect", e.target.checked)} style={{ width: "16px", height: "16px" }} />
@@ -378,7 +369,7 @@ export function ActivityBuilderPage() {
                       <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px" }}>
                         <h3 style={{ fontSize: "14px", marginBottom: "8px", color: "var(--text-muted)" }}>Cấu hình giọng nói</h3>
                         <div className="field">
-                          <label>TTS Prompt Text</label>
+                          <label>Nội dung đọc cho trẻ</label>
                           <input type="text" value={ttsPromptText} onChange={(e) => setTtsPromptText(e.target.value)} placeholder="Nội dung TTS phát cho trẻ" />
                         </div>
                         <div className="field">
@@ -395,7 +386,7 @@ export function ActivityBuilderPage() {
                         </div>
                         <div className="field check-row" style={{ marginTop: "8px" }}>
                           <input type="checkbox" id="voicePremiumRequired" checked={voicePremiumRequired} onChange={(e) => setVoicePremiumRequired(e.target.checked)} />
-                          <label htmlFor="voicePremiumRequired" style={{ fontWeight: "normal", cursor: "pointer" }}>Yêu cầu Premium Voice</label>
+                          <label htmlFor="voicePremiumRequired" style={{ fontWeight: "normal", cursor: "pointer" }}>Yêu cầu giọng nói Premium</label>
                         </div>
                       </div>
                     )}
@@ -439,8 +430,8 @@ export function ActivityBuilderPage() {
                       <div className="field">
                         <label>Truy cập</label>
                         <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>
-                          <option value="FREE">FREE</option>
-                          <option value="PREMIUM">PREMIUM</option>
+                          <option value="FREE">Miễn phí</option>
+                          <option value="PREMIUM">Premium</option>
                         </select>
                       </div>
                     </div>
@@ -481,7 +472,7 @@ export function ActivityBuilderPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingActivity ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingActivity ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

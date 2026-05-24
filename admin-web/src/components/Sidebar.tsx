@@ -1,74 +1,95 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
-type NavItem = { to: string; label: string; legacy?: boolean };
-type NavGroup = { title: string; icon: string; items: NavItem[]; defaultOpen?: boolean };
+type IconName =
+  | "dashboard"
+  | "content"
+  | "target"
+  | "program"
+  | "path"
+  | "lesson"
+  | "activity"
+  | "sort"
+  | "character"
+  | "qr"
+  | "premium"
+  | "users"
+  | "child"
+  | "progress"
+  | "archive"
+  | "badge"
+  | "mission"
+  | "media"
+  | "more";
+type NavItem = { to: string; label: string; icon: IconName; legacy?: boolean };
+type NavGroup = { title: string; icon: IconName; items: NavItem[]; defaultOpen?: boolean };
 
 const groups: NavGroup[] = [
   {
-    title: "Dashboard", icon: "📊", defaultOpen: true,
-    items: [{ to: "/dashboard", label: "Tổng quan" }]
+    title: "Tổng quan", icon: "dashboard", defaultOpen: true,
+    items: [{ to: "/dashboard", label: "Bảng điều khiển", icon: "dashboard" }]
   },
   {
-    title: "Content Workflow", icon: "✏️", defaultOpen: true,
+    title: "Quản lý nội dung học", icon: "content", defaultOpen: true,
     items: [
-      { to: "/taxonomy", label: "Phân loại (Taxonomy)" },
-      { to: "/programs-v2", label: "Chương trình" },
-      { to: "/learning-paths-v2", label: "Lộ trình học" },
-      { to: "/path-builder", label: "Xây dựng lộ trình" },
-      { to: "/lessons-v2", label: "Bài học v2" },
-      { to: "/activity-builder", label: "Xây dựng hoạt động" }
+      { to: "/taxonomy", label: "Nhóm trẻ & mục tiêu học", icon: "target" },
+      { to: "/programs-v2", label: "Chương trình học", icon: "program" },
+      { to: "/learning-paths-v2", label: "Lộ trình học", icon: "path" },
+      { to: "/lessons-v2", label: "Bài học", icon: "lesson" },
+      { to: "/activity-builder", label: "Hoạt động trong bài học", icon: "activity" },
+      { to: "/path-builder", label: "Sắp xếp bài học vào lộ trình", icon: "sort" }
     ]
   },
   {
-    title: "Characters & Unlock", icon: "🐾",
+    title: "Nhân vật & mã mở khóa", icon: "character",
     items: [
-      { to: "/npcs-v2", label: "Mascot (NPC) v2" },
-      { to: "/activation-codes", label: "Mã kích hoạt" }
+      { to: "/npcs-v2", label: "Nhân vật đồng hành", icon: "character" },
+      { to: "/activation-codes", label: "Mã QR mở khóa", icon: "qr" }
     ]
   },
   {
-    title: "Gamification", icon: "🏅",
+    title: "Gói Premium", icon: "premium",
+    items: [{ to: "/premium", label: "Quản lý gói Premium", icon: "premium" }]
+  },
+  {
+    title: "Người dùng & tiến độ", icon: "users",
     items: [
-      { to: "/badges", label: "Huy hiệu" },
-      { to: "/daily-missions", label: "Nhiệm vụ ngày" }
+      { to: "/users", label: "Người dùng", icon: "users" },
+      { to: "/children", label: "Hồ sơ trẻ", icon: "child" },
+      { to: "/progress", label: "Tiến độ học tập", icon: "progress" }
     ]
   },
   {
-    title: "Users & Progress", icon: "👤",
+    title: "Dữ liệu cũ", icon: "archive",
     items: [
-      { to: "/users", label: "Người dùng" },
-      { to: "/premium", label: "Gói Premium (Demo)" },
-      { to: "/children", label: "Hồ sơ trẻ" },
-      { to: "/progress", label: "Tiến độ" }
+      { to: "/lessons", label: "Bài học cũ", icon: "lesson", legacy: true },
+      { to: "/math-questions", label: "Câu hỏi toán cũ", icon: "activity", legacy: true },
+      { to: "/dialogues", label: "Hội thoại cũ", icon: "activity", legacy: true },
+      { to: "/flashcards", label: "Flashcard cũ", icon: "lesson", legacy: true },
+      { to: "/qr-codes", label: "QR cũ", icon: "qr", legacy: true },
+      { to: "/development-categories", label: "Nhóm trẻ cũ", icon: "target", legacy: true },
+      { to: "/learning-goals", label: "Mục tiêu học cũ", icon: "target", legacy: true },
+      { to: "/skills", label: "Kỹ năng cũ", icon: "activity", legacy: true },
+      { to: "/programs", label: "Chương trình cũ", icon: "program", legacy: true },
+      { to: "/learning-paths", label: "Lộ trình cũ", icon: "path", legacy: true },
+      { to: "/npcs", label: "Nhân vật cũ", icon: "character", legacy: true },
+      { to: "/thinking-questions", label: "Câu hỏi tư duy cũ", icon: "activity", legacy: true },
+      { to: "/spelling-questions", label: "Câu hỏi đánh vần cũ", icon: "activity", legacy: true },
+      { to: "/rhyme-questions", label: "Câu hỏi ghép vần cũ", icon: "activity", legacy: true }
     ]
   },
   {
-    title: "Media", icon: "🖼️",
-    items: [{ to: "/media", label: "Thư viện Media" }]
-  },
-  {
-    title: "Legacy", icon: "📦",
+    title: "Khác", icon: "more",
     items: [
-      { to: "/development-categories", label: "Nhóm khó khăn", legacy: true },
-      { to: "/learning-goals", label: "Mục tiêu học", legacy: true },
-      { to: "/skills", label: "Kỹ năng", legacy: true },
-      { to: "/programs", label: "Chương trình", legacy: true },
-      { to: "/learning-paths", label: "Lộ trình", legacy: true },
-      { to: "/npcs", label: "Mascot", legacy: true },
-      { to: "/qr-codes", label: "Mã QR", legacy: true },
-      { to: "/lessons", label: "Bài học", legacy: true },
-      { to: "/math-questions", label: "Toán", legacy: true },
-      { to: "/thinking-questions", label: "Tư duy", legacy: true },
-      { to: "/spelling-questions", label: "Đánh vần", legacy: true },
-      { to: "/rhyme-questions", label: "Ghép vần", legacy: true },
-      { to: "/dialogues", label: "Hội thoại", legacy: true },
-      { to: "/flashcards", label: "Thẻ học", legacy: true }
+      { to: "/badges", label: "Huy hiệu", icon: "badge" },
+      { to: "/daily-missions", label: "Nhiệm vụ ngày", icon: "mission" },
+      { to: "/media", label: "Thư viện tệp", icon: "media" }
     ]
   }
 ];
 
 export function Sidebar() {
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     groups.forEach((g) => { init[g.title] = !g.defaultOpen; });
@@ -79,25 +100,101 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="brand">Quản trị Project HA</div>
+      <div className="brand" aria-label="Quản trị Project HA">
+        <span className="brand-mark">HA</span>
+        <span className="brand-copy">
+          <strong>Project HA</strong>
+          <small>Admin Panel</small>
+        </span>
+      </div>
       {groups.map((group) => (
-        <div className="sidebar-group" key={group.title}>
-          <div className="sidebar-group-header" onClick={() => toggle(group.title)}>
-            <span>{group.icon}</span>
-            <span style={{ flex: 1 }}>{group.title}</span>
-            <span style={{ fontSize: "10px" }}>{collapsed[group.title] ? "▸" : "▾"}</span>
-          </div>
-          <div className={`sidebar-group-items ${collapsed[group.title] ? "collapsed" : ""}`} style={collapsed[group.title] ? { maxHeight: 0 } : { maxHeight: `${group.items.length * 44}px` }}>
-            {group.items.map((item) => (
-              <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? "nav active" : "nav")}>
-                {item.label}
-                {item.legacy && <span className="legacy-tag">Legacy</span>}
-              </NavLink>
-            ))}
-          </div>
-        </div>
+        <SidebarSection
+          group={group}
+          key={group.title}
+          collapsed={collapsed[group.title]}
+          active={group.items.some((item) => item.to === location.pathname)}
+          onToggle={() => toggle(group.title)}
+        />
       ))}
     </aside>
   );
 }
 
+function SidebarSection({
+  group,
+  collapsed,
+  active,
+  onToggle,
+}: {
+  group: NavGroup;
+  collapsed: boolean;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  const groupId = `sidebar-${group.title.toLowerCase().replace(/\s+/g, "-")}`;
+
+  return (
+    <section className={`sidebar-group ${active ? "has-active" : ""}`}>
+      <button
+        type="button"
+        className="sidebar-group-header"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        aria-controls={groupId}
+      >
+        <span className="sidebar-group-icon"><SidebarIcon name={group.icon} /></span>
+        <span className="sidebar-group-title">{group.title}</span>
+        <span className="sidebar-chevron" aria-hidden="true">
+          <SidebarIcon name="path" />
+        </span>
+      </button>
+      <div id={groupId} className={`sidebar-group-items ${collapsed ? "collapsed" : ""}`}>
+            {group.items.map((item) => (
+              <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? "nav active" : "nav")}>
+                <span className="nav-icon"><SidebarIcon name={item.icon} /></span>
+                <span className="nav-label">{item.label}</span>
+                {item.legacy && <span className="legacy-tag">Cũ</span>}
+              </NavLink>
+            ))}
+      </div>
+    </section>
+  );
+}
+
+function SidebarIcon({ name }: { name: IconName }) {
+  const common = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+
+  const paths: Record<IconName, JSX.Element> = {
+    dashboard: <><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><path d="M14 17h6M17 14v6" /></>,
+    content: <><path d="M5 5.5h14" /><path d="M5 11.5h14" /><path d="M5 17.5h9" /><path d="M17 16l2 2 3-4" /></>,
+    target: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="1" /></>,
+    program: <><path d="M6 4.5h9a3 3 0 0 1 3 3v12H7a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3Z" /><path d="M8 8h6M8 12h7M8 16h5" /></>,
+    path: <><path d="m8 5 7 7-7 7" /></>,
+    lesson: <><path d="M5 4.5h10.5A3.5 3.5 0 0 1 19 8v11.5H7.5A2.5 2.5 0 0 1 5 17V4.5Z" /><path d="M8.5 8h6M8.5 12h7" /></>,
+    activity: <><path d="M6 7h12" /><path d="M6 12h12" /><path d="M6 17h7" /><circle cx="4" cy="7" r="1" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="17" r="1" /></>,
+    sort: <><path d="M8 6h10" /><path d="M8 12h8" /><path d="M8 18h5" /><path d="M4 7v10" /><path d="m2.5 15.5 1.5 1.5 1.5-1.5" /></>,
+    character: <><circle cx="12" cy="8" r="3.2" /><path d="M6.5 19a5.5 5.5 0 0 1 11 0" /><path d="M8 7 6 5M16 7l2-2" /></>,
+    qr: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><path d="M14 14h2v2h-2zM18 14h2M14 18h6" /></>,
+    premium: <><path d="m4 8 4 9h8l4-9-5 3-3-6-3 6-5-3Z" /><path d="M8 20h8" /></>,
+    users: <><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 8.5a2.5 2.5 0 1 0-1-4.8" /><path d="M17 19a4.5 4.5 0 0 0-2.5-4" /></>,
+    child: <><circle cx="12" cy="8" r="3" /><path d="M7 19a5 5 0 0 1 10 0" /><path d="M9.5 11.5 8 14M14.5 11.5 16 14" /></>,
+    progress: <><path d="M5 19V9" /><path d="M12 19V5" /><path d="M19 19v-7" /><path d="M4 19h16" /></>,
+    archive: <><path d="M4 7h16" /><path d="M6 7v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7" /><path d="M7 4h10l1 3H6l1-3Z" /><path d="M10 11h4" /></>,
+    badge: <><circle cx="12" cy="9" r="4" /><path d="m9.5 12.5-1 7 3.5-2 3.5 2-1-7" /></>,
+    mission: <><path d="M6 4h10l2 2v14H6V4Z" /><path d="M9 9h6M9 13h6M9 17h3" /></>,
+    media: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m6.5 17 4-4 3 3 2-2 2.5 3" /></>,
+    more: <><circle cx="6" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="18" cy="12" r="1.5" /></>,
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...common}>
+      {paths[name]}
+    </svg>
+  );
+}

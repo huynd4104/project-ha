@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
+import { UNLOCK_RULE_LABELS, uiLabel } from "../utils/adminLabels";
 import type { Lesson, LearningPath, PathItem, Program, UnlockRule } from "../types/firebaseModels";
 
 const UNLOCK_RULES: UnlockRule[] = ["ALWAYS_OPEN", "PREVIOUS_COMPLETED", "MANUAL_UNLOCK", "PREMIUM_ONLY"];
-const UNLOCK_LABELS: Record<string, string> = {
-  ALWAYS_OPEN: "Luôn mở", PREVIOUS_COMPLETED: "Hoàn thành bài trước",
-  MANUAL_UNLOCK: "Mở khóa thủ công", PREMIUM_ONLY: "Chỉ Premium"
-};
+const UNLOCK_LABELS = UNLOCK_RULE_LABELS;
 
 export function PathBuilderPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -113,7 +111,10 @@ export function PathBuilderPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Xây dựng lộ trình</h1>
+        <div>
+          <h1>Sắp xếp bài học vào lộ trình</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Chọn lộ trình và sắp xếp thứ tự bài học trẻ sẽ học.</p>
+        </div>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "end" }}>
@@ -133,7 +134,7 @@ export function PathBuilderPage() {
         </div>
       </div>
 
-      {loading ? <p>Đang tải...</p> : !selectedPathId ? (
+      {loading ? <p>Đang tải dữ liệu...</p> : !selectedPathId ? (
         <div className="panel" style={{ textAlign: "center", padding: "60px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🗺️</div>
           <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa chọn lộ trình</h3>
@@ -149,7 +150,7 @@ export function PathBuilderPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <strong>{selectedPath.title}</strong>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{selectedPath.status || "DRAFT"} • {pathItems.length} bài học</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{uiLabel(selectedPath.status || "DRAFT")} • {pathItems.length} bài học</span>
                 </div>
               </div>
             </div>
@@ -161,7 +162,7 @@ export function PathBuilderPage() {
               <label>Thêm bài học vào lộ trình</label>
               <select value={addLessonId} onChange={(e) => setAddLessonId(e.target.value)}>
                 <option value="">-- Chọn bài học --</option>
-                {availableLessons.map((l) => <option key={l.id} value={l.id}>{l.title} ({l.lessonType || l.type})</option>)}
+                {availableLessons.map((l) => <option key={l.id} value={l.id}>{l.title} ({uiLabel(l.lessonType || l.type)})</option>)}
               </select>
             </div>
             <button onClick={handleAddLesson} disabled={!addLessonId}>➕ Thêm</button>
@@ -187,7 +188,7 @@ export function PathBuilderPage() {
                     <div className="path-item-info" style={{ flex: 1 }}>
                       <strong>{lesson?.title || pi.lessonId}</strong>
                       <small>
-                        <span className="badge info" style={{ marginRight: "4px" }}>{lesson?.lessonType || lesson?.type || "—"}</span>
+                        <span className="badge info" style={{ marginRight: "4px" }}>{uiLabel(lesson?.lessonType || lesson?.type)}</span>
                         <span className="badge yellow" style={{ marginRight: "4px" }}>{UNLOCK_LABELS[pi.unlockRule] || pi.unlockRule}</span>
                         {pi.requiredCompletion && <span className="badge green">Bắt buộc</span>}
                       </small>
@@ -205,7 +206,7 @@ export function PathBuilderPage() {
                       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
                         <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
                           <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: "200px" }}>
-                            <label style={{ fontSize: "12px" }}>Unlock Rule</label>
+                            <label style={{ fontSize: "12px" }}>Điều kiện mở khóa</label>
                             <select value={editUnlockRule} onChange={(e) => setEditUnlockRule(e.target.value as UnlockRule)} style={{ fontSize: "13px" }}>
                               {UNLOCK_RULES.map((r) => <option key={r} value={r}>{UNLOCK_LABELS[r]}</option>)}
                             </select>
@@ -219,7 +220,7 @@ export function PathBuilderPage() {
                         {editUnlockRule === "PREVIOUS_COMPLETED" && (
                           <div style={{ width: "100%", marginTop: "8px" }}>
                             <MultiSelect
-                              label="Bài học tiên quyết (Prerequisites)"
+                              label="Bài học cần hoàn thành trước"
                               options={pathItems
                                 .filter((item) => item.id !== pi.id)
                                 .map((item) => {

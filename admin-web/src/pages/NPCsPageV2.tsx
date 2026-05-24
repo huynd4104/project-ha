@@ -6,6 +6,7 @@ import { CSVImportModal } from "../components/import/CSVImportModal";
 import { npcsImportConfig } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { uiLabel } from "../utils/adminLabels";
 import type { DialogueTemplates, AccessType } from "../types/firebaseModels";
 
 const ACCESS_TYPES: AccessType[] = ["FREE", "PREMIUM"];
@@ -114,7 +115,7 @@ export function NPCsPageV2() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = "Tên Mascot không được để trống.";
+    if (!name.trim()) errs.name = "Tên nhân vật không được để trống.";
     if (!description.trim()) errs.description = "Mô tả không được để trống.";
     setErrors(errs);
     if (Object.keys(errs).length) return;
@@ -139,7 +140,7 @@ export function NPCsPageV2() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa Mascot này?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa nhân vật này?")) return;
     await adminApi.remove("/npcs", id); showToast("Đã xóa!"); loadData();
   };
 
@@ -150,33 +151,36 @@ export function NPCsPageV2() {
   const importConfig = npcsImportConfig(items as any);
   const handleImport = async (rows: any[]) => {
     await batchImport("npcs", rows);
-    showToast(`Import thành công ${rows.length} Mascot.`);
+    showToast(`Import thành công ${rows.length} nhân vật.`);
     await loadData();
   };
 
   return (
     <div>
       <div className="toolbar">
-        <h1>Mascot (NPC) v2</h1>
+        <div>
+          <h1>Nhân vật đồng hành</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Quản lý nhân vật hướng dẫn, động viên và phản hồi trong quá trình học.</p>
+        </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
-          <button onClick={openAddModal}>➕ Thêm Mascot</button>
+          <button onClick={openAddModal}>➕ Thêm nhân vật</button>
         </div>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
-        <input type="text" placeholder="Tìm kiếm mascot..." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
+        <input type="text" placeholder="Tìm kiếm nhân vật..." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
       </div>
 
-      {loading ? <p>Đang tải...</p> : filtered.length === 0 ? (
+      {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🐾</div>
-          <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có Mascot nào</h3>
+          <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có nhân vật đồng hành nào</h3>
           <p style={{ color: "var(--text-muted)", margin: "0 0 16px 0", fontSize: "14px" }}>
-            Mascot là bạn đồng hành học tập cùng trẻ. Hãy tạo Mascot để gắn liền với các bài học.
+            Nhân vật đồng hành sẽ hướng dẫn, động viên và phản hồi trong quá trình trẻ học.
           </p>
-          <button onClick={openAddModal}>➕ Thêm Mascot mới</button>
+          <button onClick={openAddModal}>➕ Thêm nhân vật mới</button>
         </div>
       ) : (
         <div className="table-wrap">
@@ -202,7 +206,7 @@ export function NPCsPageV2() {
                   <td style={{ fontWeight: "600" }}>{item.name}</td>
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description?.slice(0, 60)}{(item.description?.length || 0) > 60 ? "..." : ""}</td>
                   <td style={{ fontSize: "12px" }}>{item.role || "—"}</td>
-                  <td><span className={`badge ${item.accessType === "PREMIUM" ? "premium" : "free"}`}>{item.accessType || "FREE"}</span></td>
+                  <td><span className={`badge ${item.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(item.accessType || "FREE")}</span></td>
                   <td><span className={`badge ${item.isActive ? "active" : "inactive"}`}>{item.isActive ? "Hoạt động" : "Tạm khóa"}</span></td>
                   <td>
                     <div className="actions">
@@ -222,7 +226,7 @@ export function NPCsPageV2() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(780px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập nhật Mascot" : "Thêm Mascot Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa nhân vật" : "Thêm nhân vật mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -230,7 +234,7 @@ export function NPCsPageV2() {
                 <div className="drawer-container">
                   <div className="drawer-main" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <div className="field">
-                      <label>Tên Mascot <span style={{ color: "red" }}>*</span></label>
+                      <label>Tên nhân vật <span style={{ color: "red" }}>*</span></label>
                       <input type="text" placeholder="VD: Mèo Mimi" value={name} onChange={(e) => setName(e.target.value)} />
                       {errors.name && <span className="error-msg">{errors.name}</span>}
                     </div>
@@ -242,7 +246,7 @@ export function NPCsPageV2() {
                     </div>
 
                     <div className="field">
-                      <label>Hình ảnh Mascot</label>
+                      <label>Hình ảnh nhân vật</label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <input type="text" placeholder="URL hình ảnh" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ flex: 1 }} />
                         <button type="button" className="secondary" onClick={() => setShowMediaPicker(true)}>Thư viện</button>
@@ -250,8 +254,8 @@ export function NPCsPageV2() {
                     </div>
 
                     <div className="field">
-                      <label>Animation URL</label>
-                      <input type="text" placeholder="URL animation (Lottie, GIF...)" value={animationUrl} onChange={(e) => setAnimationUrl(e.target.value)} />
+                      <label>Đường dẫn hoạt ảnh</label>
+                      <input type="text" placeholder="URL hoạt ảnh (Lottie, GIF...)" value={animationUrl} onChange={(e) => setAnimationUrl(e.target.value)} />
                     </div>
 
                     <div className="field">
@@ -263,7 +267,7 @@ export function NPCsPageV2() {
                       <div className="field">
                         <label>Loại truy cập</label>
                         <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>
-                          {ACCESS_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
+                          {ACCESS_TYPES.map((a) => <option key={a} value={a}>{uiLabel(a)}</option>)}
                         </select>
                       </div>
                       <div className="field check-row" style={{ height: "60px" }}>
@@ -274,7 +278,7 @@ export function NPCsPageV2() {
 
                     {/* Advanced section */}
                     <div className="collapsible-header" onClick={() => setShowAdvanced(!showAdvanced)}>
-                      <h3>🧩 Vai trò nâng cao (Advanced)</h3>
+                      <h3>🧩 Vai trò nâng cao</h3>
                       <span style={{ fontSize: "18px" }}>{showAdvanced ? "▾" : "▸"}</span>
                     </div>
 
@@ -298,7 +302,7 @@ export function NPCsPageV2() {
                         </div>
 
                         <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", marginTop: "8px" }}>
-                          <label style={{ fontWeight: "600", fontSize: "14px", marginBottom: "8px", display: "block" }}>Mẫu câu thoại (Dialogue Templates)</label>
+                          <label style={{ fontWeight: "600", fontSize: "14px", marginBottom: "8px", display: "block" }}>Mẫu câu thoại</label>
                           {DIALOGUE_FIELDS.map((df) => (
                             <div className="field" key={df.key}>
                               <label style={{ fontSize: "12px" }}>{df.label}</label>
@@ -318,7 +322,7 @@ export function NPCsPageV2() {
                         {imageUrl ? <img src={imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : <span style={{ fontSize: "36px" }}>🐾</span>}
                       </div>
-                      <strong style={{ fontSize: "14px" }}>{name || "Tên Mascot"}</strong>
+                      <strong style={{ fontSize: "14px" }}>{name || "Tên nhân vật"}</strong>
                       {role && <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{role}</p>}
                       {defaultDialogue && (
                         <div style={{ marginTop: "8px", padding: "8px 12px", background: "#f0f9ff", borderRadius: "12px", fontSize: "12px", color: "var(--primary)", position: "relative" }}>
@@ -331,7 +335,7 @@ export function NPCsPageV2() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

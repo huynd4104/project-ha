@@ -2,13 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { adminApi } from "../api/adminApi";
 import QRCode from "qrcode";
 import type { ActivationType, ActivationSource } from "../types/firebaseModels";
+import { ACTIVATION_TYPE_LABELS, uiLabel } from "../utils/adminLabels";
 
 const ACTIVATION_TYPES: ActivationType[] = ["NPC", "LESSON", "PATH", "REWARD", "PHYSICAL_TOY"];
 const SOURCES: ActivationSource[] = ["QR", "NFC", "MANUAL"];
 
 const TYPE_LABELS: Record<string, string> = {
-  NPC: "Mascot", LESSON: "Bài học", PATH: "Lộ trình",
-  REWARD: "Phần thưởng", PHYSICAL_TOY: "Đồ chơi vật lý"
+  ...ACTIVATION_TYPE_LABELS
 };
 
 function generateRandomCode() {
@@ -167,7 +167,7 @@ export function ActivationCodesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa mã kích hoạt này?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa mã QR mở khóa này?")) return;
     await adminApi.remove("/activation-codes", id); showToast("Đã xóa!"); loadData();
   };
 
@@ -197,22 +197,25 @@ export function ActivationCodesPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Mã kích hoạt</h1>
-        <button onClick={openAddModal}>➕ Thêm Mã</button>
+        <div>
+          <h1>Mã QR mở khóa</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Tạo mã QR để mở khóa nhân vật hoặc nội dung. Hiện tại hỗ trợ mở khóa nhân vật.</p>
+        </div>
+        <button onClick={openAddModal}>➕ Thêm mã QR</button>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input type="text" placeholder="Tìm kiếm mã..." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
       </div>
 
-      {loading ? <p>Đang tải...</p> : filtered.length === 0 ? (
+      {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🎫</div>
-          <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có mã kích hoạt nào</h3>
+          <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có mã QR mở khóa nào</h3>
           <p style={{ color: "var(--text-muted)", margin: "0 0 16px 0", fontSize: "14px" }}>
-            Mã kích hoạt giúp liên kết các Mascot hoặc Lộ trình với đồ chơi vật lý/sách học bằng mã QR.
+            Mã QR giúp mở khóa nhân vật đồng hành hoặc nội dung khi trẻ quét mã.
           </p>
-          <button onClick={openAddModal}>➕ Tạo mã kích hoạt mới</button>
+          <button onClick={openAddModal}>➕ Tạo mã QR mới</button>
         </div>
       ) : (
         <div className="table-wrap">
@@ -237,10 +240,10 @@ export function ActivationCodesPage() {
                   <td style={{ fontWeight: "600" }}>{item.label || "—"}</td>
                   <td><span className="badge info">{TYPE_LABELS[item.activationType] || item.activationType}</span></td>
                   <td style={{ fontSize: "13px" }}>{getTargetLabel(item.activationType, item.targetId)}</td>
-                  <td><span className="badge yellow">{item.source || "QR"}</span></td>
+                  <td><span className="badge yellow">{uiLabel(item.source || "QR")}</span></td>
                   <td>{formatExpiration(item.expiresAt)}</td>
                   <td style={{ fontWeight: "600" }}>{item.usedCount || 0}{item.maxUses ? `/${item.maxUses}` : ""}</td>
-                  <td><span className={`badge ${item.active !== false ? "active" : "inactive"}`}>{item.active !== false ? "Active" : "Inactive"}</span></td>
+                  <td><span className={`badge ${item.active !== false ? "active" : "inactive"}`}>{item.active !== false ? "Đang bật" : "Đang tắt"}</span></td>
                   <td>
                     <div className="actions">
                       <button className="secondary" onClick={() => copyCode(item.code)} style={{ fontSize: "11px" }}>📋</button>
@@ -260,7 +263,7 @@ export function ActivationCodesPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(680px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập nhật Mã Kích Hoạt" : "Thêm Mã Kích Hoạt"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa mã QR mở khóa" : "Thêm mã QR mở khóa"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -268,10 +271,10 @@ export function ActivationCodesPage() {
                 <div className="drawer-container">
                   <div className="drawer-main" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <div className="field">
-                      <label>Mã kích hoạt <span style={{ color: "red" }}>*</span></label>
+                      <label>Mã mở khóa <span style={{ color: "red" }}>*</span></label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <input type="text" placeholder="HA-XXXXXXXX" value={code} onChange={(e) => setCode(e.target.value)} style={{ flex: 1, fontFamily: "monospace", fontWeight: "700" }} disabled={!!editingItem} />
-                        {!editingItem && <button type="button" className="secondary" onClick={() => setCode(generateRandomCode())}>🎲 Random</button>}
+                        {!editingItem && <button type="button" className="secondary" onClick={() => setCode(generateRandomCode())}>🎲 Tạo mã</button>}
                       </div>
                       {errors.code && <span className="error-msg">{errors.code}</span>}
                     </div>
@@ -284,7 +287,7 @@ export function ActivationCodesPage() {
 
                     <div className="form-grid">
                       <div className="field">
-                        <label>Loại kích hoạt</label>
+                        <label>Loại mở khóa</label>
                         <select value={activationType} onChange={(e) => { setActivationType(e.target.value as ActivationType); setTargetId(""); }}>
                           {ACTIVATION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
                         </select>
@@ -292,7 +295,7 @@ export function ActivationCodesPage() {
                       <div className="field">
                         <label>Nguồn</label>
                         <select value={source} onChange={(e) => setSource(e.target.value as ActivationSource)}>
-                          {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+                          {SOURCES.map((s) => <option key={s} value={s}>{uiLabel(s)}</option>)}
                         </select>
                       </div>
                     </div>
@@ -314,7 +317,7 @@ export function ActivationCodesPage() {
                         <input type="number" min={0} placeholder="Không giới hạn" value={maxUses} onChange={(e) => setMaxUses(e.target.value === "" ? "" : Number(e.target.value))} />
                       </div>
                       <div className="field">
-                        <label>Giới hạn mỗi user</label>
+                        <label>Giới hạn mỗi người dùng</label>
                         <input type="number" min={0} placeholder="Không giới hạn" value={perUserLimit} onChange={(e) => setPerUserLimit(e.target.value === "" ? "" : Number(e.target.value))} />
                       </div>
                     </div>
@@ -331,7 +334,7 @@ export function ActivationCodesPage() {
                   </div>
 
                   <div className="drawer-aside" style={{ width: "220px" }}>
-                    <h3>QR Preview</h3>
+                    <h3>Xem trước QR</h3>
                     <div className="qr-preview-box" style={{ marginTop: "12px" }}>
                       {qrPreviewUrl ? (
                         <img src={qrPreviewUrl} alt="QR Code" style={{ width: "160px", height: "160px" }} />
@@ -340,7 +343,7 @@ export function ActivationCodesPage() {
                           Bấm tạo QR
                         </div>
                       )}
-                      <button type="button" className="secondary" onClick={() => generateQR(code)} style={{ width: "100%" }}>Tạo QR Preview</button>
+                      <button type="button" className="secondary" onClick={() => generateQR(code)} style={{ width: "100%" }}>Tạo xem trước QR</button>
                       {qrPreviewUrl && <button type="button" className="secondary" onClick={() => downloadQR(code)} style={{ width: "100%" }}>📥 Tải QR PNG</button>}
                     </div>
                     <canvas ref={canvasRef} style={{ display: "none" }} />
@@ -349,7 +352,7 @@ export function ActivationCodesPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

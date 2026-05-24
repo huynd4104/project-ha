@@ -148,7 +148,7 @@ export function DailyMissionsPage() {
       <div className="toolbar">
         <h1>Nhiệm Vụ Hàng Ngày</h1>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal}>➕ Thêm Nhiệm Vụ</button>
         </div>
@@ -214,7 +214,7 @@ export function DailyMissionsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(600px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập Nhật Nhiệm Vụ Hàng Ngày" : "Thêm Nhiệm Vụ Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa nhiệm vụ hằng ngày" : "Thêm nhiệm vụ mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -245,7 +245,7 @@ export function DailyMissionsPage() {
                   <select value={type} onChange={(e) => setType(e.target.value as any)}>
                     <option value="COMPLETE_LESSON">COMPLETE_LESSON (Hoàn thành bài học nói chung)</option>
                     <option value="REVIEW_FLASHCARD">REVIEW_FLASHCARD (Ôn tập thẻ học Flashcard)</option>
-                    <option value="SCAN_QR">SCAN_QR (Quét QR mở khóa Mascot)</option>
+                    <option value="SCAN_QR">Quét QR mở khóa nhân vật</option>
                     <option value="COMPLETE_DIALOGUE">COMPLETE_DIALOGUE (Hoàn thành bài Hội thoại)</option>
                     <option value="COMPLETE_MATH">COMPLETE_MATH (Hoàn thành bài Toán)</option>
                   </select>
@@ -285,7 +285,7 @@ export function DailyMissionsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

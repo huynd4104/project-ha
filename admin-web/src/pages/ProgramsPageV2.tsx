@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
+import { uiLabel } from "../utils/adminLabels";
 import { validateProgramPublish } from "../utils/publishValidation";
 import type { DevelopmentCategory, LearningGoal, Skill, Program, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
@@ -136,15 +137,18 @@ export function ProgramsPageV2() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Chương trình học</h1>
-        <button onClick={openAddModal}>➕ Thêm Chương Trình</button>
+        <div>
+          <h1>Chương trình học</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Tạo các nhóm nội dung lớn như Luyện nghe cơ bản, Giao tiếp hằng ngày, Nhận biết cảm xúc.</p>
+        </div>
+        <button onClick={openAddModal}>➕ Thêm chương trình</button>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input type="text" placeholder="Tìm kiếm chương trình..." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
       </div>
 
-      {loading ? <p>Đang tải...</p> : filtered.length === 0 ? (
+      {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📂</div>
           <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có chương trình nào</h3>
@@ -162,7 +166,7 @@ export function ProgramsPageV2() {
                 <th>Đối tượng</th>
                 <th>Mục tiêu học</th>
                 <th>Kỹ năng</th>
-                <th>Level</th>
+                <th>Cấp độ</th>
                 <th>Truy cập</th>
                 <th>Trạng thái</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
@@ -175,9 +179,9 @@ export function ProgramsPageV2() {
                   <td style={{ fontSize: "13px" }}>{item.targetAgeMin}–{item.targetAgeMax} tuổi</td>
                   <td style={{ fontSize: "12px" }}>{(item.learningGoals || []).length} mục tiêu</td>
                   <td style={{ fontSize: "12px" }}>{(item.skillTags || []).length} kỹ năng</td>
-                  <td><span className="badge info">{item.level}</span></td>
-                  <td><span className={`badge ${accessBadge(item.accessType)}`}>{item.accessType}</span></td>
-                  <td><span className={`badge ${statusBadge(item.status)}`}>{item.status}</span></td>
+                  <td><span className="badge info">{uiLabel(item.level)}</span></td>
+                  <td><span className={`badge ${accessBadge(item.accessType)}`}>{uiLabel(item.accessType)}</span></td>
+                  <td><span className={`badge ${statusBadge(item.status)}`}>{uiLabel(item.status)}</span></td>
                   <td>
                     <div className="actions">
                       <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
@@ -195,7 +199,7 @@ export function ProgramsPageV2() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(780px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập nhật Chương Trình" : "Thêm Chương Trình Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa chương trình" : "Thêm chương trình mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -241,13 +245,13 @@ export function ProgramsPageV2() {
                       <div className="field">
                         <label>Cấp độ</label>
                         <select value={level} onChange={(e) => setLevel(e.target.value as LearningLevel)}>
-                          {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+                          {LEVELS.map((l) => <option key={l} value={l}>{uiLabel(l)}</option>)}
                         </select>
                       </div>
                       <div className="field">
                         <label>Loại truy cập</label>
                         <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>
-                          {ACCESS_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
+                          {ACCESS_TYPES.map((a) => <option key={a} value={a}>{uiLabel(a)}</option>)}
                         </select>
                       </div>
                     </div>
@@ -255,7 +259,7 @@ export function ProgramsPageV2() {
                     <div className="field">
                       <label>Trạng thái xuất bản</label>
                       <select value={status} onChange={(e) => setStatus(e.target.value as PublishStatus)}>
-                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {STATUSES.map((s) => <option key={s} value={s}>{uiLabel(s)}</option>)}
                       </select>
                     </div>
                   </div>
@@ -272,9 +276,9 @@ export function ProgramsPageV2() {
                         <div style={{ marginBottom: "6px" }}>🧩 {skillTags.length} kỹ năng</div>
                         <div style={{ marginBottom: "6px" }}>👶 {targetAgeMin}–{targetAgeMax} tuổi</div>
                         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "8px" }}>
-                          <span className={`badge ${statusBadge(status)}`}>{status}</span>
-                          <span className={`badge ${accessBadge(accessType)}`}>{accessType}</span>
-                          <span className="badge info">{level}</span>
+                          <span className={`badge ${statusBadge(status)}`}>{uiLabel(status)}</span>
+                          <span className={`badge ${accessBadge(accessType)}`}>{uiLabel(accessType)}</span>
+                          <span className="badge info">{uiLabel(level)}</span>
                         </div>
                       </div>
                     </div>
@@ -283,7 +287,7 @@ export function ProgramsPageV2() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

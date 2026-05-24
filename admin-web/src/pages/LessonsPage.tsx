@@ -181,17 +181,16 @@ export function LessonsPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Bài học</h1>
+        <h1>Bài học cũ</h1>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal}>➕ Thêm Bài Học</button>
         </div>
       </div>
 
       <div className="panel" style={{ padding: "14px 16px", marginBottom: "16px", color: "var(--text-muted)" }}>
-        Trang này vẫn quản lý dữ liệu bài học legacy. Phase 2 dùng thêm Programs, Learning Paths,
-        Path Items và Activities nhưng chưa thay thế các trang nội dung cũ.
+        Mục này dùng để tương thích với dữ liệu cũ. Nội dung mới nên tạo ở phần Quản lý nội dung học.
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
@@ -219,7 +218,7 @@ export function LessonsPage() {
                 <th>Tiêu đề bài học</th>
                 <th>Mô tả</th>
                 <th>Loại bài</th>
-                <th>Mascot đồng hành</th>
+                <th>Nhân vật đồng hành</th>
                 <th style={{ width: "120px" }}>Trạng thái</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
               </tr>
@@ -245,7 +244,7 @@ export function LessonsPage() {
                           <span style={{ fontSize: "13px" }}>{npc.name}</span>
                         </div>
                       ) : (
-                        <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>Chưa gắn Mascot</span>
+                        <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>Chưa gắn nhân vật</span>
                       )}
                     </td>
                     <td>
@@ -272,7 +271,7 @@ export function LessonsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập Nhật Bài Học" : "Thêm Bài Học Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa bài học cũ" : "Thêm bài học cũ"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -310,16 +309,16 @@ export function LessonsPage() {
                   </div>
 
                   <div className="field">
-                    <label>Mascot đồng hành (Tùy chọn)</label>
+                    <label>Nhân vật đồng hành (tùy chọn)</label>
                     <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
-                      <option value="">-- Không có Mascot --</option>
+                      <option value="">-- Không có nhân vật --</option>
                       {npcs.map((n) => (
                         <option key={n.id} value={n.id}>
                           {n.name}
                         </option>
                       ))}
                     </select>
-                    <span className="helper">Mascot đồng hành, trợ giúp giảng giải.</span>
+                    <span className="helper">Nhân vật đồng hành, trợ giúp giảng giải.</span>
                   </div>
                 </div>
 
@@ -347,7 +346,7 @@ export function LessonsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

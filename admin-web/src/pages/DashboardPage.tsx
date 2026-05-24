@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { adminApi } from "../api/adminApi";
 
@@ -86,14 +87,14 @@ export function DashboardPage() {
     });
   }, []);
 
-  if (!data) return <p>Đang tải...</p>;
+  if (!data) return <p>Đang tải dữ liệu...</p>;
 
   const mainCards = [
     ["Người dùng", data.totalUsers, "👤"],
     ["Hồ sơ trẻ", data.totalChildren, "👶"],
     ["Bài học", data.totalLessons, "📖"],
     ["Bài hoàn thành", data.totalCompletedLessons, "✅"],
-    ["Mascot", data.totalNPCs, "🐾"],
+    ["Nhân vật đồng hành", data.totalNPCs, "🐾"],
     ["Mã QR", data.totalQRCodes, "📱"],
     ["Huy hiệu", data.totalBadges, "🏅"],
     ["Nhiệm vụ hôm nay", data.missionCompletionsToday, "⭐"],
@@ -101,29 +102,49 @@ export function DashboardPage() {
 
   const phase3Cards = extra ? [
     ["Chương trình", extra.totalPrograms, "📚"],
-    ["CT đã xuất bản", extra.publishedPrograms, "🟢"],
+    ["Chương trình đã xuất bản", extra.publishedPrograms, "🟢"],
     ["Lộ trình", extra.totalPaths, "🗺️"],
-    ["LT đã xuất bản", extra.publishedPaths, "🟢"],
+    ["Lộ trình đã xuất bản", extra.publishedPaths, "🟢"],
     ["Hoạt động", extra.totalActivities, "🎯"],
-    ["Mã kích hoạt", extra.totalActivationCodes, "🔑"],
-    ["Nhóm khó khăn", extra.totalCategories, "📂"],
+    ["Mã QR mở khóa", extra.totalActivationCodes, "🔑"],
+    ["Nhóm trẻ", extra.totalCategories, "📂"],
     ["Kỹ năng", extra.totalSkills, "🧩"],
-    ["Bài học Legacy", extra.legacyLessonsCount, "📦"],
-    ["Thiếu Metadata", extra.missingMetadataCount, "⚠️"]
+    ["Bài học cũ", extra.legacyLessonsCount, "📦"],
+    ["Thiếu thông tin phân loại", extra.missingMetadataCount, "⚠️"]
   ] : [];
 
   const premiumCards = extra ? [
-    ["Premium Users", extra.premiumUsers, "👑"],
-    ["Premium CT", extra.premiumPrograms, "💎"],
+    ["Người dùng Premium", extra.premiumUsers, "👑"],
+    ["Chương trình Premium", extra.premiumPrograms, "💎"],
     ["Premium Lộ trình", extra.premiumPaths, "💎"],
     ["Premium Bài học", extra.premiumLessons, "💎"],
     ["Premium Hoạt động", extra.premiumActivities, "💎"],
-    ["Premium NPC", extra.premiumNpcs, "👑"]
+    ["Nhân vật Premium", extra.premiumNpcs, "👑"]
   ] : [];
 
   return (
     <div>
-      <h1>Tổng quan</h1>
+      <h1>Bảng điều khiển</h1>
+
+      <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+        <h2 style={{ marginTop: 0 }}>Quy trình tạo nội dung học</h2>
+        <p style={{ color: "var(--text-muted)", marginTop: 0 }}>
+          Làm theo thứ tự này để nội dung mới có đủ chương trình, lộ trình, bài học và hoạt động trước khi kiểm tra trên app mobile.
+        </p>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {[
+            ["1. Kiểm tra nhóm trẻ, mục tiêu học và kỹ năng", "/taxonomy"],
+            ["2. Tạo chương trình học", "/programs-v2"],
+            ["3. Tạo lộ trình học", "/learning-paths-v2"],
+            ["4. Tạo bài học", "/lessons-v2"],
+            ["5. Tạo hoạt động", "/activity-builder"],
+            ["6. Sắp xếp bài học vào lộ trình", "/path-builder"],
+            ["7. Kiểm tra trên app mobile", "/progress"],
+          ].map(([label, to]) => (
+            <Link key={to} to={to} className="secondary" style={{ textDecoration: "none", padding: "8px 10px", borderRadius: "8px" }}>{label}</Link>
+          ))}
+        </div>
+      </div>
 
       <div className="cards">
         {mainCards.map(([label, value, icon]) => (
@@ -136,7 +157,7 @@ export function DashboardPage() {
 
       {extra && (
         <>
-          <h2 style={{ marginTop: "12px" }}>Phân quyền Premium (Phase 5)</h2>
+          <h2 style={{ marginTop: "12px" }}>Gói Premium</h2>
           <div className="cards" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}>
             {premiumCards.map(([label, value, icon]) => (
               <div className="stat" key={label as string} style={{ borderLeft: "4px solid #d97706" }}>
@@ -146,7 +167,7 @@ export function DashboardPage() {
             ))}
           </div>
 
-          <h2 style={{ marginTop: "12px" }}>Nội dung học tập (Phase 3)</h2>
+          <h2 style={{ marginTop: "12px" }}>Nội dung học tập</h2>
           <div className="cards">
             {phase3Cards.map(([label, value, icon]) => (
               <div className="stat" key={label as string}>
@@ -174,4 +195,3 @@ export function DashboardPage() {
     </div>
   );
 }
-

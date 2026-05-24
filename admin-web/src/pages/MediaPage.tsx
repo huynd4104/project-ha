@@ -219,12 +219,12 @@ export function MediaPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Thư viện Media</h1>
+        <h1>Thư viện tệp</h1>
         <div style={{ display: "flex", gap: "10px" }}>
           {assets.length === 0 && (
             <button onClick={handleSeed} className="secondary">🌱 Seed Media Mẫu</button>
           )}
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal}>➕ Thêm Media</button>
         </div>
@@ -240,7 +240,7 @@ export function MediaPage() {
         />
         <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: "auto" }}>
           <option value="ALL">Tất cả danh mục</option>
-          <option value="NPC">Mascot</option>
+          <option value="NPC">Nhân vật đồng hành</option>
           <option value="FLASHCARD">Flashcard</option>
           <option value="DIALOGUE">Dialogue</option>
           <option value="BADGE">Badge</option>
@@ -305,7 +305,7 @@ export function MediaPage() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingAsset ? "Cập Nhật Media Asset" : "Thêm Media Asset Mới"}</h2>
+              <h2>{editingAsset ? "Chỉnh sửa tệp" : "Thêm tệp mới"}</h2>
               <button className="modal-close" onClick={closeModal}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -328,7 +328,7 @@ export function MediaPage() {
                   <div className="field">
                     <label>Danh mục *</label>
                     <select value={assetCategory} onChange={(e) => setAssetCategory(e.target.value as any)}>
-                      <option value="NPC">Mascot</option>
+                      <option value="NPC">Nhân vật đồng hành</option>
                       <option value="FLASHCARD">Flashcard</option>
                       <option value="DIALOGUE">Dialogue</option>
                       <option value="BADGE">Badge</option>
@@ -372,7 +372,7 @@ export function MediaPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={closeModal}>Hủy</button>
-                <button type="submit">{editingAsset ? "Cập Nhật" : "Lưu lại"}</button>
+                <button type="submit">{editingAsset ? "Cập nhật" : "Lưu lại"}</button>
               </div>
             </form>
           </div>

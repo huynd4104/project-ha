@@ -155,7 +155,7 @@ export function BadgesPage() {
       <div className="toolbar">
         <h1>Huy Hiệu Học Tập</h1>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal}>➕ Thêm Huy Hiệu</button>
         </div>
@@ -229,7 +229,7 @@ export function BadgesPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(680px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập Nhật Huy Hiệu" : "Thêm Huy Hiệu Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa huy hiệu" : "Thêm huy hiệu mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -278,7 +278,7 @@ export function BadgesPage() {
                         <option value="LESSON">LESSON (Bài học)</option>
                         <option value="STREAK">STREAK (Liên tiếp)</option>
                         <option value="XP">XP (Kinh nghiệm)</option>
-                        <option value="NPC">Mascot</option>
+                        <option value="NPC">Nhân vật đồng hành</option>
                         <option value="MISSION">MISSION (Nhiệm vụ)</option>
                       </select>
                     </div>
@@ -289,7 +289,7 @@ export function BadgesPage() {
                         <option value="COMPLETE_LESSONS">COMPLETE_LESSONS (Số lượng bài hoàn thành)</option>
                         <option value="STREAK_DAYS">STREAK_DAYS (Số ngày streak liên tục)</option>
                         <option value="TOTAL_XP">TOTAL_XP (Tổng số điểm XP đạt được)</option>
-                        <option value="UNLOCK_NPCS">UNLOCK_NPCS (Số Mascot được mở khóa)</option>
+                        <option value="UNLOCK_NPCS">Số nhân vật được mở khóa</option>
                         <option value="COMPLETE_DAILY_MISSIONS">COMPLETE_DAILY_MISSIONS (Số nhiệm vụ ngày xong)</option>
                       </select>
                     </div>
@@ -337,7 +337,7 @@ export function BadgesPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

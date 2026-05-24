@@ -52,7 +52,7 @@ export function TaxonomyPage() {
     tab === "goals" ? "learningGoals" : "skills";
 
   const tabTitle =
-    tab === "categories" ? "Nhóm khó khăn phát triển" :
+    tab === "categories" ? "Nhóm trẻ" :
     tab === "goals" ? "Mục tiêu học tập" : "Kỹ năng";
 
   async function loadData() {
@@ -117,13 +117,13 @@ export function TaxonomyPage() {
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!key.trim()) errs.key = "Key không được để trống.";
+    if (!key.trim()) errs.key = "Mã định danh không được để trống.";
     if (!label.trim()) errs.label = "Nhãn không được để trống.";
     if (!editingItem) {
       const existing = items.find((i) => i.key.toLowerCase() === key.trim().toLowerCase());
-      if (existing) errs.key = "Key đã tồn tại.";
+      if (existing) errs.key = "Mã định danh đã tồn tại.";
     }
-    if (tab === "skills" && !domain.trim()) errs.domain = "Domain không được để trống.";
+    if (tab === "skills" && !domain.trim()) errs.domain = "Nhóm kỹ năng không được để trống.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -194,21 +194,27 @@ export function TaxonomyPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Phân loại nội dung (Taxonomy)</h1>
+        <div>
+          <h1>Nhóm trẻ & mục tiêu học</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kiểm tra dữ liệu nền gồm nhóm trẻ, mục tiêu học và kỹ năng dùng để gắn vào chương trình, lộ trình và bài học.</p>
+        </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
+          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal}>➕ Thêm mới</button>
         </div>
       </div>
 
       <div className="tab-nav">
-        <button className={`tab-btn ${tab === "categories" ? "active" : ""}`} onClick={() => { setTab("categories"); setSearch(""); }}>Nhóm khó khăn</button>
+        <button className={`tab-btn ${tab === "categories" ? "active" : ""}`} onClick={() => { setTab("categories"); setSearch(""); }}>Nhóm trẻ</button>
         <button className={`tab-btn ${tab === "goals" ? "active" : ""}`} onClick={() => { setTab("goals"); setSearch(""); }}>Mục tiêu học</button>
         <button className={`tab-btn ${tab === "skills" ? "active" : ""}`} onClick={() => { setTab("skills"); setSearch(""); }}>Kỹ năng</button>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+        <div className="validation-warnings" style={{ marginBottom: "12px" }}>
+          Đây là dữ liệu nền của hệ thống. Thông thường admin chỉ cần kiểm tra, bật/tắt hoặc chỉnh nội dung hiển thị khi có yêu cầu.
+        </div>
         <input
           type="text"
           placeholder={`Tìm kiếm ${tabTitle.toLowerCase()}...`}
@@ -219,7 +225,7 @@ export function TaxonomyPage() {
       </div>
 
       {loading ? (
-        <p>Đang tải...</p>
+        <p>Đang tải dữ liệu...</p>
       ) : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🔍</div>
@@ -235,10 +241,10 @@ export function TaxonomyPage() {
             <thead>
               <tr>
                 <th style={{ width: "60px" }}>#</th>
-                <th>Key</th>
+                <th>Mã định danh</th>
                 <th>Nhãn</th>
-                {tab === "skills" && <th>Domain</th>}
-                {tab === "goals" && <th>Skill Tags</th>}
+                {tab === "skills" && <th>Nhóm kỹ năng</th>}
+                {tab === "goals" && <th>Kỹ năng liên quan</th>}
                 <th>Mô tả</th>
                 <th style={{ width: "110px" }}>Trạng thái</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
@@ -281,7 +287,7 @@ export function TaxonomyPage() {
             <form onSubmit={handleSubmit}>
               <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div className="field">
-                  <label>Key (mã định danh) <span style={{ color: "red" }}>*</span></label>
+                  <label>Mã định danh <span style={{ color: "red" }}>*</span></label>
                   <input
                     type="text"
                     placeholder="VD: SPEECH_DELAY"
@@ -290,7 +296,7 @@ export function TaxonomyPage() {
                     disabled={!!editingItem}
                   />
                   {errors.key && <span className="error-msg">{errors.key}</span>}
-                  {editingItem && <span className="helper">Key không thể thay đổi sau khi tạo.</span>}
+                  {editingItem && <span className="helper">Mã định danh không thể thay đổi sau khi tạo.</span>}
                 </div>
 
                 <div className="field">
@@ -315,7 +321,7 @@ export function TaxonomyPage() {
 
                 {tab === "skills" && (
                   <div className="field">
-                    <label>Domain <span style={{ color: "red" }}>*</span></label>
+                    <label>Nhóm kỹ năng <span style={{ color: "red" }}>*</span></label>
                     <input
                       type="text"
                       placeholder="VD: LANGUAGE, COGNITIVE"
@@ -328,7 +334,7 @@ export function TaxonomyPage() {
 
                 {tab === "goals" && (
                   <div className="field">
-                    <label>Skill Tags (phân cách bởi dấu phẩy)</label>
+                    <label>Kỹ năng liên quan (phân cách bởi dấu phẩy)</label>
                     <input
                       type="text"
                       placeholder="naming, requesting, listening"
@@ -361,7 +367,7 @@ export function TaxonomyPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

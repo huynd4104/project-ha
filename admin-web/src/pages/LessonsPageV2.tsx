@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
+import { uiLabel } from "../utils/adminLabels";
 import { validateLessonPublish } from "../utils/publishValidation";
 import type { Lesson, Program, LearningPath, NPC, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
@@ -161,15 +162,18 @@ export function LessonsPageV2() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Bài học v2</h1>
-        <button onClick={openAddModal}>➕ Thêm Bài Học</button>
+        <div>
+          <h1>Bài học</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Tạo bài học chính. Mỗi bài học có thể gồm nhiều hoạt động nhỏ.</p>
+        </div>
+        <button onClick={openAddModal}>➕ Thêm bài học</button>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input type="text" placeholder="Tìm kiếm bài học..." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
       </div>
 
-      {loading ? <p>Đang tải...</p> : filtered.length === 0 ? (
+      {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>📚</div>
           <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có bài học nào</h3>
@@ -187,10 +191,10 @@ export function LessonsPageV2() {
                 <th>Tiêu đề</th>
                 <th>Loại</th>
                 <th>Chương trình</th>
-                <th>Mascot</th>
-                <th>Level</th>
+                <th>Nhân vật</th>
+                <th>Cấp độ</th>
                 <th>Truy cập</th>
-                <th>Publish</th>
+                <th>Xuất bản</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
               </tr>
             </thead>
@@ -202,7 +206,7 @@ export function LessonsPageV2() {
                   <tr key={item.id}>
                     <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                     <td style={{ fontWeight: "600" }}>{item.title}</td>
-                    <td><span className="badge info">{item.lessonType || item.type}</span></td>
+                    <td><span className="badge info">{uiLabel(item.lessonType || item.type)}</span></td>
                     <td style={{ fontSize: "13px" }}>{prog?.title || "—"}</td>
                     <td>{npc ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -210,9 +214,9 @@ export function LessonsPageV2() {
                         <span style={{ fontSize: "12px" }}>{npc.name}</span>
                       </div>
                     ) : <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>—</span>}</td>
-                    <td><span className="badge info">{item.level || "—"}</span></td>
-                    <td><span className={`badge ${accessBadge(item.accessType)}`}>{item.accessType || "FREE"}</span></td>
-                    <td><span className={`badge ${statusBadge(item.publishStatus)}`}>{item.publishStatus || "DRAFT"}</span></td>
+                    <td><span className="badge info">{uiLabel(item.level)}</span></td>
+                    <td><span className={`badge ${accessBadge(item.accessType)}`}>{uiLabel(item.accessType || "FREE")}</span></td>
+                    <td><span className={`badge ${statusBadge(item.publishStatus)}`}>{uiLabel(item.publishStatus || "DRAFT")}</span></td>
                     <td>
                       <div className="actions">
                         <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
@@ -231,7 +235,7 @@ export function LessonsPageV2() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(800px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập nhật Bài Học" : "Thêm Bài Học Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa bài học" : "Thêm bài học mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -261,7 +265,7 @@ export function LessonsPageV2() {
                       <div className="field">
                         <label>Loại bài học <span style={{ color: "red" }}>*</span></label>
                         <select value={lessonType} onChange={(e) => setLessonType(e.target.value)}>
-                          {LESSON_TYPES_V2.map((t) => <option key={t} value={t}>{t}</option>)}
+                          {LESSON_TYPES_V2.map((t) => <option key={t} value={t}>{uiLabel(t)}</option>)}
                         </select>
                         {errors.lessonType && <span className="error-msg">{errors.lessonType}</span>}
                       </div>
@@ -291,15 +295,15 @@ export function LessonsPageV2() {
 
                     <div className="form-grid">
                       <div className="field">
-                        <label>Mascot đồng hành</label>
+                        <label>Nhân vật đồng hành</label>
                         <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
                           <option value="">-- Không --</option>
                           {npcs.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
                         </select>
                       </div>
                       <div className="field">
-                        <label>Level</label>
-                        <select value={level} onChange={(e) => setLevel(e.target.value as LearningLevel)}>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
+                        <label>Cấp độ</label>
+                        <select value={level} onChange={(e) => setLevel(e.target.value as LearningLevel)}>{LEVELS.map((l) => <option key={l} value={l}>{uiLabel(l)}</option>)}</select>
                       </div>
                     </div>
 
@@ -310,11 +314,11 @@ export function LessonsPageV2() {
                     <div className="form-grid">
                       <div className="field">
                         <label>Truy cập</label>
-                        <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>{ACCESS_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}</select>
+                        <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>{ACCESS_TYPES.map((a) => <option key={a} value={a}>{uiLabel(a)}</option>)}</select>
                       </div>
                       <div className="field">
                         <label>Trạng thái xuất bản</label>
-                        <select value={publishStatus} onChange={(e) => setPublishStatus(e.target.value as PublishStatus)}>{STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+                        <select value={publishStatus} onChange={(e) => setPublishStatus(e.target.value as PublishStatus)}>{STATUSES.map((s) => <option key={s} value={s}>{uiLabel(s)}</option>)}</select>
                       </div>
                     </div>
 
@@ -336,8 +340,8 @@ export function LessonsPageV2() {
                       <strong style={{ fontSize: "13px" }}>{title || "Tên bài học"}</strong>
                       <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>{description || "Mô tả bài học..."}</p>
                       <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "8px" }}>
-                        <span className="badge info">{lessonType}</span>
-                        <span className={`badge ${statusBadge(publishStatus)}`}>{publishStatus}</span>
+                        <span className="badge info">{uiLabel(lessonType)}</span>
+                        <span className={`badge ${statusBadge(publishStatus)}`}>{uiLabel(publishStatus)}</span>
                       </div>
                       <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px" }}>
                         ⏱ {estimatedMinutes} phút • {skillTags.length} kỹ năng
@@ -348,7 +352,7 @@ export function LessonsPageV2() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

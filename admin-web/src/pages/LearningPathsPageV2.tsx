@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
+import { uiLabel } from "../utils/adminLabels";
 import type { LearningPath, Program, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
 const LEVELS: LearningLevel[] = ["BEGINNER", "BASIC", "INTERMEDIATE"];
@@ -78,7 +79,7 @@ export function LearningPathsPageV2() {
 
   const categoryOptions = categories.filter((c: any) => c.isActive).map((c: any) => ({ value: c.key, label: c.label }));
   const goalOptions = goals.filter((g: any) => g.isActive).map((g: any) => ({ value: g.key, label: g.label }));
-  const supportOptions = SUPPORT_LEVELS.map((s) => ({ value: s, label: s }));
+  const supportOptions = SUPPORT_LEVELS.map((s) => ({ value: s, label: uiLabel(s) }));
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -145,8 +146,11 @@ export function LearningPathsPageV2() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Lộ trình học</h1>
-        <button onClick={openAddModal}>➕ Thêm Lộ Trình</button>
+        <div>
+          <h1>Lộ trình học</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Tạo đường học cụ thể cho từng nhóm trẻ và mục tiêu học.</p>
+        </div>
+        <button onClick={openAddModal}>➕ Thêm lộ trình</button>
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
@@ -157,7 +161,7 @@ export function LearningPathsPageV2() {
         </select>
       </div>
 
-      {loading ? <p>Đang tải...</p> : filtered.length === 0 ? (
+      {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🛣️</div>
           <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có lộ trình nào</h3>
@@ -174,7 +178,7 @@ export function LearningPathsPageV2() {
                 <th style={{ width: "60px" }}>#</th>
                 <th>Tiêu đề</th>
                 <th>Chương trình</th>
-                <th>Level</th>
+                <th>Cấp độ</th>
                 <th>Truy cập</th>
                 <th>Trạng thái</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
@@ -186,9 +190,9 @@ export function LearningPathsPageV2() {
                   <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ fontSize: "13px" }}>{getProgramTitle(item.programId)}</td>
-                  <td><span className="badge info">{item.level}</span></td>
-                  <td><span className={`badge ${accessBadge(item.accessType)}`}>{item.accessType}</span></td>
-                  <td><span className={`badge ${statusBadge(item.status)}`}>{item.status}</span></td>
+                  <td><span className="badge info">{uiLabel(item.level)}</span></td>
+                  <td><span className={`badge ${accessBadge(item.accessType)}`}>{uiLabel(item.accessType)}</span></td>
+                  <td><span className={`badge ${statusBadge(item.status)}`}>{uiLabel(item.status)}</span></td>
                   <td>
                     <div className="actions">
                       <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
@@ -206,7 +210,7 @@ export function LearningPathsPageV2() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(720px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập nhật Lộ Trình" : "Thêm Lộ Trình Mới"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa lộ trình" : "Thêm lộ trình mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -234,7 +238,7 @@ export function LearningPathsPageV2() {
                 <div className="form-grid">
                   <div className="field">
                     <label>Cấp độ</label>
-                    <select value={level} onChange={(e) => setLevel(e.target.value as LearningLevel)}>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
+                    <select value={level} onChange={(e) => setLevel(e.target.value as LearningLevel)}>{LEVELS.map((l) => <option key={l} value={l}>{uiLabel(l)}</option>)}</select>
                   </div>
                   <div className="field">
                     <label>Thứ tự</label>
@@ -245,16 +249,16 @@ export function LearningPathsPageV2() {
                 <div className="form-grid">
                   <div className="field">
                     <label>Truy cập</label>
-                    <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>{ACCESS_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}</select>
+                    <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>{ACCESS_TYPES.map((a) => <option key={a} value={a}>{uiLabel(a)}</option>)}</select>
                   </div>
                   <div className="field">
                     <label>Trạng thái</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value as PublishStatus)}>{STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+                    <select value={status} onChange={(e) => setStatus(e.target.value as PublishStatus)}>{STATUSES.map((s) => <option key={s} value={s}>{uiLabel(s)}</option>)}</select>
                   </div>
                 </div>
 
                 <div style={{ borderTop: "1px solid var(--border)", marginTop: "8px", paddingTop: "16px" }}>
-                  <h3 style={{ fontSize: "14px", marginBottom: "12px", color: "var(--text-muted)" }}>Quy tắc đề xuất (Target Profile Rules)</h3>
+                  <h3 style={{ fontSize: "14px", marginBottom: "12px", color: "var(--text-muted)" }}>Quy tắc đề xuất cho hồ sơ trẻ</h3>
 
                   <MultiSelect label="Nhóm khó khăn" options={categoryOptions} selected={ruleDiffCategories} onChange={setRuleDiffCategories} />
                   <MultiSelect label="Mục tiêu học" options={goalOptions} selected={ruleLearningGoals} onChange={setRuleLearningGoals} />
@@ -262,11 +266,11 @@ export function LearningPathsPageV2() {
 
                   <div className="form-grid">
                     <div className="field">
-                      <label>Tuổi min</label>
+                      <label>Tuổi tối thiểu</label>
                       <input type="number" value={ruleAgeMin} onChange={(e) => setRuleAgeMin(Number(e.target.value))} />
                     </div>
                     <div className="field">
-                      <label>Tuổi max</label>
+                      <label>Tuổi tối đa</label>
                       <input type="number" value={ruleAgeMax} onChange={(e) => setRuleAgeMax(Number(e.target.value))} />
                     </div>
                   </div>
@@ -274,7 +278,7 @@ export function LearningPathsPageV2() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary" onClick={() => setIsModalOpen(false)}>Hủy</button>
-                <button type="submit">{editingItem ? "Cập Nhật" : "Tạo Mới"}</button>
+                <button type="submit">{editingItem ? "Cập nhật" : "Tạo mới"}</button>
               </div>
             </form>
           </div>

@@ -101,7 +101,7 @@ export function CSVImportModal({
         <div className="modal-body">
           <div className="csv-import-step">
             <div>
-              <strong>1. Upload CSV</strong>
+              <strong>1. Tải file CSV hoặc Excel lên</strong>
               <p>Vui lòng dùng đúng header CSV hoặc Excel. Có thể tải file mẫu.</p>
             </div>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -110,14 +110,14 @@ export function CSVImportModal({
                 className="secondary"
                 onClick={() => downloadCSVTemplate(templateFilename, templateHeaders, templateExampleRows)}
               >
-                Download CSV Template
+                Tải mẫu CSV
               </button>
               <button
                 type="button"
                 className="secondary"
                 onClick={() => downloadExcelTemplate(toExcelTemplateFilename(templateFilename), templateHeaders, templateExampleRows)}
               >
-                Download Excel Template
+                Tải mẫu Excel
               </button>
             </div>
           </div>
@@ -135,7 +135,7 @@ export function CSVImportModal({
             </div>
           )}
 
-          {isParsing && <p>Đang parse CSV...</p>}
+          {isParsing && <p>Đang đọc file...</p>}
           {parseError && <p className="error-msg csv-error">{parseError}</p>}
 
           {rows.length > 0 && (
@@ -164,7 +164,7 @@ export function CSVImportModal({
                         <td>{index + 2}</td>
                         <td>
                           <span className={`badge ${row.result.isValid ? "active" : "inactive"}`}>
-                            {row.result.isValid ? "valid" : "invalid"}
+                            {row.result.isValid ? "Hợp lệ" : "Có lỗi"}
                           </span>
                         </td>
                         {templateHeaders.map((header) => (
@@ -178,7 +178,7 @@ export function CSVImportModal({
               </div>
               {previewRows.length > 20 && <p className="csv-helper">Đang hiển thị 20 dòng đầu tiên.</p>}
               {invalidRows.length > 0 && (
-                <p className="error-msg csv-error">CSV còn dòng lỗi. Vui lòng sửa file rồi upload lại trước khi import.</p>
+                <p className="error-msg csv-error">File còn dòng lỗi. Vui lòng sửa file rồi tải lên lại trước khi import.</p>
               )}
             </>
           )}
@@ -196,13 +196,13 @@ export function CSVImportModal({
                   setIsRefreshing(true);
                   try {
                     await onRefresh();
-                    setResultMessage(`${resultMessage} Danh sách đã được refresh.`);
+                    setResultMessage(`${resultMessage} Danh sách đã được tải lại.`);
                   } finally {
                     setIsRefreshing(false);
                   }
                 }}
               >
-                {isRefreshing ? "Đang refresh..." : "Refresh list"}
+                {isRefreshing ? "Đang tải lại..." : "Tải lại danh sách"}
               </button>
             </div>
           )}
@@ -211,9 +211,9 @@ export function CSVImportModal({
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="secondary" onClick={resetAndClose}>Cancel</button>
+          <button type="button" className="secondary" onClick={resetAndClose}>Hủy</button>
           <button type="button" onClick={handleImport} disabled={!canImport}>
-            {isImporting ? "Đang import..." : "Import valid rows"}
+            {isImporting ? "Đang import..." : "Import các dòng hợp lệ"}
           </button>
         </div>
       </div>
