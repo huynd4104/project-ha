@@ -10,7 +10,7 @@ Follow this guide to initialize and configure Firebase Authentication, Cloud Fir
 3. Add a **Web App** to copy the configuration parameters.
 4. Populate the parameters in:
    - `admin-web/.env` (using prefix `VITE_`)
-   - `mobile-app/.env` (using prefix `EXPO_PUBLIC_`)
+   - For `mobile-flutter`, run `flutterfire configure` to generate the configuration files automatically.
 
 ---
 

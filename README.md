@@ -9,7 +9,7 @@ MVP hỗ trợ phụ huynh có con 2-6 tuổi đồng hành cùng trẻ qua ho�
 ```text
 backend/       Legacy Express + TypeScript + Prisma + SQLite, deprecated cho MVP
 admin-web/     React + Vite + TypeScript, dùng Firebase SDK trực tiếp
-mobile-app/    Expo React Native + TypeScript, dùng Firebase SDK trực tiếp
+mobile-flutter/ Ứng dụng di động Flutter dùng Firebase SDK trực tiếp
 firebase/      Firestore rules, Storage rules, indexes
 docs/          Tài liệu setup, schema, flow và migration
 ```
@@ -20,17 +20,6 @@ docs/          Tài liệu setup, schema, flow và migration
 
 ## 2. Cấu hình môi trường (Environment Variables)
 
-### Mobile App (`mobile-app/.env`)
-```bash
-EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSy...
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=...
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=...
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=...
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-EXPO_PUBLIC_FIREBASE_APP_ID=...
-# Đặt thành true để bắt buộc xác thực email mới cho vào app
-EXPO_PUBLIC_REQUIRE_EMAIL_VERIFICATION=false
-```
 
 ### Admin Web (`admin-web/.env`)
 ```bash
@@ -57,14 +46,14 @@ npm run dev
 ```
 Trang quản trị chạy tại: `http://localhost:5173`
 
-### Chạy mobile-app
+### Chạy mobile-flutter
 ```bash
-cd mobile-app
-npm install
-cp .env.example .env
-npx expo start
+cd mobile-flutter
+flutter pub get
+dart pub global activate flutterfire_cli
+flutterfire configure
+flutter run --dart-define=REQUIRE_EMAIL_VERIFICATION=false --dart-define=ALLOW_ALL_LESSONS_FOR_DEMO=true
 ```
-*Lưu ý*: Nếu chạy trên máy ảo hoặc thiết bị không có camera, hãy chọn quét QR thủ công bằng cách nhập trực tiếp mã code.
 
 ---
 

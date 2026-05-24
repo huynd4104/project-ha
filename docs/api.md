@@ -1,7 +1,7 @@
 # Legacy API Documentation
 
 This document describes the deprecated Express backend kept in `backend/`.
-The MVP now uses Firebase SDK directly from `admin-web` and `mobile-app`.
+The MVP now uses Firebase SDK directly from `admin-web` and `mobile-flutter`.
 
 Base URL: `http://localhost:4000/api`
 

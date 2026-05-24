@@ -21,15 +21,15 @@ npm install
 npm run dev
 ```
 
-## Mobile App
+## Mobile Flutter
 
 ```bash
-cd mobile-app
-npm install
-npx expo start
+cd mobile-flutter
+flutter pub get
+flutter run --dart-define=REQUIRE_EMAIL_VERIFICATION=false --dart-define=ALLOW_ALL_LESSONS_FOR_DEMO=true
 ```
 
-Luu y legacy: neu chay backend Express cu tren thiet bi that, `localhost` tro ve chinh thiet bi. MVP hien tai dung Firebase, khong can sua IP backend.
+Lưu ý: Bạn cần có Flutter SDK được cài đặt sẵn. Cấu hình Firebase có thể được tạo bằng `flutterfire configure`.
 
 ## Demo Accounts
 

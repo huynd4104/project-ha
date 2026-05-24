@@ -2,7 +2,7 @@
 
 ## Summary
 
-MVP now uses Firebase directly from `admin-web` and `mobile-app`.
+MVP now uses Firebase directly from `admin-web` and `mobile-flutter`.
 
 - Firebase Authentication replaces `/auth/login`, `/auth/register`, `/auth/me`.
 - Cloud Firestore replaces the custom Express REST API and SQLite database.
@@ -20,18 +20,7 @@ MVP now uses Firebase directly from `admin-web` and `mobile-app`.
 - `admin-web/src/components/Navbar.tsx`
 - `admin-web/src/pages/LoginPage.tsx`
 - `admin-web/src/pages/CrudPage.tsx`
-- `mobile-app/.env.example`
-- `mobile-app/src/firebase/firebase.ts`
-- `mobile-app/src/firebase/models.ts`
-- `mobile-app/src/api/authApi.ts`
-- `mobile-app/src/api/childApi.ts`
-- `mobile-app/src/api/lessonApi.ts`
-- `mobile-app/src/api/npcApi.ts`
-- `mobile-app/src/api/progressApi.ts`
-- `mobile-app/src/api/qrApi.ts`
-- `mobile-app/src/navigation/RootNavigator.tsx`
-- `mobile-app/src/screens/ProfileScreen.tsx`
-- `mobile-app/src/types/index.ts`
+- `mobile-flutter` (Flutter app files)
 - `firebase/firestore.rules`
 - `firebase/storage.rules`
 - `firebase/firestore.indexes.json`
@@ -82,10 +71,9 @@ npm run dev
 Mobile app:
 
 ```bash
-cd mobile-app
-npm install
-cp .env.example .env
-npx expo start
+cd mobile-flutter
+flutter pub get
+flutter run --dart-define=REQUIRE_EMAIL_VERIFICATION=false --dart-define=ALLOW_ALL_LESSONS_FOR_DEMO=true
 ```
 
 Firebase rules and hosting:

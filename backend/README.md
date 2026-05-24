@@ -2,7 +2,7 @@
 
 REST API cu cho `project_ha`, dùng Express, TypeScript, Prisma và SQLite.
 
-Backend này hiện là legacy/phase 2. MVP mới dùng Firebase trực tiếp từ `admin-web` và `mobile-app`, không dùng Express trong flow chính.
+Backend này hiện là legacy/phase 2. MVP mới dùng Firebase trực tiếp từ `admin-web` và `mobile-flutter`, không dùng Express trong flow chính.
 
 ## Chay local
 

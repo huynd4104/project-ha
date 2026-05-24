@@ -19,7 +19,7 @@ Tài liệu này hướng dẫn các bước để kích hoạt và cấu hình 
 
 ## 2. Thiết Lập Quyền Truy Cập (Security Rules)
 
-Để tránh lỗi bị chặn quyền đọc/ghi từ ứng dụng admin-web và mobile-app, hãy truy cập tab **Rules** trên trang cấu hình Storage của Firebase Console và cập nhật luật bảo mật như sau:
+Để tránh lỗi bị chặn quyền đọc/ghi từ ứng dụng admin-web và mobile-flutter, hãy truy cập tab **Rules** trên trang cấu hình Storage của Firebase Console và cập nhật luật bảo mật như sau:
 
 ```javascript
 rules_version = '2';
