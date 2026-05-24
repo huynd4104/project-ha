@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,10 +5,13 @@ import 'package:provider/provider.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_image.dart';
+import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/loading_view.dart';
-import '../../../core/widgets/progress_bar.dart';
 import '../../../models/models.dart';
 import '../../learning_path/data/lesson_repository.dart';
+import '../widgets/lesson_header.dart';
+import '../widgets/mascot_message_bubble.dart';
 
 class FlashcardScreen extends StatefulWidget {
   const FlashcardScreen({super.key, required this.lessonId});
@@ -42,79 +44,123 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     );
   }
 
+  Future<void> confirmExit() async {
+    final ok = await showAppConfirmationDialog(
+      context,
+      title: 'Dừng bài học',
+      message: 'Con có muốn dừng bài học không?',
+      confirmLabel: 'Dừng lại',
+    );
+    if (ok && mounted) {
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      } else {
+        context.go('/lesson/${widget.lessonId}');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder(
     future: data,
     builder: (_, snap) {
       if (!snap.hasData) return const Scaffold(body: LoadingView());
       final value = snap.data!;
-      if (value.cards.isEmpty)
+      if (value.cards.isEmpty) {
         return Scaffold(
           appBar: AppBar(),
           body: const Center(child: Text('Bộ thẻ chưa có nội dung.')),
         );
+      }
       final card = value.cards[index];
-      return Scaffold(
-        appBar: AppBar(title: Text(value.lesson.title)),
-        body: ListView(
-          padding: const EdgeInsets.all(18),
-          children: [
-            ProgressBar(value: (index + 1) / value.cards.length),
-            const SizedBox(height: 18),
-            GestureDetector(
-              onTap: () => setState(() => back = !back),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 240),
-                child: AppCard(
-                  key: ValueKey(back),
-                  child: SizedBox(
-                    height: 300,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if ((card.imageUrl ?? '').isNotEmpty)
-                          CachedNetworkImage(
-                            imageUrl: card.imageUrl!,
-                            height: 120,
-                          ),
-                        Text(
-                          back ? card.backText : card.frontText,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          Future.microtask(() => confirmExit());
+        },
+        child: Scaffold(
+          body: Column(
+            children: [
+              LessonHeader(
+                title: value.lesson.title,
+                progress: (index + 1) / value.cards.length,
+                activityLabel: 'Thẻ ${index + 1}/${value.cards.length}',
+                onBack: confirmExit,
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(18),
+                  children: [
+                    MascotMessageBubble(
+                      npc: value.lesson.npc,
+                      message: 'Con chạm vào thẻ để xem mặt sau nhé.',
+                    ),
+                    const SizedBox(height: 18),
+                    GestureDetector(
+                      onTap: () => setState(() => back = !back),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 240),
+                        child: AppCard(
+                          key: ValueKey(back),
+                          child: SizedBox(
+                            height: 300,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if ((card.imageUrl ?? '').isNotEmpty)
+                                  AppImage(
+                                    imageUrl: card.imageUrl!,
+                                    height: 120,
+                                  ),
+                                Text(
+                                  back ? card.backText : card.frontText,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(back ? 'Mặt sau' : 'Chạm để lật thẻ'),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Text(back ? 'Mặt sau' : 'Chạm để lật thẻ'),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
+            ],
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: AppButton(
+                label: index == value.cards.length - 1
+                    ? 'Đã học xong'
+                    : 'Đã thuộc',
+                icon: Icons.check_rounded,
+                onPressed: () async {
+                  if (index < value.cards.length - 1) {
+                    setState(() {
+                      index++;
+                      back = false;
+                    });
+                    return;
+                  }
+                  final state = context.read<AppState>();
+                  final result = await repo.submitFlashcardComplete(
+                    state.firebaseUser!.uid,
+                    state.activeChild!.id,
+                    value.lesson,
+                  );
+                  await state.refreshStats();
+                  if (context.mounted) context.go('/result', extra: result);
+                },
+              ),
             ),
-          ],
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(18),
-          child: AppButton(
-            label: index == value.cards.length - 1 ? 'Đã học xong' : 'Đã thuộc',
-            icon: Icons.check_rounded,
-            onPressed: () async {
-              if (index < value.cards.length - 1)
-                return setState(() {
-                  index++;
-                  back = false;
-                });
-              final state = context.read<AppState>();
-              final result = await repo.submitFlashcardComplete(
-                state.firebaseUser!.uid,
-                state.activeChild!.id,
-                value.lesson,
-              );
-              await state.refreshStats();
-              if (context.mounted) context.go('/result', extra: result);
-            },
           ),
         ),
       );

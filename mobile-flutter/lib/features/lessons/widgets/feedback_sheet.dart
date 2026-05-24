@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
+import 'feedback_panel.dart';
 
 class FeedbackSheet extends StatelessWidget {
   const FeedbackSheet({
@@ -14,34 +14,12 @@ class FeedbackSheet extends StatelessWidget {
   final VoidCallback onContinue;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: correct
-          ? AppColors.primary.withValues(alpha: .14)
-          : AppColors.error.withValues(alpha: .12),
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    child: SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            correct ? 'Chính xác!' : 'Chưa đúng',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: correct ? AppColors.primary : AppColors.error,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(message),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onContinue, child: const Text('Tiếp tục')),
-        ],
-      ),
-    ),
+  Widget build(BuildContext context) => FeedbackPanel(
+    type: correct ? FeedbackType.correct : FeedbackType.wrong,
+    message: correct
+        ? (message.isEmpty ? 'Con làm tốt lắm!' : message)
+        : 'Không sao, mình thử thêm lần nữa nhé.',
+    ctaLabel: correct ? 'Tiếp tục' : 'Thử lại',
+    onPressed: onContinue,
   );
 }

@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_image.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../data/npc_repository.dart';
 
@@ -16,14 +17,26 @@ class NPCDetailScreen extends StatelessWidget {
       if (!snap.hasData) return const Scaffold(body: LoadingView());
       final npc = snap.data!;
       return Scaffold(
-        appBar: AppBar(title: Text(npc.name)),
+        appBar: AppBar(
+          title: Text(npc.name),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.of(context).pop();
+              } else {
+                context.go('/npcs');
+              }
+            },
+          ),
+        ),
         body: ListView(
           padding: const EdgeInsets.all(24),
           children: [
             AppCard(
               child: (npc.imageUrl.isEmpty)
                   ? const Icon(Icons.auto_awesome_rounded, size: 120)
-                  : CachedNetworkImage(imageUrl: npc.imageUrl, height: 260),
+                  : AppImage(imageUrl: npc.imageUrl, height: 260),
             ),
             const SizedBox(height: 16),
             Text(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../models/models.dart';
-import 'lesson_connector.dart';
+import 'learning_path_connector.dart';
+import 'learning_path_section_header.dart';
 import 'lesson_node.dart';
 
 class LearningMap extends StatelessWidget {
@@ -22,25 +24,37 @@ class LearningMap extends StatelessWidget {
         .where((p) => p.status == 'COMPLETED')
         .map((p) => p.lessonId.replaceAll('_flashcard', ''))
         .toSet();
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      itemCount: lessons.length * 2 - 1,
-      itemBuilder: (_, index) {
-        if (index.isOdd) {
-          final before = lessons[index ~/ 2];
-          return LessonConnector(completed: completed.contains(before.id));
-        }
-        final i = index ~/ 2;
-        final lesson = lessons[i];
-        final state = _state(i, lesson, completed);
-        return LessonNode(
-          lesson: lesson,
-          state: state,
-          alignRight: i.isOdd,
-          onTap: () => onOpen(lesson),
-        );
-      },
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
+      children: [
+        const _MapDecor(),
+        for (var i = 0; i < lessons.length; i++) ...[
+          if (i % 3 == 0)
+            LearningPathSectionHeader(title: _sectionTitle(i ~/ 3)),
+          LessonNode(
+            lesson: lessons[i],
+            state: _state(i, lessons[i], completed),
+            alignRight: i.isOdd,
+            onTap: () => onOpen(lessons[i]),
+          ),
+          if (i != lessons.length - 1)
+            LearningPathConnector(
+              completed: completed.contains(lessons[i].id),
+              alignRight: i.isOdd,
+            ),
+        ],
+      ],
     );
+  }
+
+  String _sectionTitle(int index) {
+    const titles = [
+      'Bước 1: Làm quen',
+      'Bước 2: Luyện nghe',
+      'Bước 3: Luyện nói',
+      'Bước 4: Giao tiếp hằng ngày',
+    ];
+    return titles[index.clamp(0, titles.length - 1)];
   }
 
   LessonNodeState _state(int index, Lesson lesson, Set<String> completed) {
@@ -52,4 +66,18 @@ class LearningMap extends StatelessWidget {
         ? LessonNodeState.available
         : LessonNodeState.locked;
   }
+}
+
+class _MapDecor extends StatelessWidget {
+  const _MapDecor();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: const [
+      Icon(Icons.cloud_rounded, color: AppColors.sky, size: 30),
+      Icon(Icons.star_rounded, color: AppColors.yellow, size: 26),
+      Icon(Icons.eco_rounded, color: AppColors.primary, size: 28),
+    ],
+  );
 }

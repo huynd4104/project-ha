@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../models/lesson.dart';
 
 enum LessonNodeState { completed, current, available, locked }
@@ -30,17 +33,25 @@ class LessonNode extends StatelessWidget {
     final icon = switch (lesson.type) {
       LessonType.dialogue => Icons.chat_bubble_rounded,
       LessonType.flashcard => Icons.style_rounded,
+      LessonType.spelling => Icons.abc_rounded,
+      LessonType.rhyme => Icons.music_note_rounded,
+      LessonType.thinking => Icons.psychology_rounded,
       _ => Icons.calculate_rounded,
     };
+    final reducedAnimation = context.watch<AppState>().reducedAnimation;
     final node = InkWell(
       onTap: state == LessonNodeState.locked ? null : onTap,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: Container(
-        width: 104,
-        height: 104,
+        width: state == LessonNodeState.current ? 122 : 108,
+        constraints: const BoxConstraints(minHeight: 108),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
+          color: state == LessonNodeState.locked
+              ? const Color(0xFFF3F4F6)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: color, width: 3),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: .28),
@@ -49,14 +60,34 @@ class LessonNode extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          state == LessonNodeState.completed
-              ? Icons.check_rounded
-              : state == LessonNodeState.locked
-              ? Icons.lock_rounded
-              : icon,
-          color: Colors.white,
-          size: 42,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: color,
+              child: Icon(
+                state == LessonNodeState.completed
+                    ? Icons.check_rounded
+                    : state == LessonNodeState.locked
+                    ? Icons.lock_rounded
+                    : icon,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _statusText(),
+              style: TextStyle(
+                color: state == LessonNodeState.locked
+                    ? AppColors.muted
+                    : color,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -67,7 +98,7 @@ class LessonNode extends StatelessWidget {
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
-          (state == LessonNodeState.current
+          (state == LessonNodeState.current && !reducedAnimation
               ? node
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .scale(
@@ -78,15 +109,51 @@ class LessonNode extends StatelessWidget {
               : node),
           const SizedBox(height: 8),
           SizedBox(
-            width: 170,
-            child: Text(
-              lesson.title,
-              textAlign: alignRight ? TextAlign.right : TextAlign.left,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+            width: 190,
+            child: Column(
+              crossAxisAlignment: alignRight
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lesson.title,
+                  textAlign: alignRight ? TextAlign.right : TextAlign.left,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_typeLabel()} • 3 phút',
+                  textAlign: alignRight ? TextAlign.right : TextAlign.left,
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+  String _statusText() => switch (state) {
+    LessonNodeState.completed => 'Xong',
+    LessonNodeState.current => 'Tiếp tục',
+    LessonNodeState.available => 'Sẵn sàng',
+    LessonNodeState.locked => 'Mở sau',
+  };
+
+  String _typeLabel() => switch (lesson.type) {
+    LessonType.dialogue => 'Nghe nói',
+    LessonType.flashcard => 'Thẻ học',
+    LessonType.thinking => 'Tư duy',
+    LessonType.spelling => 'Từ vựng',
+    LessonType.rhyme => 'Âm nhạc',
+    LessonType.math => 'Chọn đáp án',
+  };
 }

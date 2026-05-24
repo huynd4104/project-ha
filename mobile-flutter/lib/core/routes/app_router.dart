@@ -23,7 +23,7 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/qr_unlock/screens/qr_scanner_screen.dart';
 import '../config/app_config.dart';
 import '../services/app_state.dart';
-import '../theme/app_colors.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
 
@@ -38,18 +38,29 @@ GoRouter buildRouter(AppState state) {
           path == '/login' ||
           path == '/register' ||
           path == '/forgot';
+      if (state.loading &&
+          (state.firebaseUser == null || state.activeChild == null)) {
+        return '/loading';
+      }
       if (state.loading) return null;
       if (state.firebaseError != null) return '/config-error';
       if (!state.isAuthed) return authPath ? null : '/';
-      if (authPath) return '/home';
+      if (authPath || path == '/loading') return '/home';
       if (AppConfig.requireEmailVerification &&
           !state.emailVerified &&
           path != '/verify-email')
         return '/verify-email';
-      if (!state.hasChild && path != '/child-profile') return '/child-profile';
+      if ((!AppConfig.requireEmailVerification || state.emailVerified) &&
+          !state.hasChild &&
+          path != '/child-profile')
+        return '/child-profile';
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/loading',
+        builder: (_, __) => const GuardLoadingScreen(),
+      ),
       GoRoute(
         path: '/config-error',
         builder: (_, __) => Scaffold(
@@ -148,33 +159,7 @@ class MainShell extends StatelessWidget {
     final path = GoRouterState.of(context).uri.path;
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index(path),
-        indicatorColor: AppColors.primary.withValues(alpha: .16),
-        onDestinationSelected: (index) {
-          final paths = ['/home', '/learning', '/scan', '/rewards', '/parent'];
-          context.go(paths[index]);
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(
-            icon: Icon(Icons.route_rounded),
-            label: 'Lộ trình',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.qr_code_scanner_rounded),
-            label: 'Quét',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.emoji_events_rounded),
-            label: 'Thưởng',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Phụ huynh',
-          ),
-        ],
-      ),
+      bottomNavigationBar: AppBottomNav(selectedIndex: _index(path)),
     );
   }
 }

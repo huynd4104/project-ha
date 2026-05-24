@@ -2,7 +2,6 @@ import * as admin from 'firebase-admin';
 import * as readline from 'readline';
 import { initializeFirebaseAdmin } from './firebase-init';
 import { seedDemoUsers } from './seed-demo-users';
-import { seedLearningContent } from './seed-learning-content';
 
 // Collections to completely clear
 const COLLECTIONS_TO_DELETE = [
@@ -89,6 +88,33 @@ async function cleanUsersCollection(db: admin.firestore.Firestore, adminUid: str
 }
 
 /**
+ * Clears Firebase Authentication users except demo admin and parent.
+ * Returns number of users deleted.
+ */
+async function cleanAuthUsers(adminUid: string, parentUid: string): Promise<number> {
+  let deletedCount = 0;
+  let nextPageToken: string | undefined;
+
+  do {
+    const listUsersResult = await admin.auth().listUsers(1000, nextPageToken);
+    const uidsToDelete = listUsersResult.users
+      .filter(user => user.uid !== adminUid && user.uid !== parentUid && user.email !== 'admin@demo.com' && user.email !== 'parent@demo.com')
+      .map(user => user.uid);
+
+    if (uidsToDelete.length > 0) {
+      const deleteResult = await admin.auth().deleteUsers(uidsToDelete);
+      deletedCount += deleteResult.successCount;
+      if (deleteResult.failureCount > 0) {
+        console.error(`Failed to delete ${deleteResult.failureCount} users from Auth. Errors:`, deleteResult.errors);
+      }
+    }
+    nextPageToken = listUsersResult.pageToken;
+  } while (nextPageToken);
+
+  return deletedCount;
+}
+
+/**
  * Prompts the user for text input in the CLI.
  */
 async function askConfirmation(promptText: string): Promise<string> {
@@ -115,7 +141,7 @@ async function runReset() {
   console.log('\x1b[31mAdditionally, all profiles in the "users" collection will be deleted EXCEPT:\x1b[0m');
   console.log(`  - Admin UID: ${process.env.ADMIN_UID || 'Not Configured'}`);
   console.log(`  - Parent UID: ${process.env.PARENT_UID || 'Not Configured'}\n`);
-  console.log('\x1b[33mFirebase Authentication users will NOT be modified.\x1b[0m\n');
+  console.log('\x1b[31mAdditionally, all registered users in Firebase Authentication (except Admin and Parent) will be permanently deleted.\x1b[0m\n');
 
   const answer = await askConfirmation('To confirm this action, please type exactly "\x1b[1m\x1b[31mRESET\x1b[0m": ');
 
@@ -146,8 +172,9 @@ async function runReset() {
   console.log('Cleaning users collection...');
   const deletedUsersCount = await cleanUsersCollection(db, adminUid, parentUid);
 
-  console.log('\x1b[36mSeeding learning content...\x1b[0m');
-  await seedLearningContent(db, { adminUid, parentUid });
+  // Clean Firebase Authentication users
+  console.log('Cleaning Firebase Authentication users...');
+  const deletedAuthUsersCount = await cleanAuthUsers(adminUid, parentUid);
 
   console.log('\n\x1b[32m=========================================\x1b[0m');
   console.log('\x1b[32m        RESET COMPLETED SUCCESSFULLY      \x1b[0m');
@@ -157,11 +184,13 @@ async function runReset() {
   Object.entries(deletedCollectionsReport).forEach(([col, count]) => {
     console.log(`  - \x1b[33m${col}\x1b[0m: deleted ${count} document(s)`);
   });
-  console.log(`  - \x1b[33musers (others)\x1b[0m: deleted ${deletedUsersCount} document(s)`);
+  console.log(`  - \x1b[33musers (others)\x1b[0m: deleted ${deletedUsersCount} document(s) from Firestore`);
+  console.log(`  - \x1b[33mAuth users (others)\x1b[0m: deleted ${deletedAuthUsersCount} user(s) from Firebase Authentication`);
 
   console.log('\n\x1b[1mDemo Accounts Retained / Seeded:\x1b[0m');
   console.log(`  - \x1b[32m[ADMIN]\x1b[0m  admin@demo.com  (UID: ${adminUid})`);
   console.log(`  - \x1b[32m[PARENT]\x1b[0m parent@demo.com (UID: ${parentUid})\n`);
+  process.exit(0);
 }
 
 runReset().catch((err) => {

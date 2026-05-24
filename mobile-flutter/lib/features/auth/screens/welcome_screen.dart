@@ -12,32 +12,53 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              Container(
-                width: 108,
-                height: 108,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: const Icon(
-                  Icons.child_care_rounded,
-                  color: Colors.white,
-                  size: 58,
+              Center(
+                child: Container(
+                  width: 126,
+                  height: 126,
+                  decoration: BoxDecoration(
+                    color: AppColors.yellow,
+                    borderRadius: BorderRadius.circular(38),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.yellow.withValues(alpha: .28),
+                        blurRadius: 28,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.text,
+                    size: 64,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Project HA', style: AppTextStyles.headline),
+              const Text(
+                'Project HA',
+                style: AppTextStyles.display,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 10),
               const Text(
-                'Đồng hành cùng bé qua bài học ngắn, mascot, nhiệm vụ và phần thưởng mỗi ngày.',
+                'Học từng chút, tiến bộ mỗi ngày.',
                 style: AppTextStyles.body,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Bài học ngắn, bạn đồng hành và phần thưởng tích cực cho bé tại nhà.',
+                style: AppTextStyles.muted,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               const AppCard(
@@ -52,7 +73,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const Spacer(),
               AppButton(
-                label: 'Tạo tài khoản phụ huynh',
+                label: 'Bắt đầu',
                 icon: Icons.person_add_alt_1_rounded,
                 onPressed: () => context.go('/register'),
               ),

@@ -5,8 +5,9 @@ class SoundService {
   SoundService._();
   static final instance = SoundService._();
 
-  final _player = AudioPlayer();
+  final Map<String, AudioPlayer> _players = {};
   bool enabled = true;
+  DateTime? _lastPlayTime;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -21,10 +22,30 @@ class SoundService {
 
   Future<void> play(String key) async {
     if (!enabled) return;
+
+    final now = DateTime.now();
+    if (_lastPlayTime != null &&
+        now.difference(_lastPlayTime!).inMilliseconds < 150) {
+      return; // Ignore rapid taps to prevent native audio thread lockups/crashes
+    }
+    _lastPlayTime = now;
+
     try {
-      await _player.play(AssetSource('sounds/$key.wav'));
+      var player = _players[key];
+      if (player == null) {
+        player = AudioPlayer();
+        _players[key] = player;
+      }
+      await player.play(AssetSource('sounds/$key.wav'));
     } catch (_) {
       // Sound is optional in this phase.
     }
+  }
+
+  void dispose() {
+    for (final player in _players.values) {
+      player.dispose();
+    }
+    _players.clear();
   }
 }

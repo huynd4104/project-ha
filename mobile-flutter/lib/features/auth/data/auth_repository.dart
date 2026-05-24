@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:flutter/foundation.dart';
 
 import '../../../models/app_user.dart';
 
@@ -28,6 +29,7 @@ class AuthRepository {
       'fullName': fullName ?? user.displayName ?? user.email ?? 'Phụ huynh',
       'role': 'PARENT',
       'isActive': true,
+      'emailVerified': false,
       'createdAt': now,
       'updatedAt': now,
     };
@@ -52,7 +54,7 @@ class AuthRepository {
       credential.user!,
       fullName: fullName.trim(),
     );
-    await credential.user!.sendEmailVerification();
+    await sendOtpVerificationCode();
     return appUser;
   }
 
@@ -72,8 +74,67 @@ class AuthRepository {
 
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordResetEmail(email: email.trim());
-  Future<void> resendVerification() async =>
-      _auth.currentUser?.sendEmailVerification();
+
+  Future<void> sendOtpVerificationCode() async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Bạn cần đăng nhập.');
+
+    final code = (100000 + (DateTime.now().microsecondsSinceEpoch % 900000))
+        .toString();
+    final expiresAt = DateTime.now().add(const Duration(minutes: 30));
+
+    await _db.collection('otps').doc(user.uid).set({
+      'code': code,
+      'expiresAt': Timestamp.fromDate(expiresAt),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    debugPrint(
+      '===== VERIFICATION CODE FOR ${user.email}: $code (expires at $expiresAt) =====',
+    );
+  }
+
+  Future<bool> verifyOtpCode(String enteredCode) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Bạn cần đăng nhập.');
+
+    final doc = await _db.collection('otps').doc(user.uid).get();
+    if (!doc.exists) {
+      throw Exception('Không tìm thấy mã xác thực. Vui lòng gửi lại mã mới.');
+    }
+
+    final data = doc.data()!;
+    final actualCode = data['code'] as String?;
+    final expiresAtTimestamp = data['expiresAt'] as Timestamp?;
+
+    if (actualCode == null || expiresAtTimestamp == null) {
+      throw Exception('Mã xác thực không hợp lệ. Vui lòng gửi lại mã mới.');
+    }
+
+    final expiresAt = expiresAtTimestamp.toDate();
+    if (DateTime.now().isAfter(expiresAt)) {
+      throw Exception(
+        'Mã xác thực đã hết hạn (30 phút). Vui lòng gửi lại mã mới.',
+      );
+    }
+
+    if (actualCode != enteredCode.trim()) {
+      throw Exception(
+        'Mã xác thực 6 số chưa chính xác. Vui lòng kiểm tra lại.',
+      );
+    }
+
+    await _db.collection('users').doc(user.uid).set({
+      'emailVerified': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    await _db.collection('otps').doc(user.uid).delete();
+
+    return true;
+  }
+
+  Future<void> resendVerification() async => sendOtpVerificationCode();
 
   Future<void> reloadUser() async {
     await _auth.currentUser?.reload();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/badge.dart' as model;
 import '../data/gamification_repository.dart';
@@ -59,14 +60,20 @@ class _RewardsScreenState extends State<RewardsScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Phần thưởng')),
       body: FutureBuilder(
         future: data,
         builder: (_, snap) {
           if (!snap.hasData) return const LoadingView();
           return ListView(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(18, 56, 18, 24),
             children: [
+              const Text('Phần thưởng', style: AppTextStyles.headline),
+              const SizedBox(height: 4),
+              const Text(
+                'Ghi nhận nỗ lực của bé, không so sánh hay xếp hạng.',
+                style: AppTextStyles.muted,
+              ),
+              const SizedBox(height: 16),
               LevelCard(stats: state.levelStats),
               const SizedBox(height: 18),
               const Text(
@@ -84,7 +91,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       mission,
                     );
                     await state.refreshStats();
-                    setState(() => data = load());
+                    if (mounted) {
+                      setState(() => data = load());
+                    }
                   },
                 ),
               const SizedBox(height: 16),

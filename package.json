@@ -7,6 +7,7 @@
     "dev:admin": "npm run dev --prefix admin-web",
     "db:reset": "tsx scripts/reset-firestore.ts",
     "db:seed": "tsx scripts/seed-demo-users.ts",
+    "db:seed-learning": "tsx scripts/seed-learning.ts",
     "db:delete-seeded-gamification": "tsx scripts/delete-seeded-gamification.ts"
   },
   "dependencies": {

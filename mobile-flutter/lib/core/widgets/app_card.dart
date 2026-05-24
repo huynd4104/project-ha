@@ -11,12 +11,18 @@ class AppCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(18),
     this.color = AppColors.surface,
     this.onTap,
+    this.borderColor = AppColors.border,
+    this.radius = AppRadius.lg,
+    this.shadow = true,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final Color color;
   final VoidCallback? onTap;
+  final Color borderColor;
+  final double radius;
+  final bool shadow;
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +30,15 @@ class AppCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppShadows.soft,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: borderColor),
+        boxShadow: shadow ? AppShadows.soft : const [],
       ),
       child: child,
     );
     if (onTap == null) return card;
     return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      borderRadius: BorderRadius.circular(radius),
       onTap: onTap,
       child: card,
     );

@@ -19,12 +19,10 @@ Future<void> main() async {
         'or run the app passing the environment variables via --dart-define:\n'
         '  flutter run \\\n'
         '    --dart-define=FIREBASE_API_KEY=... \\\n'
-        '    --dart-define=FIREBASE_APP_ID=...'
+        '    --dart-define=FIREBASE_APP_ID=...',
       );
     }
-    await Firebase.initializeApp(
-      options: options,
-    );
+    await Firebase.initializeApp(options: options);
   } catch (error) {
     firebaseError = error;
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_card.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/progress_bar.dart';
 import '../data/gamification_repository.dart';
 
@@ -15,16 +16,33 @@ class DailyMissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = item.progress.currentValue / item.progress.targetValue;
+    final safeTarget = item.progress.targetValue == 0
+        ? 1
+        : item.progress.targetValue;
+    final progress = item.progress.currentValue / safeTarget;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              item.mission.title,
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: AppColors.teal,
+                  child: Icon(Icons.flag_rounded, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.mission.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ],
             ),
             Text(item.mission.description),
             const SizedBox(height: 10),

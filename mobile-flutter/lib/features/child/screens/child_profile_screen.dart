@@ -64,6 +64,18 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Hồ sơ của bé'),
+      leading: (Navigator.canPop(context) || context.read<AppState>().hasChild)
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/profile');
+                }
+              },
+            )
+          : null,
       actions: [
         TextButton(
           onPressed: () => context.read<AppState>().logout(),

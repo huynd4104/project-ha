@@ -65,9 +65,9 @@ npm install
 
 ## 4. Cách sử dụng các Script
 
-### A. Reset Firestore và Tạo Demo Users
+### A. Reset Firestore và Firebase Authentication
 
-Script này sẽ xóa toàn bộ dữ liệu trong 12 collections:
+Script này sẽ xóa toàn bộ dữ liệu trong các collections Firestore sau:
 * `children`
 * `npcs`
 * `qrCodes`
@@ -76,12 +76,21 @@ Script này sẽ xóa toàn bộ dữ liệu trong 12 collections:
 * `mathQuestions`
 * `dialogues`
 * `flashcards`
+* `spellingActivities`
+* `rhymeChallenges`
 * `progress`
 * `xpLogs`
 * `streaks`
 * `mediaAssets`
+* `badges`
+* `userBadges`
+* `dailyMissions`
+* `userMissionProgress`
 
-Đồng thời xóa các user documents khác trong collection `users` và chỉ giữ lại (hoặc tạo mới) 2 user tương ứng với `ADMIN_UID` và `PARENT_UID` trong `.env`.
+Đồng thời script sẽ:
+1. Xóa các user documents khác trong collection `users` Firestore (chỉ giữ lại tài khoản ứng với `ADMIN_UID` và `PARENT_UID` trong `.env`).
+2. Tự động **xóa các tài khoản Authentication tương ứng trên Firebase** (ngoại trừ Admin và Parent).
+3. **KHÔNG** tự động nạp lại dữ liệu mẫu (NPCs, Lessons, v.v.). Database sẽ hoàn toàn trống sau khi reset để bạn tự import dữ liệu.
 
 **Lệnh chạy:**
 ```bash
@@ -100,14 +109,14 @@ Additionally, all profiles in the "users" collection will be deleted EXCEPT:
   - Admin UID: admin-uid-here
   - Parent UID: parent-uid-here
 
-Firebase Authentication users will NOT be modified.
+Additionally, all registered users in Firebase Authentication (except Admin and Parent) will be permanently deleted.
 
 To confirm this action, please type exactly "RESET": RESET
 ```
 
 ### B. Chỉ Seeding lại Demo Users (Không reset)
 
-Nếu bạn chỉ muốn tạo hoặc cập nhật lại thông tin 2 tài khoản demo trong collection `users` mà không muốn xóa dữ liệu các collection khác:
+Nếu bạn chỉ muốn tạo hoặc cập nhật lại thông tin 2 tài khoản demo trong collection `users` Firestore và Firebase Auth mà không muốn xóa dữ liệu các collection khác:
 
 **Lệnh chạy:**
 ```bash
@@ -118,3 +127,12 @@ Script này sẽ tự động:
 - Kiểm tra xem user có UID tương ứng đã tồn tại trong Firestore collection `users` hay chưa.
 - Nếu chưa có, sẽ tạo mới document với các trường thông tin chuẩn (`email`, `fullName`, `role`, `isActive`, `createdAt`, `updatedAt`).
 - Nếu đã có, sẽ cập nhật lại vai trò và trạng thái hoạt động mà không ghi đè trường `createdAt`.
+
+### C. Nạp dữ liệu mẫu Học tập (Seeding Learning Content)
+
+Nếu bạn muốn nạp toàn bộ dữ liệu học tập mẫu (bao gồm các NPCs, QR Codes, bài học mẫu, câu hỏi toán học, hội thoại, badges, daily missions, v.v. từ data templates) vào database sạch:
+
+**Lệnh chạy:**
+```bash
+npm run db:seed-learning
+```

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
+import 'answer_option_card.dart';
 
 class AnswerOption extends StatelessWidget {
   const AnswerOption({
@@ -16,43 +16,10 @@ class AnswerOption extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.sky.withValues(alpha: .14) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? AppColors.sky : AppColors.border,
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: selected ? AppColors.sky : AppColors.border,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
+  Widget build(BuildContext context) => AnswerOptionCard(
+    label: label,
+    text: text,
+    state: selected ? AnswerOptionState.selected : AnswerOptionState.normal,
+    onTap: onTap,
   );
 }

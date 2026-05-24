@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
@@ -14,13 +17,30 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+  final TextEditingController otpController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   int cooldown = 0;
   Timer? timer;
+  bool loading = false;
+  String? error;
+  String? successMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
 
   void startCooldown() {
     setState(() => cooldown = 60);
     timer?.cancel();
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       if (cooldown <= 1) {
         t.cancel();
         setState(() => cooldown = 0);
@@ -30,54 +50,392 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     });
   }
 
+  Future<void> _verifyCode() async {
+    final code = otpController.text.trim();
+    if (code.length != 6) {
+      setState(() => error = 'Vui lòng nhập đầy đủ 6 chữ số.');
+      return;
+    }
+
+    setState(() {
+      loading = true;
+      error = null;
+      successMessage = null;
+    });
+
+    try {
+      final appState = context.read<AppState>();
+      await appState.authRepository.verifyOtpCode(code);
+      if (mounted) {
+        setState(() {
+          successMessage = 'Xác thực email thành công!';
+        });
+      }
+      await appState.refresh();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          error = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
+
+  Future<void> _resendCode() async {
+    setState(() {
+      error = null;
+      successMessage = null;
+      loading = true;
+    });
+
+    try {
+      final appState = context.read<AppState>();
+      await appState.authRepository.resendVerification();
+      if (mounted) {
+        startCooldown();
+        setState(() {
+          successMessage = 'Đã gửi lại mã xác thực mới đến email của bạn.';
+        });
+        otpController.clear();
+        _focusNode.requestFocus();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          error = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     timer?.cancel();
+    otpController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Xác thực email')),
-    body: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.verified_rounded, size: 74, color: AppColors.sky),
-          const SizedBox(height: 16),
-          const Text(
-            'Vui lòng kiểm tra email để xác thực tài khoản.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 18),
-          AppButton(
-            label: 'Tôi đã xác thực',
-            icon: Icons.refresh_rounded,
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final email = state.firebaseUser?.email ?? 'phụ huynh';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Xác thực tài khoản'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/login');
+            }
+          },
+        ),
+        actions: [
+          IconButton(
             onPressed: () async {
-              await context.read<AppState>().authRepository.reloadUser();
-              await context.read<AppState>().refresh();
+              await state.logout();
+              await state.refresh();
             },
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: cooldown > 0
-                ? null
-                : () async {
-                    await context
-                        .read<AppState>()
-                        .authRepository
-                        .resendVerification();
-                    startCooldown();
-                  },
-            icon: const Icon(Icons.send_rounded),
-            label: Text(
-              cooldown > 0 ? 'Gửi lại sau ${cooldown}s' : 'Gửi lại email',
-            ),
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Đăng xuất',
           ),
         ],
       ),
-    ),
-  );
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.mark_email_read_rounded,
+                size: 80,
+                color: AppColors.primary,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Nhập mã xác thực',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 12),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.muted,
+                    height: 1.5,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Vui lòng nhập mã xác thực gồm '),
+                    const TextSpan(
+                      text: '6 chữ số',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const TextSpan(text: ' đã được gửi đến email:\n'),
+                    TextSpan(
+                      text: email,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              GestureDetector(
+                onTap: () => _focusNode.requestFocus(),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Opacity(
+                      opacity: 0,
+                      child: SizedBox(
+                        height: 40,
+                        width: double.infinity,
+                        child: TextField(
+                          controller: otpController,
+                          focusNode: _focusNode,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          showCursor: false,
+                          decoration: const InputDecoration(counterText: ''),
+                          onChanged: (val) {
+                            setState(() {});
+                            if (val.length == 6) {
+                              _verifyCode();
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(6, (index) {
+                        final text = otpController.text;
+                        String char = '';
+                        if (index < text.length) {
+                          char = text[index];
+                        }
+                        final isFocused =
+                            _focusNode.hasFocus && index == text.length;
+
+                        return Container(
+                          width: 44,
+                          height: 56,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isFocused
+                                  ? AppColors.primary
+                                  : AppColors.border,
+                              width: isFocused ? 2.5 : 1.5,
+                            ),
+                            boxShadow: isFocused
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Text(
+                            char,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.text,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Mã xác thực có hiệu lực trong vòng 30 phút.',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: AppColors.muted,
+                ),
+              ),
+              const SizedBox(height: 32),
+              if (error != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          error!,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (successMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_outline_rounded,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          successMessage!,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              AppButton(
+                label: 'Xác minh',
+                icon: Icons.verified_user_rounded,
+                loading: loading,
+                onPressed: _verifyCode,
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: cooldown > 0 || loading ? null : _resendCode,
+                icon: const Icon(Icons.send_rounded),
+                label: Text(
+                  cooldown > 0
+                      ? 'Gửi lại sau ${cooldown}s'
+                      : 'Gửi lại mã xác thực',
+                ),
+              ),
+              if (kDebugMode)
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('otps')
+                      .doc(state.firebaseUser?.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data!.exists) {
+                      final data = snapshot.data!.data();
+                      final code = data?['code'] ?? 'Chưa có';
+                      final expiresAt = (data?['expiresAt'] as Timestamp?)
+                          ?.toDate();
+                      return Container(
+                        margin: const EdgeInsets.only(top: 32),
+                        padding: const EdgeInsets.all(16),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          border: Border.all(color: Colors.amber.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.bug_report_rounded,
+                                  color: Colors.amber,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  '[DEBUG] MÃ XÁC THỰC HIỆN TẠI',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SelectableText(
+                              code,
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 6,
+                                color: Color(0xFF92400E),
+                              ),
+                            ),
+                            if (expiresAt != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                'Hết hạn lúc: ${expiresAt.hour.toString().padLeft(2, '0')}:${expiresAt.minute.toString().padLeft(2, '0')}:${expiresAt.second.toString().padLeft(2, '0')}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.amber.shade900,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

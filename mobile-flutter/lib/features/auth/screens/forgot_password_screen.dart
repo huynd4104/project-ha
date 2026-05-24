@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
@@ -26,9 +27,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await context.read<AppState>().authRepository.sendPasswordReset(
         email.text,
       );
-      setState(() => message = 'Đã gửi email đặt lại mật khẩu.');
+      if (mounted) setState(() => message = 'Đã gửi email đặt lại mật khẩu.');
     } catch (e) {
-      setState(() => message = friendlyFirebaseError(e));
+      if (mounted) setState(() => message = friendlyFirebaseError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -36,7 +37,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Quên mật khẩu')),
+    appBar: AppBar(
+      title: const Text('Quên mật khẩu'),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onPressed: () {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          } else {
+            context.go('/login');
+          }
+        },
+      ),
+    ),
     body: Form(
       key: formKey,
       child: ListView(

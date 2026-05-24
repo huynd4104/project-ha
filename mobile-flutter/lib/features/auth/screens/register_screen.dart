@@ -35,14 +35,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!formKey.currentState!.validate()) return;
     setState(() => loading = true);
     try {
-      await context.read<AppState>().authRepository.register(
+      final appState = context.read<AppState>();
+      await appState.authRepository.register(
         name.text,
         email.text,
         password.text,
       );
-      await context.read<AppState>().refresh();
+      // Don't call appState.refresh() here — the authStateChanges
+      // listener in AppState.start() already fires automatically
+      // after register and triggers refresh(). Calling it twice
+      // causes a race condition that can lead to "screen not found".
     } catch (e) {
-      setState(() => error = friendlyFirebaseError(e));
+      if (mounted) setState(() => error = friendlyFirebaseError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -50,9 +54,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final score = Validators.passwordScore(password.text) / 4;
     return Scaffold(
-      appBar: AppBar(title: const Text('Tạo tài khoản')),
+      appBar: AppBar(
+        title: const Text('Tạo tài khoản'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+      ),
       body: SafeArea(
         child: Form(
           key: formKey,
@@ -79,12 +94,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 validator: Validators.password,
               ),
               const SizedBox(height: 8),
-              AnimatedBuilder(
-                animation: password,
-                builder: (_, __) => ProgressBar(
-                  value: score,
-                  color: score < .5 ? AppColors.orange : AppColors.primary,
-                ),
+              ListenableBuilder(
+                listenable: password,
+                builder: (_, __) {
+                  final score = Validators.passwordScore(password.text) / 4;
+                  return ProgressBar(
+                    value: score,
+                    color: score < .5 ? AppColors.orange : AppColors.primary,
+                  );
+                },
               ),
               const SizedBox(height: 12),
               PasswordField(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
@@ -29,9 +30,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         current.text,
         next.text,
       );
-      setState(() => message = 'Đã đổi mật khẩu.');
+      if (mounted) setState(() => message = 'Đã đổi mật khẩu.');
     } catch (e) {
-      setState(() => message = friendlyFirebaseError(e));
+      if (mounted) setState(() => message = friendlyFirebaseError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -39,7 +40,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Đổi mật khẩu')),
+    appBar: AppBar(
+      title: const Text('Đổi mật khẩu'),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onPressed: () {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          } else {
+            context.go('/profile');
+          }
+        },
+      ),
+    ),
     body: Form(
       key: formKey,
       child: ListView(

@@ -66,7 +66,8 @@ class DefaultFirebaseOptions {
     projectId: 'project-ha152',
     databaseURL: 'https://project-ha152-default-rtdb.firebaseio.com',
     storageBucket: 'project-ha152.firebasestorage.app',
-    iosClientId: '543274803579-vma79e220gfda1r67b13q4rm86ull2l6.apps.googleusercontent.com',
+    iosClientId:
+        '543274803579-vma79e220gfda1r67b13q4rm86ull2l6.apps.googleusercontent.com',
     iosBundleId: 'com.projectha.mobileFlutter',
   );
 
@@ -77,7 +78,8 @@ class DefaultFirebaseOptions {
     projectId: 'project-ha152',
     databaseURL: 'https://project-ha152-default-rtdb.firebaseio.com',
     storageBucket: 'project-ha152.firebasestorage.app',
-    iosClientId: '543274803579-vma79e220gfda1r67b13q4rm86ull2l6.apps.googleusercontent.com',
+    iosClientId:
+        '543274803579-vma79e220gfda1r67b13q4rm86ull2l6.apps.googleusercontent.com',
     iosBundleId: 'com.projectha.mobileFlutter',
   );
 

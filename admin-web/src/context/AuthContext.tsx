@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!user;
   const isAdmin = userProfile?.role === "ADMIN";
-  const emailVerified = user?.emailVerified || false;
+  const emailVerified = user?.emailVerified || userProfile?.emailVerified || false;
 
   return (
     <AuthContext.Provider

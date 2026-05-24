@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
@@ -40,7 +41,6 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Lộ trình học')),
     body: FutureBuilder(
       future: data,
       builder: (_, snap) {
@@ -52,10 +52,34 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
             onRetry: () => setState(() => data = load()),
           );
         final value = snap.data!;
-        return LearningMap(
-          lessons: value.lessons,
-          progress: value.progress,
-          onOpen: (lesson) => context.push('/lesson/${lesson.id}'),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Lộ trình học', style: AppTextStyles.headline),
+                    SizedBox(height: 4),
+                    Text(
+                      'Đi từng bước nhỏ, học vừa đủ mỗi ngày.',
+                      style: AppTextStyles.muted,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: LearningMap(
+                lessons: value.lessons,
+                progress: value.progress,
+                onOpen: (lesson) => context.push('/lesson/${lesson.id}'),
+              ),
+            ),
+          ],
         );
       },
     ),

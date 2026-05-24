@@ -26,13 +26,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!formKey.currentState!.validate()) return;
     setState(() => loading = true);
     try {
-      await context.read<AppState>().authRepository.login(
-        email.text,
-        password.text,
-      );
-      await context.read<AppState>().refresh();
+      final appState = context.read<AppState>();
+      await appState.authRepository.login(email.text, password.text);
+      await appState.refresh();
     } catch (e) {
-      setState(() => error = friendlyFirebaseError(e));
+      if (mounted) setState(() => error = friendlyFirebaseError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -41,7 +39,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Đăng nhập')),
+      appBar: AppBar(
+        title: const Text('Đăng nhập'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+      ),
       body: SafeArea(
         child: Form(
           key: formKey,
