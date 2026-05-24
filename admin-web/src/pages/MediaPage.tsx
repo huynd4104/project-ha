@@ -4,6 +4,8 @@ import { mediaAssetsImportConfig } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
 import { mediaService, MediaAsset } from "../services/mediaService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { TableControls } from "../components/TableControls";
+import { useTableControls } from "../utils/tableControls";
 
 function isTikTokUrl(url: string) {
   return /(^|\.)tiktok\.com\//i.test(url);
@@ -132,6 +134,12 @@ export function MediaPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+  const table = useTableControls(filtered, [
+    { value: "name", label: "Tên", getValue: (item) => item.name },
+    { value: "category", label: "Danh mục", getValue: (item) => item.category },
+    { value: "type", label: "Định dạng", getValue: (item) => item.type },
+    { value: "url", label: "URL", getValue: (item) => item.url }
+  ], "name");
 
   const handleCopy = (val: string) => {
     navigator.clipboard.writeText(val);
@@ -266,8 +274,10 @@ export function MediaPage() {
           )}
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="media-grid">
-          {filtered.map((asset) => (
+          {table.pagedItems.map((asset) => (
             <div key={asset.id} className="media-card">
               <div className="media-preview-container">
                 {asset.type === "IMAGE" ? (
@@ -298,6 +308,7 @@ export function MediaPage() {
             </div>
           ))}
         </div>
+        </>
       )}
 
       {/* New Asset Modal */}

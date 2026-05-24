@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { adminApi } from "../api/adminApi";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { npcsImportConfig } from "../components/import/importConfigs";
 import { MediaPicker } from "../components/MediaPicker";
@@ -301,14 +302,8 @@ export function NPCsPage() {
                       <span className="helper">Lời thoại mặc định là câu thoại ngắn đầu tiên khi trẻ tương tác.</span>
                     </div>
 
-                    <div className="field check-row">
-                      <input
-                        type="checkbox"
-                        id="isActive"
-                        checked={isActive}
-                        onChange={(e) => setIsActive(e.target.checked)}
-                      />
-                      <label htmlFor="isActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Nhân vật này đang hoạt động</label>
+                    <div className="field">
+                      <ToggleSwitch id="isActive" label="Nhân vật này đang hoạt động" checked={isActive} onChange={setIsActive} />
                     </div>
                   </div>
 

@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { badgesImportConfig } from "../components/import/importConfigs";
 import { MediaPicker } from "../components/MediaPicker";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { useTableControls } from "../utils/tableControls";
 
 interface Badge {
   id: string;
@@ -67,6 +70,12 @@ export function BadgesPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+  const table = useTableControls(filtered, [
+    { value: "name", label: "Tên huy hiệu", getValue: (item) => item.name },
+    { value: "type", label: "Phân loại", getValue: (item) => item.type },
+    { value: "condition", label: "Yêu cầu đạt", getValue: (item) => item.conditionValue },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
+  ], "name");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -178,6 +187,8 @@ export function BadgesPage() {
           <p style={{ color: "var(--text-muted)" }}>Không có huy hiệu nào.</p>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -193,7 +204,7 @@ export function BadgesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td>
                     {item.iconUrl ? (
@@ -223,6 +234,7 @@ export function BadgesPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {isModalOpen && (
@@ -305,14 +317,8 @@ export function BadgesPage() {
                       {errors.conditionValue && <span className="error-msg">{errors.conditionValue}</span>}
                     </div>
 
-                    <div className="field check-row">
-                      <input
-                        type="checkbox"
-                        id="isActive"
-                        checked={isActive}
-                        onChange={(e) => setIsActive(e.target.checked)}
-                      />
-                      <label htmlFor="isActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Huy hiệu này đang hoạt động</label>
+                    <div className="field">
+                      <ToggleSwitch id="isActive" label="Huy hiệu này đang hoạt động" checked={isActive} onChange={setIsActive} />
                     </div>
                   </div>
 

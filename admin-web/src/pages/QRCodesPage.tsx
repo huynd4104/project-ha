@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import QRCodeLib from "qrcode";
 import { adminApi } from "../api/adminApi";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { qrCodesImportConfig } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
@@ -390,14 +391,8 @@ export function QRCodesPage() {
                   <span className="helper">Giới hạn số lần quét mã. Để trống nếu muốn cho phép quét vô hạn.</span>
                 </div>
 
-                <div className="field check-row">
-                  <input
-                    type="checkbox"
-                    id="isActiveQR"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                  />
-                  <label htmlFor="isActiveQR" style={{ fontWeight: "normal", cursor: "pointer" }}>Mã QR này đang hoạt động</label>
+                <div className="field">
+                  <ToggleSwitch id="isActiveQR" label="Mã QR này đang hoạt động" checked={isActive} onChange={setIsActive} />
                 </div>
               </div>
               <div className="modal-footer">

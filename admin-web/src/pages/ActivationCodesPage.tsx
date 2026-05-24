@@ -1,8 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import QRCode from "qrcode";
 import type { ActivationType, ActivationSource } from "../types/firebaseModels";
 import { ACTIVATION_TYPE_LABELS, uiLabel } from "../utils/adminLabels";
+import { useTableControls } from "../utils/tableControls";
 
 const ACTIVATION_TYPES: ActivationType[] = ["NPC", "LESSON", "PATH", "REWARD", "PHYSICAL_TOY"];
 const SOURCES: ActivationSource[] = ["QR", "NFC", "MANUAL"];
@@ -59,8 +62,8 @@ export function ActivationCodesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
+  const [qrPreviewCode, setQrPreviewCode] = useState("");
   const [toastMsg, setToastMsg] = useState("");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [code, setCode] = useState("");
   const [activationType, setActivationType] = useState<ActivationType>("NPC");
@@ -98,6 +101,15 @@ export function ActivationCodesPage() {
   }, [items, search]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
+  const table = useTableControls(filtered, [
+    { value: "code", label: "Mã", getValue: (item) => item.code },
+    { value: "label", label: "Nhãn", getValue: (item) => item.label },
+    { value: "type", label: "Loại", getValue: (item) => TYPE_LABELS[item.activationType] || item.activationType },
+    { value: "source", label: "Nguồn", getValue: (item) => item.source },
+    { value: "expires", label: "Hạn dùng", getValue: (item) => item.expiresAt },
+    { value: "used", label: "Đã dùng", getValue: (item) => item.usedCount || 0 },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.active !== false }
+  ], "code");
 
   const targetOptions = (): { value: string; label: string }[] => {
     if (activationType === "NPC") return npcs.map((n) => ({ value: n.id, label: n.name }));
@@ -119,7 +131,7 @@ export function ActivationCodesPage() {
     setEditingItem(null); setCode(generateRandomCode());
     setActivationType("NPC"); setTargetId(""); setLabel("");
     setActive(true); setMaxUses(""); setPerUserLimit("");
-    setSource("QR"); setExpiresAt(""); setErrors({}); setQrPreviewUrl(null);
+    setSource("QR"); setExpiresAt(""); setErrors({}); setQrPreviewUrl(null); setQrPreviewCode("");
     setIsModalOpen(true);
   };
 
@@ -129,7 +141,7 @@ export function ActivationCodesPage() {
     setLabel(item.label || ""); setActive(item.active !== false);
     setMaxUses(item.maxUses ?? ""); setPerUserLimit(item.perUserLimit ?? "");
     setSource(item.source || "QR"); setExpiresAt(item.expiresAt ? toDateInputString(item.expiresAt) : "");
-    setErrors({}); setQrPreviewUrl(null);
+    setErrors({}); setQrPreviewUrl(null); setQrPreviewCode("");
     setIsModalOpen(true);
   };
 
@@ -175,6 +187,7 @@ export function ActivationCodesPage() {
     try {
       const url = await QRCode.toDataURL(codeStr, { width: 256, margin: 2 });
       setQrPreviewUrl(url);
+      setQrPreviewCode(codeStr);
     } catch (e) { console.error(e); }
   };
 
@@ -194,6 +207,14 @@ export function ActivationCodesPage() {
     showToast("Đã copy mã!");
   };
 
+  const printQR = async (codeStr: string) => {
+    const url = await QRCode.toDataURL(codeStr, { width: 512, margin: 2 });
+    const win = window.open("", "_blank", "width=520,height=640");
+    if (!win) return;
+    win.document.write(`<html><head><title>QR ${codeStr}</title></head><body style="font-family:sans-serif;text-align:center;padding:32px"><h2>${codeStr}</h2><img src="${url}" width="360" height="360" /><script>window.onload=()=>window.print()</script></body></html>`);
+    win.document.close();
+  };
+
   return (
     <div>
       <div className="toolbar">
@@ -202,6 +223,10 @@ export function ActivationCodesPage() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Tạo mã QR để mở khóa nhân vật hoặc nội dung. Hiện tại hỗ trợ mở khóa nhân vật.</p>
         </div>
         <button onClick={openAddModal}>➕ Thêm mã QR</button>
+      </div>
+
+      <div className="panel" style={{ background: "#fffbeb", border: "1px solid #fef3c7", color: "#92400e", padding: "14px 16px", marginBottom: "16px" }}>
+        <strong>Lưu ý:</strong> Hiện tại app chỉ mở khóa thật Nhân vật đồng hành. Bài học/Lộ trình/Đồ chơi đang ở trạng thái chuẩn bị.
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
@@ -218,6 +243,8 @@ export function ActivationCodesPage() {
           <button onClick={openAddModal}>➕ Tạo mã QR mới</button>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -234,7 +261,7 @@ export function ActivationCodesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td><code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "12px", fontWeight: "700" }}>{item.code}</code></td>
                   <td style={{ fontWeight: "600" }}>{item.label || "—"}</td>
@@ -246,8 +273,14 @@ export function ActivationCodesPage() {
                   <td><span className={`badge ${item.active !== false ? "active" : "inactive"}`}>{item.active !== false ? "Đang bật" : "Đang tắt"}</span></td>
                   <td>
                     <div className="actions">
-                      <button className="secondary" onClick={() => copyCode(item.code)} style={{ fontSize: "11px" }}>📋</button>
-                      <button className="secondary" onClick={() => downloadQR(item.code)} style={{ fontSize: "11px" }}>📥 QR</button>
+                      <button className="secondary icon-button" onClick={() => generateQR(item.code)} title="Xem QR" aria-label={`Xem QR ${item.code}`}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <rect x="4" y="4" width="6" height="6" rx="1" />
+                          <rect x="14" y="4" width="6" height="6" rx="1" />
+                          <rect x="4" y="14" width="6" height="6" rx="1" />
+                          <path d="M14 14h2v2h-2zM18 14h2M14 18h6" />
+                        </svg>
+                      </button>
                       <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
                       <button className="danger" onClick={() => handleDelete(item.id)}>Xóa</button>
                     </div>
@@ -257,19 +290,41 @@ export function ActivationCodesPage() {
             </tbody>
           </table>
         </div>
+        </>
+      )}
+
+      {qrPreviewUrl && !isModalOpen && (
+        <div className="modal-overlay" onClick={() => setQrPreviewUrl(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(420px, 95vw)" }}>
+            <div className="modal-header">
+              <h2>Xem QR</h2>
+              <button className="modal-close" onClick={() => setQrPreviewUrl(null)}>&times;</button>
+            </div>
+            <div className="modal-body" style={{ textAlign: "center" }}>
+              <div className="qr-detail-box">
+                <img src={qrPreviewUrl} alt={`QR ${qrPreviewCode}`} />
+                <code>{qrPreviewCode}</code>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="secondary" onClick={() => copyCode(qrPreviewCode)}>Copy mã</button>
+              <button type="button" className="secondary" onClick={() => downloadQR(qrPreviewCode)}>Tải QR PNG</button>
+              <button type="button" onClick={() => printQR(qrPreviewCode)}>In QR</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(680px, 95vw)" }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(620px, 95vw)" }}>
             <div className="modal-header">
               <h2>{editingItem ? "Chỉnh sửa mã QR mở khóa" : "Thêm mã QR mở khóa"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                <div className="drawer-container">
-                  <div className="drawer-main" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <div className="field">
                       <label>Mã mở khóa <span style={{ color: "red" }}>*</span></label>
                       <div style={{ display: "flex", gap: "8px" }}>
@@ -324,30 +379,19 @@ export function ActivationCodesPage() {
 
                     <div className="field">
                       <label>Ngày hết hạn</label>
-                      <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+                      <div className="date-input-wrap">
+                        <span aria-hidden="true">📅</span>
+                        <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+                        {expiresAt && (
+                          <button type="button" className="secondary" onClick={() => setExpiresAt("")}>Bỏ hạn</button>
+                        )}
+                      </div>
+                      <span className="field-help">Để trống nếu mã không có ngày hết hạn.</span>
                     </div>
 
-                    <div className="field check-row">
-                      <input type="checkbox" id="acActive" checked={active} onChange={(e) => setActive(e.target.checked)} />
-                      <label htmlFor="acActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Đang hoạt động</label>
+                    <div className="field">
+                      <ToggleSwitch id="acActive" label="Đang hoạt động" checked={active} onChange={setActive} />
                     </div>
-                  </div>
-
-                  <div className="drawer-aside" style={{ width: "220px" }}>
-                    <h3>Xem trước QR</h3>
-                    <div className="qr-preview-box" style={{ marginTop: "12px" }}>
-                      {qrPreviewUrl ? (
-                        <img src={qrPreviewUrl} alt="QR Code" style={{ width: "160px", height: "160px" }} />
-                      ) : (
-                        <div style={{ width: "160px", height: "160px", background: "#e2e8f0", borderRadius: "8px", display: "grid", placeItems: "center", color: "var(--text-muted)", fontSize: "13px" }}>
-                          Bấm tạo QR
-                        </div>
-                      )}
-                      <button type="button" className="secondary" onClick={() => generateQR(code)} style={{ width: "100%" }}>Tạo xem trước QR</button>
-                      {qrPreviewUrl && <button type="button" className="secondary" onClick={() => downloadQR(code)} style={{ width: "100%" }}>📥 Tải QR PNG</button>}
-                    </div>
-                    <canvas ref={canvasRef} style={{ display: "none" }} />
-                  </div>
                 </div>
               </div>
               <div className="modal-footer">

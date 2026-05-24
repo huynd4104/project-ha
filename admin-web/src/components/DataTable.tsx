@@ -1,29 +1,42 @@
+import { TableControls } from "./TableControls";
+import { useTableControls } from "../utils/tableControls";
+
 export function DataTable({ rows, columns, onEdit, onDelete }: { rows: any[]; columns: string[]; onEdit?: (row: any) => void; onDelete?: (row: any) => void }) {
+  const sortOptions = columns.map((col) => ({
+    value: col,
+    label: columnLabels[col] ?? col,
+    getValue: (row: any) => row[col]
+  }));
+  const table = useTableControls(rows, sortOptions, columns[0]);
+
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            {columns.map((col) => <th key={col}>{columnLabels[col] ?? col}</th>)}
-            {(onEdit || onDelete) && <th>Thao tác</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              {columns.map((col) => <td key={col}>{formatCell(row[col])}</td>)}
-              {(onEdit || onDelete) && (
-                <td className="actions">
-                  {row.code && <button onClick={() => navigator.clipboard?.writeText(row.code)}>Sao chép</button>}
-                  {onEdit && <button onClick={() => onEdit(row)}>Sửa</button>}
-                  {onDelete && <button className="danger" onClick={() => onDelete(row)}>Xóa</button>}
-                </td>
-              )}
+    <>
+      <TableControls {...table} />
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              {columns.map((col) => <th key={col}>{columnLabels[col] ?? col}</th>)}
+              {(onEdit || onDelete) && <th>Thao tác</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {table.pagedItems.map((row) => (
+              <tr key={row.id}>
+                {columns.map((col) => <td key={col}>{formatCell(row[col])}</td>)}
+                {(onEdit || onDelete) && (
+                  <td className="actions">
+                    {row.code && <button onClick={() => navigator.clipboard?.writeText(row.code)}>Sao chép</button>}
+                    {onEdit && <button onClick={() => onEdit(row)}>Sửa</button>}
+                    {onDelete && <button className="danger" onClick={() => onDelete(row)}>Xóa</button>}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

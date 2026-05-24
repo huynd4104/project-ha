@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { MultiSelect } from "../components/MultiSelect";
+import { TableControls } from "../components/TableControls";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import {
   developmentCategoriesImportConfig,
@@ -8,8 +11,16 @@ import {
 } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { useTableControls } from "../utils/tableControls";
 
 type Tab = "categories" | "goals" | "skills";
+
+const skillDomainOptions = [
+  { value: "COMMUNICATION", label: "Giao tiếp / ngôn ngữ" },
+  { value: "COGNITIVE", label: "Nhận thức" },
+  { value: "SOCIAL_EMOTIONAL", label: "Xã hội / cảm xúc" },
+  { value: "PARENT_GUIDED", label: "Phụ huynh đồng hành" }
+];
 
 interface TaxItem {
   id: string;
@@ -27,6 +38,7 @@ export function TaxonomyPage() {
   const [tab, setTab] = useState<Tab>("categories");
   const [items, setItems] = useState<TaxItem[]>([]);
   const [filtered, setFiltered] = useState<TaxItem[]>([]);
+  const [skills, setSkills] = useState<TaxItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,7 +50,7 @@ export function TaxonomyPage() {
   const [label, setLabel] = useState("");
   const [description, setDescription] = useState("");
   const [domain, setDomain] = useState("");
-  const [skillTagsStr, setSkillTagsStr] = useState("");
+  const [skillTags, setSkillTags] = useState<string[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [orderIndex, setOrderIndex] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,6 +84,21 @@ export function TaxonomyPage() {
   useEffect(() => { loadData(); }, [tab]);
 
   useEffect(() => {
+    async function loadSkillsForGoals() {
+      if (tab !== "goals") return;
+      try {
+        const res = await adminApi.list("/skills");
+        const rows = (res.data.data || []) as TaxItem[];
+        rows.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+        setSkills(rows);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    loadSkillsForGoals();
+  }, [tab]);
+
+  useEffect(() => {
     if (search.trim()) {
       const q = search.toLowerCase();
       setFiltered(items.filter((i) =>
@@ -88,6 +115,13 @@ export function TaxonomyPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+  const table = useTableControls(filtered, [
+    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
+    { value: "key", label: "Mã định danh", getValue: (item) => item.key },
+    { value: "label", label: "Nhãn", getValue: (item) => item.label },
+    { value: "domain", label: "Nhóm kỹ năng", getValue: (item) => item.domain },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
+  ], "order");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -95,7 +129,7 @@ export function TaxonomyPage() {
     setLabel("");
     setDescription("");
     setDomain("");
-    setSkillTagsStr("");
+    setSkillTags([]);
     setIsActive(true);
     setOrderIndex(items.length ? Math.max(...items.map((i) => i.orderIndex ?? 0)) + 1 : 1);
     setErrors({});
@@ -108,7 +142,7 @@ export function TaxonomyPage() {
     setLabel(item.label || "");
     setDescription(item.description || item.parentDescription || "");
     setDomain(item.domain || "");
-    setSkillTagsStr((item.skillTags || []).join(", "));
+    setSkillTags(item.skillTags || []);
     setIsActive(item.isActive !== false);
     setOrderIndex(item.orderIndex ?? 0);
     setErrors({});
@@ -144,7 +178,7 @@ export function TaxonomyPage() {
     } else if (tab === "goals") {
       payload.parentDescription = description.trim();
       payload.description = description.trim();
-      payload.skillTags = skillTagsStr.split(",").map((s) => s.trim()).filter(Boolean);
+      payload.skillTags = skillTags;
     } else {
       payload.parentDescription = description.trim();
       payload.domain = domain.trim();
@@ -190,6 +224,9 @@ export function TaxonomyPage() {
   };
 
   const importConfig = getImportConfig();
+  const skillOptions = skills
+    .filter((skill) => skill.isActive !== false)
+    .map((skill) => ({ value: skill.key, label: skill.label || skill.key }));
 
   return (
     <div>
@@ -236,6 +273,8 @@ export function TaxonomyPage() {
           <button onClick={openAddModal}>➕ Thêm {tabTitle} ngay</button>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -251,7 +290,7 @@ export function TaxonomyPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td><code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "12px" }}>{item.key}</code></td>
@@ -275,6 +314,7 @@ export function TaxonomyPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {isModalOpen && (
@@ -322,27 +362,27 @@ export function TaxonomyPage() {
                 {tab === "skills" && (
                   <div className="field">
                     <label>Nhóm kỹ năng <span style={{ color: "red" }}>*</span></label>
-                    <input
-                      type="text"
-                      placeholder="VD: LANGUAGE, COGNITIVE"
+                    <select
                       value={domain}
                       onChange={(e) => setDomain(e.target.value)}
-                    />
+                    >
+                      <option value="">Chọn nhóm kỹ năng...</option>
+                      {skillDomainOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                     {errors.domain && <span className="error-msg">{errors.domain}</span>}
                   </div>
                 )}
 
                 {tab === "goals" && (
-                  <div className="field">
-                    <label>Kỹ năng liên quan (phân cách bởi dấu phẩy)</label>
-                    <input
-                      type="text"
-                      placeholder="naming, requesting, listening"
-                      value={skillTagsStr}
-                      onChange={(e) => setSkillTagsStr(e.target.value)}
-                    />
-                    <span className="helper">Các key kỹ năng liên quan, phân cách bởi dấu phẩy.</span>
-                  </div>
+                  <MultiSelect
+                    label="Kỹ năng liên quan"
+                    options={skillOptions}
+                    selected={skillTags}
+                    onChange={setSkillTags}
+                    placeholder="Chọn kỹ năng..."
+                  />
                 )}
 
                 <div className="form-grid">
@@ -354,14 +394,8 @@ export function TaxonomyPage() {
                       onChange={(e) => setOrderIndex(Number(e.target.value))}
                     />
                   </div>
-                  <div className="field check-row" style={{ height: "60px" }}>
-                    <input
-                      type="checkbox"
-                      id="taxIsActive"
-                      checked={isActive}
-                      onChange={(e) => setIsActive(e.target.checked)}
-                    />
-                    <label htmlFor="taxIsActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Đang hoạt động</label>
+                  <div className="field" style={{ justifyContent: "end" }}>
+                    <ToggleSwitch id="taxIsActive" label="Đang hoạt động" checked={isActive} onChange={setIsActive} />
                   </div>
                 </div>
               </div>

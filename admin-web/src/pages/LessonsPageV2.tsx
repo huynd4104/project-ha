@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
 import { MultiSelect } from "../components/MultiSelect";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { uiLabel } from "../utils/adminLabels";
 import { validateLessonPublish } from "../utils/publishValidation";
+import { useTableControls } from "../utils/tableControls";
 import type { Lesson, Program, LearningPath, NPC, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
-const LESSON_TYPES_V2 = [
+const LESSON_TYPES = [
   "MATH", "DIALOGUE", "FLASHCARD", "THINKING", "SPELLING", "RHYME",
   "LISTEN_AND_CHOOSE", "VOICE_QUIZ", "EMOTION", "DAILY_LIFE", "PARENT_ACTIVITY", "MIXED"
 ];
@@ -25,6 +29,8 @@ export function LessonsPageV2() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [npcs, setNpcs] = useState<NPC[]>([]);
+  const [allActivities, setAllActivities] = useState<any[]>([]);
+  const [filter, setFilter] = useState("ALL");
   const [categories, setCategories] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
@@ -54,10 +60,10 @@ export function LessonsPageV2() {
   async function loadData() {
     setLoading(true);
     try {
-      const [lRes, pRes, lpRes, nRes, cRes, gRes, sRes] = await Promise.all([
+      const [lRes, pRes, lpRes, nRes, cRes, gRes, sRes, aRes] = await Promise.all([
         adminApi.list("/lessons"), adminApi.list("/programs"), adminApi.list("/learning-paths"),
         adminApi.list("/npcs"), adminApi.list("/development-categories"),
-        adminApi.list("/learning-goals"), adminApi.list("/skills")
+        adminApi.list("/learning-goals"), adminApi.list("/skills"), adminApi.list("/activities")
       ]);
       const lessons = (lRes.data.data || []) as Lesson[];
       lessons.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
@@ -68,6 +74,7 @@ export function LessonsPageV2() {
       setCategories(cRes.data.data || []);
       setGoals(gRes.data.data || []);
       setSkills(sRes.data.data || []);
+      setAllActivities(aRes.data.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -76,12 +83,34 @@ export function LessonsPageV2() {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFiltered(q ? items.filter((i) => i.title?.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)) : items);
-  }, [items, search]);
+    const next = items.filter((i) => {
+      const matchesSearch = !q || i.title?.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q);
+      const activityCount = allActivities.filter((a) => a.lessonId === i.id).length;
+      const matchesFilter =
+        filter === "ALL" ||
+        (filter === "DRAFT" && (i.publishStatus || "DRAFT") === "DRAFT") ||
+        (filter === "PUBLISHED" && i.publishStatus === "PUBLISHED") ||
+        (filter === "FREE" && (i.accessType || "FREE") === "FREE") ||
+        (filter === "PREMIUM" && i.accessType === "PREMIUM") ||
+        (filter === "HAS_ACTIVITIES" && activityCount > 0) ||
+        (filter === "NO_ACTIVITIES" && activityCount === 0);
+      return matchesSearch && matchesFilter;
+    });
+    setFiltered(next);
+  }, [items, search, filter, allActivities]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
 
   const filteredPaths = programId ? paths.filter((p) => p.programId === programId) : paths;
+  const table = useTableControls(filtered, [
+    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
+    { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
+    { value: "type", label: "Loại", getValue: (item) => item.lessonType || item.type },
+    { value: "program", label: "Chương trình", getValue: (item) => programs.find((p) => p.id === item.programId)?.title },
+    { value: "level", label: "Cấp độ", getValue: (item) => item.level },
+    { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
+    { value: "status", label: "Xuất bản", getValue: (item) => item.publishStatus }
+  ], "order");
   const categoryOptions = categories.filter((c: any) => c.isActive).map((c: any) => ({ value: c.key, label: c.label }));
   const goalOptions = goals.filter((g: any) => g.isActive).map((g: any) => ({ value: g.key, label: g.label }));
   const skillOptions = skills.filter((s: any) => s.isActive).map((s: any) => ({ value: s.key, label: s.label }));
@@ -171,6 +200,21 @@ export function LessonsPageV2() {
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input type="text" placeholder="Tìm kiếm bài học..." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
+          {[
+            ["ALL", "Tất cả"],
+            ["DRAFT", "Bản nháp"],
+            ["PUBLISHED", "Đã xuất bản"],
+            ["FREE", "Miễn phí"],
+            ["PREMIUM", "Premium"],
+            ["HAS_ACTIVITIES", "Có hoạt động"],
+            ["NO_ACTIVITIES", "Chưa có hoạt động"]
+          ].map(([value, label]) => (
+            <button key={value} type="button" className={filter === value ? "" : "secondary"} onClick={() => setFilter(value)}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
@@ -183,6 +227,8 @@ export function LessonsPageV2() {
           <button onClick={openAddModal}>➕ Thêm bài học mới</button>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -195,17 +241,20 @@ export function LessonsPageV2() {
                 <th>Cấp độ</th>
                 <th>Truy cập</th>
                 <th>Xuất bản</th>
-                <th style={{ width: "150px" }}>Thao tác</th>
+                <th style={{ width: "300px" }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => {
+              {table.pagedItems.map((item) => {
                 const npc = npcs.find((n) => n.id === item.npcId);
                 const prog = programs.find((p) => p.id === item.programId);
                 return (
                   <tr key={item.id}>
                     <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
-                    <td style={{ fontWeight: "600" }}>{item.title}</td>
+                    <td style={{ fontWeight: "600" }}>
+                      {item.title}
+                      {!item.lessonType && item.type && <span className="badge yellow" style={{ marginLeft: "8px" }}>Dữ liệu cũ</span>}
+                    </td>
                     <td><span className="badge info">{uiLabel(item.lessonType || item.type)}</span></td>
                     <td style={{ fontSize: "13px" }}>{prog?.title || "—"}</td>
                     <td>{npc ? (
@@ -219,6 +268,8 @@ export function LessonsPageV2() {
                     <td><span className={`badge ${statusBadge(item.publishStatus)}`}>{uiLabel(item.publishStatus || "DRAFT")}</span></td>
                     <td>
                       <div className="actions">
+                        <Link className="button-link secondary" style={{ padding: "6px 12px", fontSize: "12px" }} to="/activity-builder">Thêm hoạt động</Link>
+                        <Link className="button-link secondary" style={{ padding: "6px 12px", fontSize: "12px" }} to="/path-builder">Sắp xếp vào lộ trình</Link>
                         <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
                         <button className="danger" onClick={() => handleDelete(item.id)}>Xóa</button>
                       </div>
@@ -229,6 +280,7 @@ export function LessonsPageV2() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {isModalOpen && (
@@ -265,7 +317,7 @@ export function LessonsPageV2() {
                       <div className="field">
                         <label>Loại bài học <span style={{ color: "red" }}>*</span></label>
                         <select value={lessonType} onChange={(e) => setLessonType(e.target.value)}>
-                          {LESSON_TYPES_V2.map((t) => <option key={t} value={t}>{uiLabel(t)}</option>)}
+                          {LESSON_TYPES.map((t) => <option key={t} value={t}>{uiLabel(t)}</option>)}
                         </select>
                         {errors.lessonType && <span className="error-msg">{errors.lessonType}</span>}
                       </div>
@@ -327,9 +379,8 @@ export function LessonsPageV2() {
                         <label>Thứ tự hiển thị</label>
                         <input type="number" value={orderIndex} onChange={(e) => setOrderIndex(Number(e.target.value))} />
                       </div>
-                      <div className="field check-row" style={{ height: "60px" }}>
-                        <input type="checkbox" id="lessonV2Active" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                        <label htmlFor="lessonV2Active" style={{ fontWeight: "normal", cursor: "pointer" }}>Đang hoạt động</label>
+                      <div className="field" style={{ justifyContent: "end" }}>
+                        <ToggleSwitch id="lessonActive" label="Đang bật" checked={isActive} onChange={setIsActive} />
                       </div>
                     </div>
                   </div>

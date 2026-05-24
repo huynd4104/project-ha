@@ -3,6 +3,9 @@ import { adminApi } from "../api/adminApi";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase/firebase";
 import { uiLabel } from "../utils/adminLabels";
+import { TableControls } from "../components/TableControls";
+import { ToggleSwitch } from "../components/ToggleSwitch";
+import { useTableControls } from "../utils/tableControls";
 
 export function PremiumPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -161,6 +164,24 @@ export function PremiumPage() {
     return user ? `${user.fullName || ""} (${user.email})` : userId;
   };
 
+  const userTable = useTableControls(filteredUsers, [
+    { value: "name", label: "Họ và tên", getValue: (user) => user.fullName },
+    { value: "email", label: "Email", getValue: (user) => user.email },
+    { value: "role", label: "Vai trò", getValue: (user) => user.role },
+    { value: "plan", label: "Gói hiện tại", getValue: (user) => user.subscriptionSummary?.plan ?? "FREE" },
+    { value: "status", label: "Trạng thái", getValue: (user) => user.subscriptionSummary?.status ?? "NONE" },
+    { value: "expires", label: "Ngày hết hạn", getValue: (user) => user.subscriptionSummary?.expiresAt }
+  ], "email");
+
+  const transactionTable = useTableControls(transactions, [
+    { value: "id", label: "Giao dịch ID", getValue: (item) => item.id },
+    { value: "user", label: "Người dùng", getValue: (item) => getUserEmail(item.userId) },
+    { value: "provider", label: "Cổng thanh toán", getValue: (item) => item.provider },
+    { value: "amount", label: "Số tiền", getValue: (item) => item.amount },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.status },
+    { value: "time", label: "Thời gian", getValue: (item) => item.createdAt }
+  ], "time");
+
   const formatDateTime = (value: any) => {
     if (!value) return "Không giới hạn";
     let date: Date;
@@ -289,6 +310,8 @@ export function PremiumPage() {
               </p>
             </div>
           ) : (
+            <>
+            <TableControls {...userTable} />
             <div className="table-wrap">
               <table>
                 <thead>
@@ -304,7 +327,7 @@ export function PremiumPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => {
+                  {userTable.pagedItems.map((user) => {
                     const summary = user.subscriptionSummary;
                     const plan = summary?.plan ?? "FREE";
                     const status = summary?.status ?? "NONE";
@@ -402,6 +425,7 @@ export function PremiumPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </>
       )}
@@ -419,6 +443,8 @@ export function PremiumPage() {
               </p>
             </div>
           ) : (
+            <>
+            <TableControls {...transactionTable} />
             <div className="table-wrap">
               <table>
                 <thead>
@@ -433,7 +459,7 @@ export function PremiumPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((t) => (
+                  {transactionTable.pagedItems.map((t) => (
                     <tr key={t.id}>
                       <td>
                         <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "11px" }}>
@@ -461,6 +487,7 @@ export function PremiumPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </>
       )}
@@ -529,52 +556,20 @@ export function PremiumPage() {
                         borderRadius: "6px",
                       }}
                     >
-                      <div className="field check-row" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <input
-                          type="checkbox"
-                          id="premiumContent"
-                          checked={premiumContent}
-                          onChange={(e) => setPremiumContent(e.target.checked)}
-                        />
-                        <label htmlFor="premiumContent" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          Mở khóa nội dung Premium
-                        </label>
+                      <div className="field" style={{ marginBottom: 0 }}>
+                        <ToggleSwitch id="premiumContent" label="Mở khóa nội dung Premium" checked={premiumContent} onChange={setPremiumContent} />
                       </div>
 
-                      <div className="field check-row" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <input
-                          type="checkbox"
-                          id="voiceQuiz"
-                          checked={voiceQuiz}
-                          onChange={(e) => setVoiceQuiz(e.target.checked)}
-                        />
-                        <label htmlFor="voiceQuiz" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          Câu hỏi giọng nói
-                        </label>
+                      <div className="field" style={{ marginBottom: 0 }}>
+                        <ToggleSwitch id="voiceQuiz" label="Câu hỏi giọng nói" checked={voiceQuiz} onChange={setVoiceQuiz} />
                       </div>
 
-                      <div className="field check-row" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <input
-                          type="checkbox"
-                          id="advancedReports"
-                          checked={advancedReports}
-                          onChange={(e) => setAdvancedReports(e.target.checked)}
-                        />
-                        <label htmlFor="advancedReports" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          Xem báo cáo phân tích sâu
-                        </label>
+                      <div className="field" style={{ marginBottom: 0 }}>
+                        <ToggleSwitch id="advancedReports" label="Xem báo cáo phân tích sâu" checked={advancedReports} onChange={setAdvancedReports} />
                       </div>
 
-                      <div className="field check-row" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <input
-                          type="checkbox"
-                          id="premiumNpcs"
-                          checked={premiumNpcs}
-                          onChange={(e) => setPremiumNpcs(e.target.checked)}
-                        />
-                        <label htmlFor="premiumNpcs" style={{ fontWeight: "normal", cursor: "pointer", margin: 0 }}>
-                          Nhân vật Premium
-                        </label>
+                      <div className="field" style={{ marginBottom: 0 }}>
+                        <ToggleSwitch id="premiumNpcs" label="Nhân vật Premium" checked={premiumNpcs} onChange={setPremiumNpcs} />
                       </div>
                     </div>
                   </div>

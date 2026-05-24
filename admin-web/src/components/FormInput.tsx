@@ -1,3 +1,5 @@
+import { ToggleSwitch } from "./ToggleSwitch";
+
 type Props = {
   label: string;
   value: string | number | boolean;
@@ -7,12 +9,7 @@ type Props = {
 
 export function FormInput({ label, value, type = "text", onChange }: Props) {
   if (type === "checkbox") {
-    return (
-      <label className="check-row">
-        <input type="checkbox" checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} />
-        {label}
-      </label>
-    );
+    return <ToggleSwitch label={label} checked={Boolean(value)} onChange={(checked) => onChange(checked)} />;
   }
   return (
     <label className="field">

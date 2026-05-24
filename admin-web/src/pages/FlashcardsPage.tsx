@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { flashcardsImportConfig } from "../components/import/importConfigs";
 import { MediaPicker } from "../components/MediaPicker";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { useTableControls } from "../utils/tableControls";
 
 interface Lesson {
   id: string;
@@ -78,6 +80,15 @@ export function FlashcardsPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+  const getLessonTitle = (id: string) => {
+    return lessons.find((l) => l.id === id)?.title || "Bài học liên kết";
+  };
+  const table = useTableControls(filtered, [
+    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
+    { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
+    { value: "front", label: "Mặt trước", getValue: (item) => item.frontText },
+    { value: "back", label: "Mặt sau", getValue: (item) => item.backText }
+  ], "order");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -146,10 +157,6 @@ export function FlashcardsPage() {
     }
   };
 
-  const getLessonTitle = (id: string) => {
-    return lessons.find((l) => l.id === id)?.title || "Bài học liên kết";
-  };
-
   const importConfig = flashcardsImportConfig(lessons);
 
   const handleImport = async (rows: any[]) => {
@@ -170,6 +177,12 @@ export function FlashcardsPage() {
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Thẻ Học</button>
         </div>
+      </div>
+
+      <div className="panel" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af", padding: "14px 16px", marginBottom: "16px" }}>
+        Đây là kho nội dung có thể tái sử dụng khi tạo hoạt động trong bài học. Nội dung tại đây không phải dữ liệu bỏ đi.
+        <br />
+        Chức năng chọn nhanh từ kho nội dung sẽ được dùng trong Hoạt động trong bài học.
       </div>
 
       {lessons.length === 0 && (
@@ -195,6 +208,8 @@ export function FlashcardsPage() {
           <p style={{ color: "var(--text-muted)" }}>Không có thẻ học nào.</p>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -209,7 +224,7 @@ export function FlashcardsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
@@ -240,6 +255,7 @@ export function FlashcardsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Add/Edit Modal */}

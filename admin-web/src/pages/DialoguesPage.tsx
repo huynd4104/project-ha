@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { dialoguesImportConfig } from "../components/import/importConfigs";
 import { MediaPicker } from "../components/MediaPicker";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { useTableControls } from "../utils/tableControls";
 
 interface Lesson {
   id: string;
@@ -91,6 +93,16 @@ export function DialoguesPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+  const getLessonTitle = (id: string) => {
+    return lessons.find((l) => l.id === id)?.title || "Bài học hội thoại";
+  };
+  const table = useTableControls(filtered, [
+    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
+    { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
+    { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
+    { value: "question", label: "Câu hỏi", getValue: (item) => item.questionText },
+    { value: "correct", label: "Đáp án đúng", getValue: (item) => item.correctOption }
+  ], "order");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -177,10 +189,6 @@ export function DialoguesPage() {
     }
   };
 
-  const getLessonTitle = (id: string) => {
-    return lessons.find((l) => l.id === id)?.title || "Bài học hội thoại";
-  };
-
   const importConfig = dialoguesImportConfig(allLessons);
 
   const handleImport = async (rows: any[]) => {
@@ -201,6 +209,12 @@ export function DialoguesPage() {
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
           <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Hội Thoại</button>
         </div>
+      </div>
+
+      <div className="panel" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af", padding: "14px 16px", marginBottom: "16px" }}>
+        Đây là kho nội dung có thể tái sử dụng khi tạo hoạt động trong bài học. Nội dung tại đây không phải dữ liệu bỏ đi.
+        <br />
+        Chức năng chọn nhanh từ kho nội dung sẽ được dùng trong Hoạt động trong bài học.
       </div>
 
       {lessons.length === 0 && (
@@ -226,6 +240,8 @@ export function DialoguesPage() {
           <p style={{ color: "var(--text-muted)" }}>Không có hội thoại nào.</p>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -240,7 +256,7 @@ export function DialoguesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
@@ -272,6 +288,7 @@ export function DialoguesPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Add/Edit Modal */}

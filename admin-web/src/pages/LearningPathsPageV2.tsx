@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
 import { MultiSelect } from "../components/MultiSelect";
 import { uiLabel } from "../utils/adminLabels";
+import { useTableControls } from "../utils/tableControls";
 import type { LearningPath, Program, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
 const LEVELS: LearningLevel[] = ["BEGINNER", "BASIC", "INTERMEDIATE"];
@@ -74,8 +76,15 @@ export function LearningPathsPageV2() {
   }, [items, search, filterProgram]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
-
   const getProgramTitle = (id: string) => programs.find((p) => p.id === id)?.title || "—";
+  const table = useTableControls(filtered, [
+    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
+    { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
+    { value: "program", label: "Chương trình", getValue: (item) => getProgramTitle(item.programId) },
+    { value: "level", label: "Cấp độ", getValue: (item) => item.level },
+    { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.status }
+  ], "order");
 
   const categoryOptions = categories.filter((c: any) => c.isActive).map((c: any) => ({ value: c.key, label: c.label }));
   const goalOptions = goals.filter((g: any) => g.isActive).map((g: any) => ({ value: g.key, label: g.label }));
@@ -171,6 +180,8 @@ export function LearningPathsPageV2() {
           <button onClick={openAddModal}>➕ Tạo lộ trình ngay</button>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -185,7 +196,7 @@ export function LearningPathsPageV2() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
@@ -204,6 +215,7 @@ export function LearningPathsPageV2() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {isModalOpen && (

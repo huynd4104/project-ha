@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { validateActivityRequired } from "../utils/publishValidation";
 import { ACTIVITY_TYPE_LABELS, uiLabel } from "../utils/adminLabels";
 import type { Activity, ActivityType, Lesson, AccessType } from "../types/firebaseModels";
@@ -312,18 +313,18 @@ export function ActivityBuilderPage() {
                     <button onClick={openAddModal}>➕ Thêm hoạt động</button>
                   </div>
                   <div style={{ borderTop: "1px solid var(--border)", marginTop: "14px", paddingTop: "14px" }}>
-                    <strong style={{ display: "block", marginBottom: "4px" }}>Import từ thư viện nội dung</strong>
+                    <strong style={{ display: "block", marginBottom: "4px" }}>Tạo hoạt động từ kho nội dung</strong>
                     <p style={{ color: "var(--text-muted)", margin: "0 0 10px 0", fontSize: "13px" }}>
-                      Dùng kho nội dung học làm nguồn tái sử dụng để tạo nhanh khung hoạt động trong bài học này.
+                      Sẽ hỗ trợ chọn nhanh từ thư viện ở bước tiếp theo. Hiện tại các nút tạo khung hoạt động đúng loại để admin cấu hình tiếp.
                     </p>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       {[
-                        ["flashcards", "Import từ thư viện Flashcard"],
-                        ["dialogues", "Import từ thư viện Hội thoại"],
-                        ["math", "Import từ thư viện Toán"],
-                        ["thinking", "Import từ thư viện Tư duy"],
-                        ["spelling", "Import từ thư viện Đánh vần"],
-                        ["rhyme", "Import từ thư viện Ghép vần"]
+                        ["flashcards", "Từ Flashcard"],
+                        ["dialogues", "Từ Hội thoại"],
+                        ["math", "Từ Câu hỏi toán"],
+                        ["thinking", "Từ Tư duy"],
+                        ["spelling", "Từ Đánh vần"],
+                        ["rhyme", "Từ Ghép vần"]
                       ].map(([source, label]) => (
                         <button key={source} type="button" className="secondary" onClick={() => importFromLibrary(source as any)}>
                           {label} ({contentLibraryCounts[source] || 0})
@@ -469,9 +470,8 @@ export function ActivityBuilderPage() {
                           <label>Số lần thử lại</label>
                           <input type="number" min={0} max={10} value={retryLimit} onChange={(e) => setRetryLimit(Number(e.target.value))} />
                         </div>
-                        <div className="field check-row" style={{ marginTop: "8px" }}>
-                          <input type="checkbox" id="voicePremiumRequired" checked={voicePremiumRequired} onChange={(e) => setVoicePremiumRequired(e.target.checked)} />
-                          <label htmlFor="voicePremiumRequired" style={{ fontWeight: "normal", cursor: "pointer" }}>Yêu cầu giọng nói Premium</label>
+                        <div className="field" style={{ marginTop: "8px" }}>
+                          <ToggleSwitch id="voicePremiumRequired" label="Yêu cầu giọng nói Premium" checked={voicePremiumRequired} onChange={setVoicePremiumRequired} />
                         </div>
                       </div>
                     )}
@@ -520,9 +520,8 @@ export function ActivityBuilderPage() {
                         </select>
                       </div>
                     </div>
-                    <div className="field check-row">
-                      <input type="checkbox" id="actIsActive" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                      <label htmlFor="actIsActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Đang hoạt động</label>
+                    <div className="field">
+                      <ToggleSwitch id="actIsActive" label="Đang hoạt động" checked={isActive} onChange={setIsActive} />
                     </div>
                   </div>
 

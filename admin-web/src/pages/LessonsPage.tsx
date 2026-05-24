@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { adminApi } from "../api/adminApi";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { lessonsImportConfig } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
@@ -336,14 +337,8 @@ export function LessonsPage() {
                     <span className="helper">Số nhỏ hiển thị trước trong lộ trình học.</span>
                   </div>
 
-                  <div className="field check-row" style={{ height: "60px" }}>
-                    <input
-                      type="checkbox"
-                      id="isActiveLesson"
-                      checked={isActive}
-                      onChange={(e) => setIsActive(e.target.checked)}
-                    />
-                    <label htmlFor="isActiveLesson" style={{ fontWeight: "normal", cursor: "pointer" }}>Bài học này đang hoạt động</label>
+                  <div className="field" style={{ justifyContent: "end" }}>
+                    <ToggleSwitch id="isActiveLesson" label="Bài học này đang hoạt động" checked={isActive} onChange={setIsActive} />
                   </div>
                 </div>
               </div>

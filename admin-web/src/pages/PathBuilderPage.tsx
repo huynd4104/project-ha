@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { MultiSelect } from "../components/MultiSelect";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { UNLOCK_RULE_LABELS, uiLabel } from "../utils/adminLabels";
 import type { Lesson, LearningPath, PathItem, Program, UnlockRule } from "../types/firebaseModels";
 
@@ -211,9 +212,8 @@ export function PathBuilderPage() {
                               {UNLOCK_RULES.map((r) => <option key={r} value={r}>{UNLOCK_LABELS[r]}</option>)}
                             </select>
                           </div>
-                          <div className="field check-row" style={{ marginBottom: 0 }}>
-                            <input type="checkbox" id={`req-${pi.id}`} checked={editReqCompletion} onChange={(e) => setEditReqCompletion(e.target.checked)} />
-                            <label htmlFor={`req-${pi.id}`} style={{ fontWeight: "normal", cursor: "pointer", fontSize: "12px" }}>Bắt buộc hoàn thành</label>
+                          <div className="field" style={{ marginBottom: 0 }}>
+                            <ToggleSwitch id={`req-${pi.id}`} label="Bắt buộc hoàn thành" checked={editReqCompletion} onChange={setEditReqCompletion} />
                           </div>
                         </div>
 

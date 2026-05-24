@@ -32,12 +32,23 @@ const groups: NavGroup[] = [
   {
     title: "Quản lý nội dung học", icon: "content", defaultOpen: true,
     items: [
-      { to: "/taxonomy", label: "Nhóm trẻ & mục tiêu học", icon: "target" },
+      { to: "/taxonomy", label: "Nhóm trẻ, mục tiêu & kỹ năng", icon: "target" },
       { to: "/programs-v2", label: "Chương trình học", icon: "program" },
       { to: "/learning-paths-v2", label: "Lộ trình học", icon: "path" },
       { to: "/lessons-v2", label: "Bài học", icon: "lesson" },
       { to: "/activity-builder", label: "Hoạt động trong bài học", icon: "activity" },
       { to: "/path-builder", label: "Sắp xếp bài học vào lộ trình", icon: "sort" }
+    ]
+  },
+  {
+    title: "Kho nội dung học", icon: "archive",
+    items: [
+      { to: "/flashcards", label: "Thư viện Flashcard", icon: "lesson" },
+      { to: "/dialogues", label: "Thư viện hội thoại", icon: "activity" },
+      { to: "/math-questions", label: "Thư viện câu hỏi toán", icon: "activity" },
+      { to: "/thinking-questions", label: "Thư viện tư duy", icon: "activity" },
+      { to: "/spelling-questions", label: "Thư viện đánh vần", icon: "activity" },
+      { to: "/rhyme-questions", label: "Thư viện ghép vần", icon: "activity" }
     ]
   },
   {
@@ -60,26 +71,7 @@ const groups: NavGroup[] = [
     ]
   },
   {
-    title: "Kho nội dung học", icon: "archive",
-    items: [
-      { to: "/lessons", label: "Thư viện bài học", icon: "lesson", library: true },
-      { to: "/math-questions", label: "Thư viện toán tư duy", icon: "activity", library: true },
-      { to: "/dialogues", label: "Thư viện hội thoại", icon: "activity", library: true },
-      { to: "/flashcards", label: "Thư viện Flashcard", icon: "lesson", library: true },
-      { to: "/qr-codes", label: "Thư viện QR", icon: "qr", library: true },
-      { to: "/development-categories", label: "Thư viện nhóm trẻ", icon: "target", library: true },
-      { to: "/learning-goals", label: "Thư viện mục tiêu học", icon: "target", library: true },
-      { to: "/skills", label: "Thư viện kỹ năng", icon: "activity", library: true },
-      { to: "/programs", label: "Thư viện chương trình", icon: "program", library: true },
-      { to: "/learning-paths", label: "Thư viện lộ trình", icon: "path", library: true },
-      { to: "/npcs", label: "Thư viện nhân vật", icon: "character", library: true },
-      { to: "/thinking-questions", label: "Thư viện tư duy", icon: "activity", library: true },
-      { to: "/spelling-questions", label: "Thư viện đánh vần", icon: "activity", library: true },
-      { to: "/rhyme-questions", label: "Thư viện ghép vần", icon: "activity", library: true }
-    ]
-  },
-  {
-    title: "Khác", icon: "more",
+    title: "Công cụ", icon: "more",
     items: [
       { to: "/badges", label: "Huy hiệu", icon: "badge" },
       { to: "/daily-missions", label: "Nhiệm vụ ngày", icon: "mission" },

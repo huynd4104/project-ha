@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
 import { MultiSelect } from "../components/MultiSelect";
 import { MediaPicker } from "../components/MediaPicker";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { npcsImportConfig } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
 import { uiLabel } from "../utils/adminLabels";
+import { useTableControls } from "../utils/tableControls";
 import type { DialogueTemplates, AccessType } from "../types/firebaseModels";
 
 const ACCESS_TYPES: AccessType[] = ["FREE", "PREMIUM"];
@@ -40,6 +43,7 @@ export function NPCsPageV2() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [editingItem, setEditingItem] = useState<NPCItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<NPCItem | null>(null);
   const [toastMsg, setToastMsg] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -85,6 +89,12 @@ export function NPCsPageV2() {
   }, [items, search]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
+  const table = useTableControls(filtered, [
+    { value: "name", label: "Tên", getValue: (item) => item.name },
+    { value: "role", label: "Vai trò", getValue: (item) => item.role },
+    { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
+  ], "name");
 
   const skillOptions = skills.filter((s: any) => s.isActive).map((s: any) => ({ value: s.key, label: s.label }));
   const programOptions = programs.map((p: any) => ({ value: p.id, label: p.title }));
@@ -110,6 +120,10 @@ export function NPCsPageV2() {
     setUnlockBenefit(item.unlockBenefit || ""); setAccessType(item.accessType || "FREE");
     setErrors({}); setShowAdvanced(!!(item.role || item.personality || item.skillTags?.length));
     setIsModalOpen(true);
+  };
+
+  const openPreviewModal = (item: NPCItem) => {
+    setPreviewItem(item);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,6 +162,21 @@ export function NPCsPageV2() {
     setDialogueTemplates({ ...dialogueTemplates, [key]: value || undefined });
   };
 
+  const getProgramNames = (ids?: string[]) => {
+    if (!ids?.length) return "Chưa gắn";
+    return ids.map((id) => programs.find((p: any) => p.id === id)?.title || id).join(", ");
+  };
+
+  const getPathNames = (ids?: string[]) => {
+    if (!ids?.length) return "Chưa gắn";
+    return ids.map((id) => paths.find((p: any) => p.id === id)?.title || id).join(", ");
+  };
+
+  const getSkillNames = (keys?: string[]) => {
+    if (!keys?.length) return "Chưa gắn";
+    return keys.map((key) => skills.find((s: any) => s.key === key)?.label || key).join(", ");
+  };
+
   const importConfig = npcsImportConfig(items as any);
   const handleImport = async (rows: any[]) => {
     await batchImport("npcs", rows);
@@ -183,6 +212,8 @@ export function NPCsPageV2() {
           <button onClick={openAddModal}>➕ Thêm nhân vật mới</button>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -197,7 +228,7 @@ export function NPCsPageV2() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td>
                     {item.imageUrl ? <img src={item.imageUrl} alt={item.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "8px" }} />
@@ -207,9 +238,10 @@ export function NPCsPageV2() {
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description?.slice(0, 60)}{(item.description?.length || 0) > 60 ? "..." : ""}</td>
                   <td style={{ fontSize: "12px" }}>{item.role || "—"}</td>
                   <td><span className={`badge ${item.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(item.accessType || "FREE")}</span></td>
-                  <td><span className={`badge ${item.isActive ? "active" : "inactive"}`}>{item.isActive ? "Hoạt động" : "Tạm khóa"}</span></td>
+                  <td><span className={`badge ${item.isActive ? "active" : "inactive"}`}>{item.isActive ? "Đang bật" : "Đang tắt"}</span></td>
                   <td>
                     <div className="actions">
+                      <button className="secondary" onClick={() => openPreviewModal(item)}>Xem trước</button>
                       <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
                       <button className="danger" onClick={() => handleDelete(item.id)}>Xóa</button>
                     </div>
@@ -218,6 +250,68 @@ export function NPCsPageV2() {
               ))}
             </tbody>
           </table>
+        </div>
+        </>
+      )}
+
+      {previewItem && (
+        <div className="modal-overlay" onClick={() => setPreviewItem(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(620px, 95vw)" }}>
+            <div className="modal-header">
+              <h2>Xem trước nhân vật</h2>
+              <button className="modal-close" onClick={() => setPreviewItem(null)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "20px", alignItems: "start" }}>
+                <div style={{ border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden", background: "white", textAlign: "center", padding: "16px" }}>
+                  <div style={{ width: "96px", height: "96px", margin: "0 auto 12px", borderRadius: "48px", background: "#f8fafc", display: "grid", placeItems: "center", overflow: "hidden" }}>
+                    {previewItem.imageUrl ? <img src={previewItem.imageUrl} alt={previewItem.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <span style={{ fontSize: "40px" }}>🐾</span>}
+                  </div>
+                  <strong style={{ display: "block", fontSize: "16px" }}>{previewItem.name}</strong>
+                  {previewItem.role && <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>{previewItem.role}</span>}
+                  <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span className={`badge ${previewItem.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(previewItem.accessType || "FREE")}</span>
+                    <span className={`badge ${previewItem.isActive !== false ? "active" : "inactive"}`}>{previewItem.isActive !== false ? "Đang bật" : "Đang tắt"}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Mô tả</label>
+                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.description || "Chưa có mô tả"}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Lời thoại mặc định</label>
+                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.defaultDialogue || "Chưa có lời thoại"}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Tính cách</label>
+                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.personality || "Chưa khai báo"}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Kỹ năng liên quan</label>
+                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{getSkillNames(previewItem.skillTags)}</p>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Chương trình / lộ trình</label>
+                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>
+                      {getProgramNames(previewItem.programIds)} / {getPathNames(previewItem.pathIds)}
+                    </p>
+                  </div>
+                  {previewItem.unlockBenefit && (
+                    <div>
+                      <label style={{ fontWeight: "600", fontSize: "13px" }}>Lợi ích khi mở khóa</label>
+                      <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.unlockBenefit}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="secondary" onClick={() => setPreviewItem(null)}>Đóng</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -270,9 +364,8 @@ export function NPCsPageV2() {
                           {ACCESS_TYPES.map((a) => <option key={a} value={a}>{uiLabel(a)}</option>)}
                         </select>
                       </div>
-                      <div className="field check-row" style={{ height: "60px" }}>
-                        <input type="checkbox" id="npcIsActive" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                        <label htmlFor="npcIsActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Đang hoạt động</label>
+                      <div className="field" style={{ justifyContent: "end" }}>
+                        <ToggleSwitch id="npcIsActive" label="Đang bật" checked={isActive} onChange={setIsActive} />
                       </div>
                     </div>
 

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
 import { dailyMissionsImportConfig } from "../components/import/importConfigs";
 import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
+import { useTableControls } from "../utils/tableControls";
 
 interface DailyMission {
   id: string;
@@ -63,6 +66,13 @@ export function DailyMissionsPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+  const table = useTableControls(filtered, [
+    { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
+    { value: "type", label: "Phân loại", getValue: (item) => item.type },
+    { value: "target", label: "Mục tiêu", getValue: (item) => item.targetValue },
+    { value: "reward", label: "Phần thưởng", getValue: (item) => item.rewardXp },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
+  ], "title");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -171,6 +181,8 @@ export function DailyMissionsPage() {
           <p style={{ color: "var(--text-muted)" }}>Không có nhiệm vụ ngày nào.</p>
         </div>
       ) : (
+        <>
+        <TableControls {...table} />
         <div className="table-wrap">
           <table>
             <thead>
@@ -185,7 +197,7 @@ export function DailyMissionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description}</td>
@@ -208,6 +220,7 @@ export function DailyMissionsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {isModalOpen && (
@@ -273,14 +286,8 @@ export function DailyMissionsPage() {
                   {errors.rewardXp && <span className="error-msg">{errors.rewardXp}</span>}
                 </div>
 
-                <div className="field check-row">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                  />
-                  <label htmlFor="isActive" style={{ fontWeight: "normal", cursor: "pointer" }}>Nhiệm vụ này đang hoạt động</label>
+                <div className="field">
+                  <ToggleSwitch id="isActive" label="Nhiệm vụ này đang hoạt động" checked={isActive} onChange={setIsActive} />
                 </div>
               </div>
               <div className="modal-footer">

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
+import { TableControls } from "../components/TableControls";
 import { MultiSelect } from "../components/MultiSelect";
 import { uiLabel } from "../utils/adminLabels";
 import { validateProgramPublish } from "../utils/publishValidation";
+import { useTableControls } from "../utils/tableControls";
 import type { DevelopmentCategory, LearningGoal, Skill, Program, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
 const LEVELS: LearningLevel[] = ["BEGINNER", "BASIC", "INTERMEDIATE"];
@@ -64,6 +66,13 @@ export function ProgramsPageV2() {
   }, [items, search]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
+  const table = useTableControls(filtered, [
+    { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
+    { value: "age", label: "Tuổi tối thiểu", getValue: (item) => item.targetAgeMin },
+    { value: "level", label: "Cấp độ", getValue: (item) => item.level },
+    { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
+    { value: "status", label: "Trạng thái", getValue: (item) => item.status }
+  ], "title");
 
   const categoryOptions = categories.filter((c) => c.isActive).map((c) => ({ value: c.key, label: c.label }));
   const goalOptions = goals.filter((g) => g.isActive).map((g) => ({ value: g.key, label: g.label }));
@@ -158,8 +167,10 @@ export function ProgramsPageV2() {
           <button onClick={openAddModal}>➕ Tạo chương trình ngay</button>
         </div>
       ) : (
-        <div className="table-wrap">
-          <table>
+        <>
+          <TableControls {...table} />
+          <div className="table-wrap">
+            <table>
             <thead>
               <tr>
                 <th>Tiêu đề</th>
@@ -173,7 +184,7 @@ export function ProgramsPageV2() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {table.pagedItems.map((item) => (
                 <tr key={item.id}>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ fontSize: "13px" }}>{item.targetAgeMin}–{item.targetAgeMax} tuổi</td>
@@ -191,8 +202,9 @@ export function ProgramsPageV2() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+        </>
       )}
 
       {isModalOpen && (
