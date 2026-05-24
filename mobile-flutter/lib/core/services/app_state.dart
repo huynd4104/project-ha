@@ -10,15 +10,12 @@ import '../../models/models.dart';
 import 'sound_service.dart';
 
 class AppState extends ChangeNotifier {
-  AppState({this.firebaseError})
-    : authRepository = AuthRepository(),
-      childRepository = ChildRepository(),
-      gamificationRepository = GamificationRepository();
+  AppState({this.firebaseError});
 
   final Object? firebaseError;
-  final AuthRepository authRepository;
-  final ChildRepository childRepository;
-  final GamificationRepository gamificationRepository;
+  late final AuthRepository authRepository = AuthRepository();
+  late final ChildRepository childRepository = ChildRepository();
+  late final GamificationRepository gamificationRepository = GamificationRepository();
 
   StreamSubscription<User?>? _sub;
   bool loading = true;

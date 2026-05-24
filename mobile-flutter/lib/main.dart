@@ -11,8 +11,19 @@ Future<void> main() async {
   Object? firebaseError;
 
   try {
+    final options = DefaultFirebaseOptions.currentPlatform;
+    if (options.apiKey.isEmpty || options.appId.isEmpty) {
+      throw Exception(
+        'Firebase configuration is missing or incomplete.\n\n'
+        'Please configure native Firebase (google-services.json / GoogleService-Info.plist) '
+        'or run the app passing the environment variables via --dart-define:\n'
+        '  flutter run \\\n'
+        '    --dart-define=FIREBASE_API_KEY=... \\\n'
+        '    --dart-define=FIREBASE_APP_ID=...'
+      );
+    }
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      options: options,
     );
   } catch (error) {
     firebaseError = error;

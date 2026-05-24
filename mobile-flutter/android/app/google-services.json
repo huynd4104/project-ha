@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "543274803579",
+    "firebase_url": "https://project-ha152-default-rtdb.firebaseio.com",
+    "project_id": "project-ha152",
+    "storage_bucket": "project-ha152.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543274803579:android:03b632d67560ce09a09dde",
+        "android_client_info": {
+          "package_name": "com.projectha.mobile_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "543274803579-5imsjl2ib61erkvgrpfpun8rq0b9q3e0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBi1T5h-IWx8flSqQmjMPR3NlFsZB6ClPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "543274803579-5imsjl2ib61erkvgrpfpun8rq0b9q3e0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
