@@ -23,6 +23,13 @@ const questionSchema = z.object({
   orderIndex: z.number().int().optional()
 });
 
+type MathAnswerOption = "A" | "B" | "C" | "D";
+type MathQuestionForScoring = {
+  id: string;
+  correctOption: MathAnswerOption;
+  explanation: string | null;
+};
+
 async function assertChild(userId: string, role: string, childId?: string | null) {
   if (!childId) return;
   const child = await prisma.childProfile.findUnique({ where: { id: childId } });
@@ -47,14 +54,14 @@ mathSubmitRoutes.post("/:id/submit-math", requireAuth, asyncHandler(async (req, 
 
   const questions = await prisma.mathQuestion.findMany({ where: { lessonId: req.params.id } });
   const answerMap = new Map(body.answers.map((a) => [a.questionId, a.selectedOption]));
-  const results = questions.map((q) => ({
+  const results = questions.map((q: MathQuestionForScoring) => ({
     questionId: q.id,
     selectedOption: answerMap.get(q.id) || null,
     correctOption: q.correctOption,
     isCorrect: answerMap.get(q.id) === q.correctOption,
     explanation: q.explanation
   }));
-  const correctAnswers = results.filter((r) => r.isCorrect).length;
+  const correctAnswers = results.filter((r: { isCorrect: boolean }) => r.isCorrect).length;
   const score = questions.length ? Math.round((correctAnswers / questions.length) * 100) : 0;
 
   const existing = await prisma.userProgress.findFirst({ where: { userId: req.user!.id, childId: body.childId || null, lessonId: req.params.id } });

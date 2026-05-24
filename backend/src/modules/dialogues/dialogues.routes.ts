@@ -24,6 +24,12 @@ const dialogueSchema = z.object({
   orderIndex: z.number().int().optional()
 });
 
+type DialogueAnswerOption = "A" | "B" | "C" | "D";
+type DialogueForScoring = {
+  id: string;
+  correctOption: DialogueAnswerOption;
+};
+
 async function assertChild(userId: string, role: string, childId?: string | null) {
   if (!childId) return;
   const child = await prisma.childProfile.findUnique({ where: { id: childId } });
@@ -48,13 +54,13 @@ dialogueSubmitRoutes.post("/:id/submit-dialogue", requireAuth, asyncHandler(asyn
 
   const dialogues = await prisma.dialogue.findMany({ where: { lessonId: req.params.id } });
   const answerMap = new Map(body.dialogueAnswers.map((a) => [a.dialogueId, a.selectedOption]));
-  const results = dialogues.map((d) => ({
+  const results = dialogues.map((d: DialogueForScoring) => ({
     dialogueId: d.id,
     selectedOption: answerMap.get(d.id) || null,
     correctOption: d.correctOption,
     isCorrect: answerMap.get(d.id) === d.correctOption
   }));
-  const correctAnswers = results.filter((r) => r.isCorrect).length;
+  const correctAnswers = results.filter((r: { isCorrect: boolean }) => r.isCorrect).length;
   const score = dialogues.length ? Math.round((correctAnswers / dialogues.length) * 100) : 0;
   const existing = await prisma.userProgress.findFirst({ where: { userId: req.user!.id, childId: body.childId || null, lessonId: req.params.id } });
   const data = { status: "COMPLETED" as const, score, totalQuestions: dialogues.length, correctAnswers, completedAt: new Date() };
