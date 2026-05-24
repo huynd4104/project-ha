@@ -10,7 +10,7 @@ export function DashboardPage() {
   const cards = [
     ["Người dùng", data.totalUsers],
     ["Hồ sơ trẻ", data.totalChildren],
-    ["Nhân vật NPC", data.totalNPCs],
+    ["Nhân vật Mascot", data.totalNPCs],
     ["Mã QR", data.totalQRCodes],
     ["Bài học", data.totalLessons],
     ["Bài hoàn thành", data.totalCompletedLessons],

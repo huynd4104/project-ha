@@ -120,7 +120,7 @@ export function QRCodesPage() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     
-    const npcName = npcs.find((n) => n.id === previewCode.npcId)?.name || "NPC";
+    const npcName = npcs.find((n) => n.id === previewCode.npcId)?.name || "Mascot";
 
     printWindow.document.write(`
       <html>
@@ -179,7 +179,7 @@ export function QRCodesPage() {
     const errs: Record<string, string> = {};
     if (!label.trim()) errs.label = "Nhãn nhãn dán không được để trống.";
     if (!code.trim()) errs.code = "Mã code QR không được để trống.";
-    if (!npcId) errs.npcId = "Vui lòng chọn nhân vật NPC liên kết.";
+    if (!npcId) errs.npcId = "Vui lòng chọn nhân vật Mascot liên kết.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -257,7 +257,7 @@ export function QRCodesPage() {
                   <tr>
                     <th>Nhãn thẻ/đồ chơi</th>
                     <th>Mã định danh</th>
-                    <th>NPC liên kết</th>
+                    <th>Mascot liên kết</th>
                     <th>Lượt dùng</th>
                     <th style={{ width: "110px" }}>Trạng thái</th>
                     <th style={{ width: "230px" }}>Thao tác</th>
@@ -319,7 +319,7 @@ export function QRCodesPage() {
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "6px", textAlign: "left", width: "100%" }}>
                   <p>• Code: <code>{previewCode.code}</code></p>
-                  <p>• NPC: {getNpcInfo(previewCode.npcId)?.name || "Chưa gắn"}</p>
+                  <p>• Mascot: {getNpcInfo(previewCode.npcId)?.name || "Chưa gắn"}</p>
                 </div>
               </div>
             </div>
@@ -354,7 +354,7 @@ export function QRCodesPage() {
                   <div style={{ display: "flex", gap: "8px" }}>
                     <input
                       type="text"
-                      placeholder="Mã code (Ví dụ: NPC_MIMI_01)"
+                      placeholder="Mã code (Ví dụ: Mascot_MIMI_01)"
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       style={{ flex: 1 }}
@@ -366,9 +366,9 @@ export function QRCodesPage() {
                 </div>
 
                 <div className="field">
-                  <label>Nhân vật NPC liên kết *</label>
+                  <label>Nhân vật Mascot liên kết *</label>
                   <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
-                    <option value="">-- Chọn NPC --</option>
+                    <option value="">-- Chọn Mascot --</option>
                     {npcs.map((n) => (
                       <option key={n.id} value={n.id}>
                         {n.name}

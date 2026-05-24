@@ -263,7 +263,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () => context.go('/scan'),
             ),
             _ActionCard(
-              title: 'Bộ sưu tập NPC',
+              title: 'Bộ sưu tập Mascot',
               subtitle: 'Xem các bạn đã mở khóa',
               icon: Icons.auto_awesome_rounded,
               color: AppColors.pink,

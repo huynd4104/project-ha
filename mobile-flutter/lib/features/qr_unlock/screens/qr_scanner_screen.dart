@@ -23,7 +23,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   late final TabController tab = TabController(length: 2, vsync: this);
   final code = TextEditingController();
   final repo = ActivationRepository();
-  final scannerController = MobileScannerController();
+  final scannerController = MobileScannerController(
+    formats: const [BarcodeFormat.qrCode],
+  );
   bool loading = false;
   bool scanned = false;
   String? error;

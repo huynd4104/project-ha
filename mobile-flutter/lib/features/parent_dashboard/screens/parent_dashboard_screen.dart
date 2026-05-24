@@ -13,29 +13,67 @@ import '../widgets/recommendation_card.dart';
 import '../widgets/skill_progress_card.dart';
 import '../widgets/weekly_progress_card.dart';
 
+class _DashboardData {
+  final List<UserProgress> history;
+  final Map<String, String> lessonTitles;
+
+  const _DashboardData({
+    required this.history,
+    required this.lessonTitles,
+  });
+}
+
 class ParentDashboardScreen extends StatelessWidget {
   const ParentDashboardScreen({super.key});
 
-  Future<List<UserProgress>> _history(String uid, String childId) async {
-    final snap = await FirebaseFirestore.instance
-        .collection('progress')
-        .where('userId', isEqualTo: uid)
-        .where('childId', isEqualTo: childId)
-        .get();
-    return snap.docs
+  Future<_DashboardData> _fetchDashboardData(String uid, String childId) async {
+    final results = await Future.wait([
+      FirebaseFirestore.instance
+          .collection('progress')
+          .where('userId', isEqualTo: uid)
+          .where('childId', isEqualTo: childId)
+          .get(),
+      FirebaseFirestore.instance.collection('lessons').get(),
+    ]);
+
+    final progressSnap = results[0];
+    final lessonsSnap = results[1];
+
+    final history = progressSnap.docs
         .map((doc) => UserProgress.fromMap(doc.id, doc.data()))
         .toList();
+
+    try {
+      history.sort((a, b) {
+        final aDoc = progressSnap.docs.firstWhere((doc) => doc.id == a.id);
+        final bDoc = progressSnap.docs.firstWhere((doc) => doc.id == b.id);
+        final aTime = aDoc.data()['completedAt'] as Timestamp?;
+        final bTime = bDoc.data()['completedAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+    } catch (_) {}
+
+    final lessonTitles = <String, String>{};
+    for (final doc in lessonsSnap.docs) {
+      lessonTitles[doc.id] = doc.data()['title'] ?? '';
+    }
+
+    return _DashboardData(history: history, lessonTitles: lessonTitles);
   }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     return Scaffold(
-      body: FutureBuilder(
-        future: _history(state.firebaseUser!.uid, state.activeChild!.id),
+      body: FutureBuilder<_DashboardData>(
+        future: _fetchDashboardData(state.firebaseUser!.uid, state.activeChild!.id),
         builder: (_, snap) {
           if (!snap.hasData) return const LoadingView();
-          final completed = snap.data!
+          final data = snap.data!;
+          final completed = data.history
               .where(
                 (e) =>
                     e.status == 'COMPLETED' &&
@@ -155,15 +193,20 @@ class ParentDashboardScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 8),
-              for (final item in snap.data!.take(5))
-                ListTile(
+              ...data.history.take(5).map((item) {
+                final cleanId = item.lessonId.replaceAll('_flashcard', '');
+                final lessonTitle = data.lessonTitles[cleanId] ?? item.lessonId;
+                final isFlashcard = item.lessonId.endsWith('_flashcard');
+                final titleText = isFlashcard ? 'Ôn tập thẻ học: $lessonTitle' : lessonTitle;
+                return ListTile(
                   leading: const Icon(
                     Icons.check_circle_rounded,
                     color: AppColors.primary,
                   ),
-                  title: Text(item.lessonId),
+                  title: Text(titleText),
                   subtitle: Text('Điểm ${item.score}%'),
-                ),
+                );
+              }),
             ],
           );
         },

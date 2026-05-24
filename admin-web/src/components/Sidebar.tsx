@@ -5,7 +5,7 @@ const links = [
   ["/users", "Người dùng"],
   ["/children", "Hồ sơ trẻ"],
   ["/media", "Thư viện Media"],
-  ["/npcs", "Nhân vật NPC"],
+  ["/npcs", "Nhân vật Mascot"],
   ["/qr-codes", "Mã QR"],
   ["/lessons", "Bài học"],
   ["/math-questions", "Toán"],

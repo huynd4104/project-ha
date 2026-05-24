@@ -278,7 +278,7 @@ export function BadgesPage() {
                         <option value="LESSON">LESSON (Bài học)</option>
                         <option value="STREAK">STREAK (Liên tiếp)</option>
                         <option value="XP">XP (Kinh nghiệm)</option>
-                        <option value="NPC">NPC (Mascot)</option>
+                        <option value="NPC">Mascot</option>
                         <option value="MISSION">MISSION (Nhiệm vụ)</option>
                       </select>
                     </div>

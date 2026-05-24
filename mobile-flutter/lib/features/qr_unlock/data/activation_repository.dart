@@ -46,7 +46,7 @@ class ActivationRepository {
     final qrDoc = qrSnap.docs.first;
     final qr = QRCodeModel.fromMap(qrDoc.id, qrDoc.data());
 
-    final transactionResult = await _db.runTransaction<String>((
+    final transactionResult = await _db.runTransaction<Map<String, dynamic>>((
       transaction,
     ) async {
       final freshQr = await transaction.get(qrDoc.reference);
@@ -63,10 +63,20 @@ class ActivationRepository {
         throw Exception('Nhân vật Mascot liên kết với mã này không tồn tại.');
       if (npcDoc.data()?['isActive'] == false)
         throw Exception('Nhân vật Mascot liên kết với mã này hiện đã bị khóa.');
+
+      final npcData = npcDoc.data()!;
+      npcData['id'] = npcDoc.id;
+
       final unlockRef = _db
           .collection('userUnlockedNpcs')
           .doc('${userId}_${childId}_${fresh.npcId}');
-      if ((await transaction.get(unlockRef)).exists) return 'existing';
+      final unlockedDoc = await transaction.get(unlockRef);
+      if (unlockedDoc.exists) {
+        return {
+          'status': 'existing',
+          'npc': npcData,
+        };
+      }
       transaction.set(unlockRef, {
         'userId': userId,
         'childId': childId,
@@ -78,12 +88,18 @@ class ActivationRepository {
         'usedCount': FieldValue.increment(1),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      return 'created';
+      return {
+        'status': 'created',
+        'npc': npcData,
+      };
     });
 
-    final npcDoc = await _db.collection('npcs').doc(qr.npcId).get();
-    final npc = NPC.fromMap(npcDoc.id, npcDoc.data()!);
-    if (transactionResult == 'existing') {
+    final npcMap = transactionResult['npc'] as Map<String, dynamic>;
+    final npcId = npcMap['id'] as String;
+    final npc = NPC.fromMap(npcId, npcMap);
+    final status = transactionResult['status'] as String;
+
+    if (status == 'existing') {
       return UnlockResult(
         npc: npc,
         message: 'Mascot này đã có sẵn trong bộ sưu tập của bé!',
@@ -92,16 +108,31 @@ class ActivationRepository {
         newBadges: const [],
       );
     }
-    final xp = await _gamification.awardXp(
-      userId,
-      childId,
-      10,
-      'Mở khóa Mascot: ${npc.name}',
-    );
-    final streak = await _gamification.updateStreak(userId, childId);
-    await _gamification.updateDailyMissionProgress(userId, childId, 'SCAN_QR');
-    final badges = await _gamification.checkAndAwardBadges(userId, childId);
-    final totalXp = await _gamification.totalXp(userId, childId);
+
+    // Run gamification updates in parallel
+    final gamificationResults = await Future.wait([
+      _gamification.awardXp(
+        userId,
+        childId,
+        10,
+        'Mở khóa Mascot: ${npc.name}',
+      ),
+      _gamification.updateStreak(userId, childId),
+      _gamification.updateDailyMissionProgress(userId, childId, 'SCAN_QR'),
+    ]);
+
+    final xp = gamificationResults[0] as int;
+    final streak = gamificationResults[1] as Streak;
+
+    // Run badge checks and total XP concurrently after writes
+    final badgeAndXpResults = await Future.wait([
+      _gamification.checkAndAwardBadges(userId, childId),
+      _gamification.totalXp(userId, childId),
+    ]);
+
+    final badges = badgeAndXpResults[0] as List<Badge>;
+    final totalXp = badgeAndXpResults[1] as int;
+
     return UnlockResult(
       npc: npc,
       message: 'Mở khóa Mascot thành công!',

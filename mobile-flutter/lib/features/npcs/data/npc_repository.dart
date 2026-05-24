@@ -30,16 +30,16 @@ class NpcRepository {
         .where('userId', isEqualTo: userId)
         .where('childId', isEqualTo: childId)
         .get();
-    final items = <UnlockedNpcView>[];
-    for (final doc in snap.docs) {
+    final futures = snap.docs.map((doc) async {
       final unlock = UserUnlockedNpc.fromMap(doc.id, doc.data());
       final npcDoc = await _db.collection('npcs').doc(unlock.npcId).get();
-      if (npcDoc.exists)
-        items.add(
-          UnlockedNpcView(unlock, NPC.fromMap(npcDoc.id, npcDoc.data()!)),
-        );
-    }
-    return items;
+      if (npcDoc.exists) {
+        return UnlockedNpcView(unlock, NPC.fromMap(npcDoc.id, npcDoc.data()!));
+      }
+      return null;
+    });
+    final results = await Future.wait(futures);
+    return results.whereType<UnlockedNpcView>().toList();
   }
 
   Future<NPC?> byId(String id) async {

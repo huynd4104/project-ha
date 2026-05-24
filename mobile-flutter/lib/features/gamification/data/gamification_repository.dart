@@ -132,7 +132,7 @@ class GamificationRepository {
         .where('isActive', isEqualTo: true)
         .where('type', isEqualTo: type)
         .get();
-    for (final missionDoc in missions.docs) {
+    final futures = missions.docs.map((missionDoc) async {
       final mission = DailyMission.fromMap(missionDoc.id, missionDoc.data());
       final progressSnap = await _db
           .collection('userMissionProgress')
@@ -172,51 +172,64 @@ class GamificationRepository {
             .doc(existing.id)
             .set(payload, SetOptions(merge: true));
       }
-    }
+    });
+    await Future.wait(futures);
   }
 
   Future<List<Badge>> checkAndAwardBadges(String userId, String childId) async {
-    final badgesSnap = await _db
-        .collection('badges')
-        .where('isActive', isEqualTo: true)
-        .get();
-    final earnedSnap = await _db
-        .collection('userBadges')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .get();
+    final results = await Future.wait([
+      _db.collection('badges').where('isActive', isEqualTo: true).get(),
+      _db
+          .collection('userBadges')
+          .where('userId', isEqualTo: userId)
+          .where('childId', isEqualTo: childId)
+          .get(),
+      _db
+          .collection('progress')
+          .where('userId', isEqualTo: userId)
+          .where('childId', isEqualTo: childId)
+          .where('status', isEqualTo: 'COMPLETED')
+          .get(),
+      _db
+          .collection('streaks')
+          .where('userId', isEqualTo: userId)
+          .where('childId', isEqualTo: childId)
+          .limit(1)
+          .get(),
+      _db
+          .collection('userUnlockedNpcs')
+          .where('userId', isEqualTo: userId)
+          .where('childId', isEqualTo: childId)
+          .get(),
+      _db
+          .collection('userMissionProgress')
+          .where('userId', isEqualTo: userId)
+          .where('childId', isEqualTo: childId)
+          .where('isCompleted', isEqualTo: true)
+          .get(),
+      totalXp(userId, childId),
+    ]);
+
+    final badgesSnap = results[0] as QuerySnapshot<Map<String, dynamic>>;
+    final earnedSnap = results[1] as QuerySnapshot<Map<String, dynamic>>;
+    final progressSnap = results[2] as QuerySnapshot<Map<String, dynamic>>;
+    final streakSnap = results[3] as QuerySnapshot<Map<String, dynamic>>;
+    final unlockSnap = results[4] as QuerySnapshot<Map<String, dynamic>>;
+    final missionSnap = results[5] as QuerySnapshot<Map<String, dynamic>>;
+    final xp = results[6] as int;
+
     final earnedIds = earnedSnap.docs.map((e) => e.data()['badgeId']).toSet();
-    final progressSnap = await _db
-        .collection('progress')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .where('status', isEqualTo: 'COMPLETED')
-        .get();
-    final streakSnap = await _db
-        .collection('streaks')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .limit(1)
-        .get();
-    final unlockSnap = await _db
-        .collection('userUnlockedNpcs')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .get();
-    final missionSnap = await _db
-        .collection('userMissionProgress')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .where('isCompleted', isEqualTo: true)
-        .get();
-    final xp = await totalXp(userId, childId);
-    final streak = streakSnap.docs.isEmpty
-        ? 0
-        : Streak.fromMap(
-            streakSnap.docs.first.id,
-            streakSnap.docs.first.data(),
-          ).currentStreak;
+    final streak =
+        streakSnap.docs.isEmpty
+            ? 0
+            : Streak.fromMap(
+              streakSnap.docs.first.id,
+              streakSnap.docs.first.data(),
+            ).currentStreak;
+
     final earned = <Badge>[];
+    final writeFutures = <Future>[];
+
     for (final doc in badgesSnap.docs) {
       if (earnedIds.contains(doc.id)) continue;
       final badge = Badge.fromMap(doc.id, doc.data());
@@ -231,14 +244,18 @@ class GamificationRepository {
         _ => false,
       };
       if (ok) {
-        await _db.collection('userBadges').add({
+        final f = _db.collection('userBadges').add({
           'userId': userId,
           'childId': childId,
           'badgeId': badge.id,
           'earnedAt': FieldValue.serverTimestamp(),
         });
+        writeFutures.add(f);
         earned.add(badge.copyWith(isEarned: true));
       }
+    }
+    if (writeFutures.isNotEmpty) {
+      await Future.wait(writeFutures);
     }
     return earned;
   }

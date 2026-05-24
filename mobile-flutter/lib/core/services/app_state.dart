@@ -97,10 +97,17 @@ class AppState extends ChangeNotifier {
     if (firebaseUser == null || activeChild == null) return;
     final uid = firebaseUser!.uid;
     final childId = activeChild!.id;
-    final xp = await gamificationRepository.totalXp(uid, childId);
+
+    final results = await Future.wait([
+      gamificationRepository.totalXp(uid, childId),
+      gamificationRepository.getStreak(uid, childId),
+      NpcRepository().collection(uid, childId),
+    ]);
+
+    final xp = results[0] as int;
     levelStats = gamificationRepository.calculateLevel(xp);
-    streak = await gamificationRepository.getStreak(uid, childId);
-    final unlockedNpcs = await NpcRepository().collection(uid, childId);
+    streak = results[1] as Streak?;
+    final unlockedNpcs = results[2] as List<UnlockedNpcView>;
     activeNpc = unlockedNpcs.isEmpty ? null : unlockedNpcs.first.npc;
   }
 

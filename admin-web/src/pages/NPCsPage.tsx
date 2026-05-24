@@ -148,14 +148,14 @@ export function NPCsPage() {
 
   const handleImport = async (rows: any[]) => {
     await batchImport("npcs", rows);
-    showToast(`Import CSV thành công ${rows.length} NPC.`);
+    showToast(`Import CSV thành công ${rows.length} Mascot.`);
     await loadData();
   };
 
   return (
     <div>
       <div className="toolbar">
-        <h1>Nhân vật NPC</h1>
+        <h1>Nhân vật Mascot</h1>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Download Template</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
@@ -177,7 +177,7 @@ export function NPCsPage() {
         <p>Đang tải danh sách nhân vật...</p>
       ) : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px" }}>
-          <p style={{ color: "var(--text-muted)" }}>Không có nhân vật NPC nào.</p>
+          <p style={{ color: "var(--text-muted)" }}>Không có nhân vật Mascot nào.</p>
         </div>
       ) : (
         <div className="table-wrap">
@@ -227,7 +227,7 @@ export function NPCsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(680px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Cập Nhật Nhân Vật NPC" : "Thêm Nhân Vật NPC Mới"}</h2>
+              <h2>{editingItem ? "Cập Nhật Nhân Vật Mascot" : "Thêm Nhân Vật Mascot Mới"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -253,7 +253,7 @@ export function NPCsPage() {
                         onChange={(e) => setDescription(e.target.value)}
                       />
                       {errors.description && <span className="error-msg">{errors.description}</span>}
-                      <span className="helper">Mô tả này giúp phụ huynh hiểu rõ hơn về NPC.</span>
+                      <span className="helper">Mô tả này giúp phụ huynh hiểu rõ hơn về Mascot.</span>
                     </div>
 
                     <div className="field">
@@ -269,7 +269,7 @@ export function NPCsPage() {
                         <button type="button" className="secondary" onClick={() => setShowPickerFor("image")}>Thư viện</button>
                       </div>
                       {errors.imageUrl && <span className="error-msg">{errors.imageUrl}</span>}
-                      <span className="helper">Ảnh NPC sẽ hiển thị trong bộ sưu tập của trẻ.</span>
+                      <span className="helper">Ảnh Mascot sẽ hiển thị trong bộ sưu tập của trẻ.</span>
                     </div>
 
                     <div className="field">
@@ -295,7 +295,7 @@ export function NPCsPage() {
                         onChange={(e) => setDefaultDialogue(e.target.value)}
                       />
                       {errors.defaultDialogue && <span className="error-msg">{errors.defaultDialogue}</span>}
-                      <span className="helper">Default dialogue là câu thoại ngắn đầu tiên của NPC khi trẻ tương tác.</span>
+                      <span className="helper">Default dialogue là câu thoại ngắn đầu tiên của Mascot khi trẻ tương tác.</span>
                     </div>
 
                     <div className="field check-row">
@@ -311,7 +311,7 @@ export function NPCsPage() {
 
                   {/* Character visual preview panel */}
                   <div className="drawer-aside" style={{ width: "240px" }}>
-                    <h3>Mô Phỏng NPC</h3>
+                    <h3>Mô Phỏng Mascot</h3>
                     <div style={{ border: "1px solid var(--border)", borderRadius: "8px", overflow: "hidden", marginTop: "12px", background: "#f8fafc", textAlign: "center" }}>
                       <div style={{ height: "150px", background: "#eff6ff", display: "grid", placeItems: "center" }}>
                         {imageUrl ? (
@@ -321,7 +321,7 @@ export function NPCsPage() {
                         )}
                       </div>
                       <div style={{ padding: "12px", textAlign: "left" }}>
-                        <strong style={{ display: "block", fontSize: "14px" }}>{name || "Tên NPC"}</strong>
+                        <strong style={{ display: "block", fontSize: "14px" }}>{name || "Tên Mascot"}</strong>
                         <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", lineHeight: "1.4" }}>
                           {defaultDialogue ? `💬 "${defaultDialogue}"` : "💬 Chưa có câu thoại mặc định."}
                         </p>

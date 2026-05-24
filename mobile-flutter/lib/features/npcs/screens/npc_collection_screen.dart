@@ -99,33 +99,54 @@ class NPCCollectionScreen extends StatelessWidget {
                             },
                       child: Column(
                         children: [
-                          Expanded(
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Opacity(
-                                  opacity: isUnlocked ? 1.0 : 0.25,
-                                  child: (npc.imageUrl.isEmpty)
-                                      ? const Icon(
+                           Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final w = constraints.maxWidth;
+                                final h = constraints.maxHeight;
+
+                                Widget imageWidget = npc.imageUrl.isEmpty
+                                    ? const Center(
+                                        child: Icon(
                                           Icons.auto_awesome_rounded,
                                           size: 70,
-                                        )
-                                      : AppImage(
+                                        ),
+                                      )
+                                    : SizedBox(
+                                        width: w,
+                                        height: h,
+                                        child: AppImage(
                                           imageUrl: npc.imageUrl,
                                           fit: BoxFit.contain,
+                                          width: w,
+                                          height: h,
                                         ),
-                                ),
-                                if (!isUnlocked)
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: Colors.black.withValues(alpha: .5),
-                                    child: const Icon(
-                                      Icons.lock_rounded,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
+                                      );
+
+                                return SizedBox(
+                                  width: w,
+                                  height: h,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Opacity(
+                                        opacity: isUnlocked ? 1.0 : 0.3,
+                                        child: imageWidget,
+                                      ),
+                                      if (!isUnlocked)
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.black.withValues(alpha: .5),
+                                          child: const Icon(
+                                            Icons.lock_rounded,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ),
+                                    ],
                                   ),
-                              ],
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 8),

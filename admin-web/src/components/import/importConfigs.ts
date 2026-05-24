@@ -110,7 +110,7 @@ export function mediaAssetsImportConfig(): ImportConfig {
 export function npcsImportConfig(existingNpcs: NamedRecord[]): ImportConfig {
   const existingNames = duplicateSet(existingNpcs, "name");
   return {
-    title: "Import CSV NPCs",
+    title: "Import CSV Mascots",
     templateFilename: "npcs-template.csv",
     templateHeaders: ["name", "description", "imageUrl", "animationUrl", "defaultDialogue", "isActive"],
     templateExampleRows: [
@@ -127,7 +127,7 @@ export function npcsImportConfig(existingNpcs: NamedRecord[]): ImportConfig {
       const errors: string[] = [];
       const name = normalizeString(row.name);
       if (!name) errors.push("name bắt buộc.");
-      if (name && existingNames.has(name.toLowerCase())) errors.push("NPC đã tồn tại.");
+      if (name && existingNames.has(name.toLowerCase())) errors.push("Mascot đã tồn tại.");
       if (!validateRequired(row.description)) errors.push("description bắt buộc.");
       if (row.imageUrl && !validateUrl(row.imageUrl)) errors.push("imageUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
       if (row.animationUrl && !validateUrl(row.animationUrl)) errors.push("animationUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
@@ -161,7 +161,7 @@ export function qrCodesImportConfig(npcs: NamedRecord[], existingCodes: NamedRec
       if (!code) errors.push("code bắt buộc.");
       if (code && codes.has(code.toLowerCase())) errors.push("QR code đã tồn tại.");
       if (!npcName) errors.push("npcName bắt buộc.");
-      if (npcName && !npc) errors.push(`Không tìm thấy NPC: ${npcName}`);
+      if (npcName && !npc) errors.push(`Không tìm thấy Mascot: ${npcName}`);
       return ok({
         label: normalizeString(row.label),
         code,
@@ -193,7 +193,7 @@ export function lessonsImportConfig(npcs: NamedRecord[], existingLessons: NamedR
       if (title && titles.has(title.toLowerCase())) errors.push("Lesson đã tồn tại.");
       if (!validateRequired(row.description)) errors.push("description bắt buộc.");
       if (!validateEnum(type, ["MATH", "DIALOGUE", "FLASHCARD", "THINKING", "SPELLING", "RHYME"])) errors.push(`type phải là một trong: MATH, DIALOGUE, FLASHCARD, THINKING, SPELLING, RHYME.`);
-      if (relatedNpc && !npc) errors.push(`Không tìm thấy NPC: ${relatedNpc}`);
+      if (relatedNpc && !npc) errors.push(`Không tìm thấy Mascot: ${relatedNpc}`);
       return ok({
         title,
         description: normalizeString(row.description),

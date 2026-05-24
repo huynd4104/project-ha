@@ -214,7 +214,7 @@ export function LessonsPage() {
                 <th>Tiêu đề bài học</th>
                 <th>Mô tả</th>
                 <th>Loại bài</th>
-                <th>NPC đồng hành</th>
+                <th>Mascot đồng hành</th>
                 <th style={{ width: "120px" }}>Trạng thái</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
               </tr>
@@ -240,7 +240,7 @@ export function LessonsPage() {
                           <span style={{ fontSize: "13px" }}>{npc.name}</span>
                         </div>
                       ) : (
-                        <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>Chưa gắn NPC</span>
+                        <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>Chưa gắn Mascot</span>
                       )}
                     </td>
                     <td>
@@ -305,16 +305,16 @@ export function LessonsPage() {
                   </div>
 
                   <div className="field">
-                    <label>NPC đồng hành (Tùy chọn)</label>
+                    <label>Mascot đồng hành (Tùy chọn)</label>
                     <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
-                      <option value="">-- Không có NPC --</option>
+                      <option value="">-- Không có Mascot --</option>
                       {npcs.map((n) => (
                         <option key={n.id} value={n.id}>
                           {n.name}
                         </option>
                       ))}
                     </select>
-                    <span className="helper">NPC đồng hành, trợ giúp giảng giải.</span>
+                    <span className="helper">Mascot đồng hành, trợ giúp giảng giải.</span>
                   </div>
                 </div>
 
