@@ -2,6 +2,9 @@ node_modules/
 dist/
 .expo/
 .firebase/
+.DS_Store
+*.log
+.agent/
 
 .env
 .env.*
