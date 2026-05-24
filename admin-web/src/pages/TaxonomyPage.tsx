@@ -22,6 +22,12 @@ const skillDomainOptions = [
   { value: "PARENT_GUIDED", label: "Phụ huynh đồng hành" }
 ];
 
+const getDomainLabel = (code?: string): string => {
+  if (!code) return "";
+  const option = skillDomainOptions.find((opt) => opt.value === code);
+  return option?.label || code;
+};
+
 interface TaxItem {
   id: string;
   key: string;
@@ -119,7 +125,7 @@ export function TaxonomyPage() {
     { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "key", label: "Mã định danh", getValue: (item) => item.key },
     { value: "label", label: "Nhãn", getValue: (item) => item.label },
-    { value: "domain", label: "Nhóm kỹ năng", getValue: (item) => item.domain },
+    { value: "domain", label: "Nhóm kỹ năng", getValue: (item) => getDomainLabel(item.domain) },
     { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
   ], "order");
 
@@ -294,7 +300,7 @@ export function TaxonomyPage() {
                   <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td><code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "12px" }}>{item.key}</code></td>
                   <td style={{ fontWeight: "600" }}>{item.label}</td>
-                  {tab === "skills" && <td><span className="badge info">{item.domain}</span></td>}
+                  {tab === "skills" && <td><span className="badge info">{getDomainLabel(item.domain)}</span></td>}
                   {tab === "goals" && <td style={{ fontSize: "12px" }}>{(item.skillTags || []).join(", ") || "—"}</td>}
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description || item.parentDescription || ""}</td>
                   <td>
