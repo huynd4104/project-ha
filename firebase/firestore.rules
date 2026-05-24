@@ -171,9 +171,7 @@ service cloud.firestore {
     }
 
     match /pathItems/{id} {
-      allow read: if isAdmin()
-        || (signedIn()
-          && get(/databases/$(database)/documents/learningPaths/$(resource.data.pathId)).data.status == "PUBLISHED");
+      allow read: if signedIn();
       allow write: if isAdmin();
     }
 

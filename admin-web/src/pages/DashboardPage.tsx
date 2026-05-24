@@ -29,7 +29,7 @@ export function DashboardPage() {
       const users = uRes.data.data || [];
       const npcs = nRes.data.data || [];
 
-      const legacyLessonsCount = lessons.filter((l: any) => !l.lessonType).length;
+      const libraryLessonsCount = lessons.filter((l: any) => !l.lessonType).length;
 
       const missingMetadataCount = [
         ...programs.filter((p: any) => !p.difficultyCategories?.length || !p.learningGoals?.length || !p.skillTags?.length),
@@ -75,7 +75,7 @@ export function DashboardPage() {
         totalCategories: dcRes.data.data?.length || 0,
         totalGoals: lgRes.data.data?.length || 0,
         totalSkills: sRes.data.data?.length || 0,
-        legacyLessonsCount,
+        libraryLessonsCount,
         missingMetadataCount,
         premiumUsers,
         premiumPrograms,
@@ -109,7 +109,7 @@ export function DashboardPage() {
     ["Mã QR mở khóa", extra.totalActivationCodes, "🔑"],
     ["Nhóm trẻ", extra.totalCategories, "📂"],
     ["Kỹ năng", extra.totalSkills, "🧩"],
-    ["Bài học cũ", extra.legacyLessonsCount, "📦"],
+    ["Bài học trong thư viện", extra.libraryLessonsCount, "📦"],
     ["Thiếu thông tin phân loại", extra.missingMetadataCount, "⚠️"]
   ] : [];
 
@@ -142,6 +142,21 @@ export function DashboardPage() {
             ["7. Kiểm tra trên app mobile", "/progress"],
           ].map(([label, to]) => (
             <Link key={to} to={to} className="secondary" style={{ textDecoration: "none", padding: "8px 10px", borderRadius: "8px" }}>{label}</Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+        <h2 style={{ marginTop: 0 }}>Cấu trúc nội dung học</h2>
+        <p style={{ color: "var(--text-muted)", marginTop: 0 }}>
+          Kho nội dung học lưu nội dung có thể tái sử dụng. Hoạt động là nhiệm vụ nhỏ trẻ thực hiện. Bài học gồm nhiều hoạt động, lộ trình học gồm nhiều bài học, và chương trình học nhóm nhiều lộ trình.
+        </p>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          {["Kho nội dung học", "Hoạt động", "Bài học", "Lộ trình học", "Chương trình học"].map((label, index, arr) => (
+            <span key={label} style={{ display: "inline-flex", gap: "8px", alignItems: "center", color: "var(--text-main)", fontWeight: 700 }}>
+              <span className="badge info" style={{ padding: "6px 10px" }}>{label}</span>
+              {index < arr.length - 1 && <span style={{ color: "var(--text-muted)" }}>→</span>}
+            </span>
           ))}
         </div>
       </div>

@@ -5,7 +5,7 @@ import { FormInput } from "../components/FormInput";
 
 export type Field = { key: string; label: string; type?: string; defaultValue?: string | number | boolean };
 
-export function CrudPage({ title, path, fields, columns, readonly = false, legacy = false, description }: { title: string; path: string; fields: Field[]; columns: string[]; readonly?: boolean; legacy?: boolean; description?: string }) {
+export function CrudPage({ title, path, fields, columns, readonly = false, library = false, description }: { title: string; path: string; fields: Field[]; columns: string[]; readonly?: boolean; library?: boolean; description?: string }) {
   const empty = useMemo(() => Object.fromEntries(fields.map((field) => [field.key, field.defaultValue ?? ""])), [fields]);
   const [rows, setRows] = useState<any[]>([]);
   const [form, setForm] = useState<any>(empty);
@@ -31,12 +31,12 @@ export function CrudPage({ title, path, fields, columns, readonly = false, legac
     <div>
       <h1>{title}</h1>
       {description && <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>{description}</p>}
-      {legacy && (
+      {library && (
         <div className="validation-warnings" style={{ marginBottom: "16px" }}>
-          Mục này dùng để tương thích với dữ liệu cũ. Nội dung mới nên tạo ở phần Quản lý nội dung học.
+          Đây là thư viện nội dung học có thể tái sử dụng khi xây dựng chương trình, lộ trình, bài học và hoạt động mới.
         </div>
       )}
-      {readonly && !legacy && (
+      {readonly && !library && (
         <div className="validation-warnings" style={{ marginBottom: "16px" }}>
           Đây là dữ liệu nền của hệ thống. Thông thường admin không cần chỉnh sửa.
         </div>

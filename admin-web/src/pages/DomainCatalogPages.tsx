@@ -6,7 +6,7 @@ export function DevelopmentCategoriesPage() {
       title="Nhóm khó khăn phát triển"
       path="/development-categories"
       readonly
-      legacy
+      library
       fields={[]}
       columns={["key", "label", "parentDescription", "isActive", "orderIndex"]}
     />
@@ -19,7 +19,7 @@ export function LearningGoalsPage() {
       title="Mục tiêu học tập"
       path="/learning-goals"
       readonly
-      legacy
+      library
       fields={[]}
       columns={["key", "label", "parentDescription", "isActive", "orderIndex"]}
     />
@@ -32,7 +32,7 @@ export function SkillsPage() {
       title="Kỹ năng"
       path="/skills"
       readonly
-      legacy
+      library
       fields={[]}
       columns={["key", "label", "domain", "parentDescription", "isActive", "orderIndex"]}
     />
@@ -42,10 +42,11 @@ export function SkillsPage() {
 export function ProgramsPage() {
   return (
     <CrudPage
-      title="Chương trình cũ"
+      title="Thư viện chương trình"
+      description="Kho chương trình có thể dùng làm tham chiếu khi thiết kế chương trình học mới."
       path="/programs"
       readonly
-      legacy
+      library
       fields={[]}
       columns={[
         "title",
@@ -65,10 +66,11 @@ export function ProgramsPage() {
 export function LearningPathsPage() {
   return (
     <CrudPage
-      title="Lộ trình học cũ"
+      title="Thư viện lộ trình"
+      description="Kho lộ trình có thể dùng làm tham chiếu khi sắp xếp bài học vào kiến trúc mới."
       path="/learning-paths"
       readonly
-      legacy
+      library
       fields={[]}
       columns={[
         "title",

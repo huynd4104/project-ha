@@ -332,7 +332,7 @@ export function QRCodesPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(500px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Chỉnh sửa mã QR cũ" : "Thêm mã QR cũ"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa mã QR" : "Thêm mã QR"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>

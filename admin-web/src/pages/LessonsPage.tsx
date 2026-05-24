@@ -181,7 +181,10 @@ export function LessonsPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Bài học cũ</h1>
+        <div>
+          <h1>Thư viện bài học</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho bài học có thể dùng làm nguồn tham chiếu hoặc tách thành hoạt động trong kiến trúc mới.</p>
+        </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
@@ -190,7 +193,7 @@ export function LessonsPage() {
       </div>
 
       <div className="panel" style={{ padding: "14px 16px", marginBottom: "16px", color: "var(--text-muted)" }}>
-        Mục này dùng để tương thích với dữ liệu cũ. Nội dung mới nên tạo ở phần Quản lý nội dung học.
+        Đây là thư viện nội dung học có thể tái sử dụng. Không cần xóa dữ liệu hiện có khi chuyển sang cấu trúc chương trình, lộ trình, bài học và hoạt động.
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
@@ -271,7 +274,7 @@ export function LessonsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Chỉnh sửa bài học cũ" : "Thêm bài học cũ"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa bài học" : "Thêm bài học"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>

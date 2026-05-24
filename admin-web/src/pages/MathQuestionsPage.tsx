@@ -192,6 +192,7 @@ export function MathQuestionsPage() {
   };
 
   const importConfig = mathQuestionsImportConfig(lessons);
+  const libraryTitle = moduleKey === "MATH" ? "Thư viện toán tư duy" : `Thư viện ${moduleConfig.title.toLowerCase()}`;
 
   const handleImport = async (rows: any[]) => {
     await batchImport("mathQuestions", rows);
@@ -202,7 +203,12 @@ export function MathQuestionsPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>{moduleConfig.title}: câu hỏi</h1>
+        <div>
+          <h1>{libraryTitle}</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>
+            Kho câu hỏi {moduleKey === "MATH" ? "toán/tư duy" : moduleConfig.title.toLowerCase()} dùng để tạo hoạt động nhận thức và logic.
+          </p>
+        </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>

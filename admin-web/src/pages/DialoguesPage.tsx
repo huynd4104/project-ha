@@ -192,7 +192,10 @@ export function DialoguesPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Chi tiết Hội thoại</h1>
+        <div>
+          <h1>Thư viện hội thoại</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho hội thoại dùng để tạo hoạt động giao tiếp hoặc luyện nói.</p>
+        </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
@@ -276,7 +279,7 @@ export function DialoguesPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(880px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Chỉnh sửa hội thoại cũ" : "Thêm hội thoại cũ"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa hội thoại" : "Thêm hội thoại"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>

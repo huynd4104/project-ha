@@ -395,7 +395,7 @@ textarea {
   color: var(--sidebar-active-border);
 }
 
-.legacy-tag {
+.reuse-tag {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 2px 7px;

@@ -21,7 +21,7 @@ type IconName =
   | "mission"
   | "media"
   | "more";
-type NavItem = { to: string; label: string; icon: IconName; legacy?: boolean };
+type NavItem = { to: string; label: string; icon: IconName; library?: boolean };
 type NavGroup = { title: string; icon: IconName; items: NavItem[]; defaultOpen?: boolean };
 
 const groups: NavGroup[] = [
@@ -60,22 +60,22 @@ const groups: NavGroup[] = [
     ]
   },
   {
-    title: "Dữ liệu cũ", icon: "archive",
+    title: "Kho nội dung học", icon: "archive",
     items: [
-      { to: "/lessons", label: "Bài học cũ", icon: "lesson", legacy: true },
-      { to: "/math-questions", label: "Câu hỏi toán cũ", icon: "activity", legacy: true },
-      { to: "/dialogues", label: "Hội thoại cũ", icon: "activity", legacy: true },
-      { to: "/flashcards", label: "Flashcard cũ", icon: "lesson", legacy: true },
-      { to: "/qr-codes", label: "QR cũ", icon: "qr", legacy: true },
-      { to: "/development-categories", label: "Nhóm trẻ cũ", icon: "target", legacy: true },
-      { to: "/learning-goals", label: "Mục tiêu học cũ", icon: "target", legacy: true },
-      { to: "/skills", label: "Kỹ năng cũ", icon: "activity", legacy: true },
-      { to: "/programs", label: "Chương trình cũ", icon: "program", legacy: true },
-      { to: "/learning-paths", label: "Lộ trình cũ", icon: "path", legacy: true },
-      { to: "/npcs", label: "Nhân vật cũ", icon: "character", legacy: true },
-      { to: "/thinking-questions", label: "Câu hỏi tư duy cũ", icon: "activity", legacy: true },
-      { to: "/spelling-questions", label: "Câu hỏi đánh vần cũ", icon: "activity", legacy: true },
-      { to: "/rhyme-questions", label: "Câu hỏi ghép vần cũ", icon: "activity", legacy: true }
+      { to: "/lessons", label: "Thư viện bài học", icon: "lesson", library: true },
+      { to: "/math-questions", label: "Thư viện toán tư duy", icon: "activity", library: true },
+      { to: "/dialogues", label: "Thư viện hội thoại", icon: "activity", library: true },
+      { to: "/flashcards", label: "Thư viện Flashcard", icon: "lesson", library: true },
+      { to: "/qr-codes", label: "Thư viện QR", icon: "qr", library: true },
+      { to: "/development-categories", label: "Thư viện nhóm trẻ", icon: "target", library: true },
+      { to: "/learning-goals", label: "Thư viện mục tiêu học", icon: "target", library: true },
+      { to: "/skills", label: "Thư viện kỹ năng", icon: "activity", library: true },
+      { to: "/programs", label: "Thư viện chương trình", icon: "program", library: true },
+      { to: "/learning-paths", label: "Thư viện lộ trình", icon: "path", library: true },
+      { to: "/npcs", label: "Thư viện nhân vật", icon: "character", library: true },
+      { to: "/thinking-questions", label: "Thư viện tư duy", icon: "activity", library: true },
+      { to: "/spelling-questions", label: "Thư viện đánh vần", icon: "activity", library: true },
+      { to: "/rhyme-questions", label: "Thư viện ghép vần", icon: "activity", library: true }
     ]
   },
   {
@@ -153,7 +153,7 @@ function SidebarSection({
               <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? "nav active" : "nav")}>
                 <span className="nav-icon"><SidebarIcon name={item.icon} /></span>
                 <span className="nav-label">{item.label}</span>
-                {item.legacy && <span className="legacy-tag">Cũ</span>}
+                {item.library && <span className="reuse-tag">Reuse</span>}
               </NavLink>
             ))}
       </div>

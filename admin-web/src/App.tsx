@@ -65,7 +65,7 @@ export default function App() {
         <Route path="/daily-missions" element={<DailyMissionsPage />} />
         <Route path="/progress" element={<ProgressPage />} />
 
-        {/* Legacy routes (preserved) */}
+        {/* Content library routes (preserved for compatibility) */}
         <Route path="/npcs" element={<NPCsPage />} />
         <Route path="/qr-codes" element={<QRCodesPage />} />
         <Route path="/development-categories" element={<DevelopmentCategoriesPage />} />
@@ -87,4 +87,3 @@ export default function App() {
     </Routes>
   );
 }
-

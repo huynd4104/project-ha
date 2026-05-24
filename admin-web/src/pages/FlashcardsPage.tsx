@@ -161,7 +161,10 @@ export function FlashcardsPage() {
   return (
     <div>
       <div className="toolbar">
-        <h1>Flashcard cũ</h1>
+        <div>
+          <h1>Thư viện Flashcard</h1>
+          <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho flashcard có thể tái sử dụng để tạo hoạt động học trong bài học mới.</p>
+        </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
@@ -244,7 +247,7 @@ export function FlashcardsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(820px, 95vw)" }}>
             <div className="modal-header">
-              <h2>{editingItem ? "Chỉnh sửa flashcard cũ" : "Thêm flashcard cũ"}</h2>
+              <h2>{editingItem ? "Chỉnh sửa flashcard" : "Thêm flashcard"}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit}>

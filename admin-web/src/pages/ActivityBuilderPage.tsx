@@ -24,6 +24,7 @@ export function ActivityBuilderPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [toastMsg, setToastMsg] = useState("");
   const [lessonSearch, setLessonSearch] = useState("");
+  const [contentLibraryCounts, setContentLibraryCounts] = useState<Record<string, number>>({});
 
   // Form state
   const [activityType, setActivityType] = useState<ActivityType>("MULTIPLE_CHOICE");
@@ -52,11 +53,26 @@ export function ActivityBuilderPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [lRes, sRes] = await Promise.all([adminApi.list("/lessons"), adminApi.list("/skills")]);
+      const [lRes, sRes, fRes, dRes, qRes] = await Promise.all([
+        adminApi.list("/lessons"),
+        adminApi.list("/skills"),
+        adminApi.list("/flashcards"),
+        adminApi.list("/dialogues"),
+        adminApi.list("/math-questions")
+      ]);
       const all = (lRes.data.data || []) as Lesson[];
       all.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
       setLessons(all);
       setSkills(sRes.data.data || []);
+      const questions = qRes.data.data || [];
+      setContentLibraryCounts({
+        flashcards: fRes.data.data?.length || 0,
+        dialogues: dRes.data.data?.length || 0,
+        math: questions.filter((item: any) => all.find((lesson: any) => lesson.id === item.lessonId)?.type === "MATH").length,
+        thinking: questions.filter((item: any) => all.find((lesson: any) => lesson.id === item.lessonId)?.type === "THINKING").length,
+        spelling: questions.filter((item: any) => all.find((lesson: any) => lesson.id === item.lessonId)?.type === "SPELLING").length,
+        rhyme: questions.filter((item: any) => all.find((lesson: any) => lesson.id === item.lessonId)?.type === "RHYME").length
+      });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -193,6 +209,53 @@ export function ActivityBuilderPage() {
   const addOption = () => { if (options.length < 4) setOptions([...options, { text: "", isCorrect: false }]); };
   const removeOption = (idx: number) => { if (options.length > 2) setOptions(options.filter((_, i) => i !== idx)); };
 
+  const importFromLibrary = (source: "flashcards" | "dialogues" | "math" | "thinking" | "spelling" | "rhyme") => {
+    const presets: Record<typeof source, { type: ActivityType; prompt: string; instruction: string }> = {
+      flashcards: {
+        type: "FLASHCARD_REVIEW",
+        prompt: "Ôn tập bằng flashcard từ thư viện",
+        instruction: "Chọn flashcard phù hợp trong thư viện và cấu hình nội dung cho hoạt động."
+      },
+      dialogues: {
+        type: "DAILY_LIFE_SCENARIO",
+        prompt: "Luyện giao tiếp từ hội thoại trong thư viện",
+        instruction: "Chọn hội thoại phù hợp trong thư viện để chuyển thành tình huống giao tiếp."
+      },
+      math: {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Câu hỏi toán từ thư viện",
+        instruction: "Chọn câu hỏi toán phù hợp rồi tinh chỉnh đáp án cho hoạt động."
+      },
+      thinking: {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Câu hỏi tư duy từ thư viện",
+        instruction: "Chọn câu hỏi tư duy phù hợp rồi tinh chỉnh đáp án cho hoạt động."
+      },
+      spelling: {
+        type: "LOOK_AND_CHOOSE_WORD",
+        prompt: "Câu hỏi đánh vần từ thư viện",
+        instruction: "Chọn câu hỏi đánh vần phù hợp rồi tinh chỉnh cho hoạt động."
+      },
+      rhyme: {
+        type: "LOOK_AND_CHOOSE_WORD",
+        prompt: "Câu hỏi ghép vần từ thư viện",
+        instruction: "Chọn câu hỏi ghép vần phù hợp rồi tinh chỉnh cho hoạt động."
+      }
+    };
+    const preset = presets[source];
+    setActivityType(preset.type);
+    setPrompt(preset.prompt);
+    setInstruction(preset.instruction);
+    showToast("Đã tạo khung hoạt động từ thư viện. Bước chọn item cụ thể sẽ được nối với engine import ở phase tiếp theo.");
+    if (!isModalOpen) {
+      resetForm();
+      setActivityType(preset.type);
+      setPrompt(preset.prompt);
+      setInstruction(preset.instruction);
+      setIsModalOpen(true);
+    }
+  };
+
   return (
     <div>
       <div className="toolbar">
@@ -240,12 +303,34 @@ export function ActivityBuilderPage() {
           ) : (
             <>
               {selectedLesson && (
-                <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <strong>{selectedLesson.title}</strong>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{selectedLesson.lessonType || selectedLesson.type}</span>
+                <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                    <div>
+                      <strong>{selectedLesson.title}</strong>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{selectedLesson.lessonType || selectedLesson.type}</span>
+                    </div>
+                    <button onClick={openAddModal}>➕ Thêm hoạt động</button>
                   </div>
-                  <button onClick={openAddModal}>➕ Thêm hoạt động</button>
+                  <div style={{ borderTop: "1px solid var(--border)", marginTop: "14px", paddingTop: "14px" }}>
+                    <strong style={{ display: "block", marginBottom: "4px" }}>Import từ thư viện nội dung</strong>
+                    <p style={{ color: "var(--text-muted)", margin: "0 0 10px 0", fontSize: "13px" }}>
+                      Dùng kho nội dung học làm nguồn tái sử dụng để tạo nhanh khung hoạt động trong bài học này.
+                    </p>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {[
+                        ["flashcards", "Import từ thư viện Flashcard"],
+                        ["dialogues", "Import từ thư viện Hội thoại"],
+                        ["math", "Import từ thư viện Toán"],
+                        ["thinking", "Import từ thư viện Tư duy"],
+                        ["spelling", "Import từ thư viện Đánh vần"],
+                        ["rhyme", "Import từ thư viện Ghép vần"]
+                      ].map(([source, label]) => (
+                        <button key={source} type="button" className="secondary" onClick={() => importFromLibrary(source as any)}>
+                          {label} ({contentLibraryCounts[source] || 0})
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 

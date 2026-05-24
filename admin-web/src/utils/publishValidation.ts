@@ -28,7 +28,7 @@ export function validatePathPublish(
 export function validateLessonPublish(
   lesson: Partial<Lesson>,
   activityCount: number,
-  hasLegacyContent: boolean
+  hasLibraryContent: boolean
 ): ValidationResult {
   const errors: string[] = [];
   if (!lesson.title?.trim()) errors.push("Tiêu đề bài học không được để trống.");
@@ -38,8 +38,8 @@ export function validateLessonPublish(
     errors.push("Thời gian ước tính phải lớn hơn 0.");
   if (!lesson.learningGoals?.length) errors.push("Cần ít nhất một mục tiêu học tập.");
   if (!lesson.skillTags?.length) errors.push("Cần ít nhất một kỹ năng.");
-  if (activityCount < 1 && !hasLegacyContent)
-    errors.push("Bài học cần ít nhất một hoạt động hoặc nội dung legacy.");
+  if (activityCount < 1 && !hasLibraryContent)
+    errors.push("Bài học cần ít nhất một hoạt động hoặc nội dung từ thư viện.");
   return { valid: errors.length === 0, errors };
 }
 
