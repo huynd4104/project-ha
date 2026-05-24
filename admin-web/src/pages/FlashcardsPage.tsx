@@ -178,12 +178,6 @@ export function FlashcardsPage() {
         </div>
       </div>
 
-      <div className="panel" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af", padding: "14px 16px", marginBottom: "16px" }}>
-        Đây là kho nội dung có thể tái sử dụng khi tạo hoạt động trong bài học. Nội dung tại đây không phải dữ liệu bỏ đi.
-        <br />
-        Chức năng chọn nhanh từ kho nội dung sẽ được dùng trong Hoạt động trong bài học.
-      </div>
-
       {lessons.length === 0 && (
         <div className="panel" style={{ background: "#fffbeb", border: "1px solid #fef3c7", color: "#b45309" }}>
           ⚠️ <strong>Lưu ý:</strong> Cần tạo ít nhất một bài học trước khi thêm thẻ học.

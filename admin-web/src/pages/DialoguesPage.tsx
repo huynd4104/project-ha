@@ -205,16 +205,9 @@ export function DialoguesPage() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho hội thoại dùng để tạo hoạt động giao tiếp hoặc luyện nói.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Hội Thoại</button>
         </div>
-      </div>
-
-      <div className="panel" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af", padding: "14px 16px", marginBottom: "16px" }}>
-        Đây là kho nội dung có thể tái sử dụng khi tạo hoạt động trong bài học. Nội dung tại đây không phải dữ liệu bỏ đi.
-        <br />
-        Chức năng chọn nhanh từ kho nội dung sẽ được dùng trong Hoạt động trong bài học.
       </div>
 
       {lessons.length === 0 && (
