@@ -6,6 +6,7 @@ class SoundService {
   static final instance = SoundService._();
 
   final Map<String, AudioPlayer> _players = {};
+  final AudioPlayer _remotePlayer = AudioPlayer();
   bool enabled = true;
   DateTime? _lastPlayTime;
 
@@ -42,10 +43,23 @@ class SoundService {
     }
   }
 
+  Future<bool> playUrl(String? url) async {
+    final trimmed = url?.trim() ?? '';
+    if (!enabled || trimmed.isEmpty) return false;
+    try {
+      await _remotePlayer.stop();
+      await _remotePlayer.play(UrlSource(trimmed));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   void dispose() {
     for (final player in _players.values) {
       player.dispose();
     }
+    _remotePlayer.dispose();
     _players.clear();
   }
 }

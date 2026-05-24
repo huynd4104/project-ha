@@ -189,6 +189,11 @@ export function LessonsPage() {
         </div>
       </div>
 
+      <div className="panel" style={{ padding: "14px 16px", marginBottom: "16px", color: "var(--text-muted)" }}>
+        Trang này vẫn quản lý dữ liệu bài học legacy. Phase 2 dùng thêm Programs, Learning Paths,
+        Path Items và Activities nhưng chưa thay thế các trang nội dung cũ.
+      </div>
+
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input
           type="text"

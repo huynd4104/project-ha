@@ -10,6 +10,9 @@ import '../../../core/widgets/app_image.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
+import '../../../core/utils/access_check.dart';
+import '../../../core/utils/parent_gate.dart';
+import '../../parent_dashboard/screens/paywall_screen.dart';
 import '../data/npc_repository.dart';
 
 class NPCCollectionScreen extends StatelessWidget {
@@ -58,9 +61,9 @@ class NPCCollectionScreen extends StatelessWidget {
 
           return CustomScrollView(
             slivers: [
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(18, 20, 18, 10),
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 10),
                   child: Text(
                     'Bộ sưu tập bạn đồng hành',
                     style: AppTextStyles.headline,
@@ -77,26 +80,63 @@ class NPCCollectionScreen extends StatelessWidget {
                     childAspectRatio: 0.76,
                   ),
                   itemCount: allNpcs.length,
-                  itemBuilder: (_, i) {
+                  itemBuilder: (context, i) {
                     final npc = allNpcs[i];
                     final isUnlocked = unlockedIds.contains(npc.id);
+                    final hasPremiumAccess = AccessCheck.canAccessContent(
+                      accessType: npc.accessType,
+                      summary: state.appUser?.subscriptionSummary,
+                      entitlementType: 'premiumNpcs',
+                    );
+                    final isPremiumLocked = npc.accessType == AccessType.premium && !hasPremiumAccess;
 
                     return AppCard(
                       padding: const EdgeInsets.all(12),
-                      onTap: isUnlocked
-                          ? () => context.push('/npc/${npc.id}')
-                          : () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                      onTap: isPremiumLocked
+                          ? () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('✨ Mascot Premium'),
                                   content: Text(
-                                    'Hãy quét mã QR của ${npc.name} để mở khóa bạn nhỏ này nhé!',
-                                    style: const TextStyle(fontWeight: FontWeight.w800),
+                                    'Bạn ${npc.name} là Mascot Premium đặc biệt. Bé hãy nhờ bố mẹ nâng cấp để mở khóa nhé!',
                                   ),
-                                  backgroundColor: AppColors.purple,
-                                  duration: const Duration(seconds: 2),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: const Text('Để sau', style: TextStyle(color: Colors.grey)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        ParentGate.show(context, () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => const PaywallScreen(),
+                                            ),
+                                          );
+                                        });
+                                      },
+                                      child: const Text('Dành cho Bố Mẹ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ),
                               );
-                            },
+                            }
+                          : (isUnlocked
+                              ? () => context.push('/npc/${npc.id}')
+                              : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Hãy quét mã QR của ${npc.name} để mở khóa bạn nhỏ này nhé!',
+                                        style: const TextStyle(fontWeight: FontWeight.w800),
+                                      ),
+                                      backgroundColor: AppColors.orange,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }),
                       child: Column(
                         children: [
                            Expanded(
@@ -130,10 +170,20 @@ class NPCCollectionScreen extends StatelessWidget {
                                     alignment: Alignment.center,
                                     children: [
                                       Opacity(
-                                        opacity: isUnlocked ? 1.0 : 0.3,
+                                        opacity: (isUnlocked && !isPremiumLocked) ? 1.0 : 0.3,
                                         child: imageWidget,
                                       ),
-                                      if (!isUnlocked)
+                                      if (isPremiumLocked)
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.amber.shade700.withValues(alpha: .8),
+                                          child: const Icon(
+                                            Icons.workspace_premium_rounded,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        )
+                                      else if (!isUnlocked)
                                         CircleAvatar(
                                           radius: 20,
                                           backgroundColor: Colors.black.withValues(alpha: .5),
@@ -155,7 +205,7 @@ class NPCCollectionScreen extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
-                              color: isUnlocked ? AppColors.text : AppColors.muted,
+                              color: (isUnlocked && !isPremiumLocked) ? AppColors.text : AppColors.muted,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -165,15 +215,25 @@ class NPCCollectionScreen extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: isUnlocked
-                                  ? AppColors.primary.withValues(alpha: .12)
-                                  : AppColors.border.withValues(alpha: .5),
+                              color: isPremiumLocked
+                                  ? Colors.amber.shade50
+                                  : (isUnlocked
+                                      ? AppColors.primary.withValues(alpha: .12)
+                                      : AppColors.border.withValues(alpha: .5)),
                               borderRadius: BorderRadius.circular(99),
+                              border: isPremiumLocked ? Border.all(color: Colors.amber.shade200) : null,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (!isUnlocked) ...[
+                                if (isPremiumLocked) ...[
+                                  const Icon(
+                                    Icons.workspace_premium_rounded,
+                                    size: 11,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ] else if (!isUnlocked) ...[
                                   const Icon(
                                     Icons.lock_rounded,
                                     size: 10,
@@ -182,11 +242,15 @@ class NPCCollectionScreen extends StatelessWidget {
                                   const SizedBox(width: 4),
                                 ],
                                 Text(
-                                  isUnlocked ? 'Đã mở khóa' : 'Chưa mở khóa',
+                                  isPremiumLocked
+                                      ? 'Mở khóa Premium'
+                                      : (isUnlocked ? 'Đã mở khóa' : 'Chưa mở khóa'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 10,
-                                    color: isUnlocked ? AppColors.primary : AppColors.muted,
+                                    color: isPremiumLocked
+                                        ? Colors.amber.shade800
+                                        : (isUnlocked ? AppColors.primary : AppColors.muted),
                                   ),
                                 ),
                               ],

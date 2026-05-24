@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_radius.dart';
@@ -19,13 +20,14 @@ class AppTheme {
       scaffoldBackgroundColor: highContrast
           ? AppColors.highContrastBackground
           : AppColors.background,
-      fontFamily: 'System',
-      appBarTheme: const AppBarTheme(
+      textTheme: GoogleFonts.nunitoTextTheme(),
+      fontFamily: GoogleFonts.nunito().fontFamily,
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.text,
         centerTitle: false,
         elevation: 0,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.nunito(
           color: AppColors.text,
           fontSize: 20,
           fontWeight: FontWeight.w900,

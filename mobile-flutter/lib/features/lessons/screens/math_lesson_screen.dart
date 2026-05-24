@@ -37,12 +37,13 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
 
   Future<({Lesson lesson, List<MathQuestion> items})> load() async {
     final state = context.read<AppState>();
-    final lessons = await repo.listLessons(
+    final lesson = await repo.lessonForChild(
       state.firebaseUser!.uid,
-      state.activeChild!.id,
+      state.activeChild!,
+      widget.lessonId,
     );
     return (
-      lesson: lessons.firstWhere((e) => e.id == widget.lessonId),
+      lesson: lesson,
       items: await repo.mathQuestions(widget.lessonId),
     );
   }

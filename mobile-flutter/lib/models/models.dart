@@ -1,8 +1,10 @@
+export 'activity_adapters.dart';
 export 'app_user.dart';
 export 'badge.dart';
 export 'child_profile.dart';
 export 'daily_mission.dart';
 export 'dialogue.dart';
+export 'domain.dart';
 export 'flashcard.dart';
 export 'lesson.dart';
 export 'math_question.dart';
@@ -15,3 +17,4 @@ export 'unlocked_npc.dart';
 export 'user_badge.dart';
 export 'user_mission_progress.dart';
 export 'xp_log.dart';
+export 'subscription_summary.dart';

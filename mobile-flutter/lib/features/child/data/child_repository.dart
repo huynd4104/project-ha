@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../models/child_profile.dart';
+import '../../../models/domain.dart';
 
 class ChildRepository {
   ChildRepository({FirebaseFirestore? db})
@@ -22,14 +23,30 @@ class ChildRepository {
     String name,
     int age,
     String gender,
-    String note,
-  ) async {
+    String note, {
+    DevelopmentCategoryKey primaryDifficulty = DevelopmentCategoryKey.other,
+    List<LearningGoalKey> learningGoals = const [],
+    SupportLevel supportLevel = SupportLevel.medium,
+    int dailyDurationMinutes = 5,
+    CoLearningMode coLearningMode = CoLearningMode.parentChildTogether,
+  }) async {
     final payload = {
       'userId': userId,
+      'displayName': name.trim(),
       'name': name.trim(),
       'age': age,
       'gender': gender,
       'note': note.trim(),
+      'primaryDifficulty': primaryDifficulty.firestoreValue,
+      'secondaryDifficulties': <String>[],
+      'learningGoals': learningGoals
+          .map((item) => item.firestoreValue)
+          .toList(),
+      'supportLevel': supportLevel.firestoreValue,
+      'dailyDurationMinutes': dailyDurationMinutes,
+      'coLearningMode': coLearningMode.firestoreValue,
+      'interests': <String>[],
+      'accessibilityPreferences': <String, dynamic>{},
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -42,5 +59,14 @@ class ChildRepository {
       ...child.toMap(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> saveCurrentPath(String childId, String programId, String pathId) async {
+    await _db.collection('children').doc(childId).update({
+      'currentProgramId': programId,
+      'currentPathId': pathId,
+      'selectedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

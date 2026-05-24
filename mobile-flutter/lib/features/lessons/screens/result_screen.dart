@@ -24,8 +24,8 @@ class ResultScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
         children: [
           AppCard(
-            color: unlockMode ? AppColors.purple : AppColors.cream,
-            borderColor: unlockMode ? AppColors.purple : AppColors.yellow,
+            color: unlockMode ? AppColors.pink : AppColors.cream,
+            borderColor: unlockMode ? AppColors.pink : AppColors.yellow,
             child: Column(
               children: [
                 Icon(

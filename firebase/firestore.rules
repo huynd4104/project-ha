@@ -22,27 +22,107 @@ service cloud.firestore {
     }
 
     function writesOwnUserData() {
-      return request.resource.data.userId == request.auth.uid;
+      return signedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function safeChildProfileKeys() {
+      return request.resource.data.keys().hasOnly([
+        "userId",
+        "displayName",
+        "name",
+        "age",
+        "gender",
+        "note",
+        "primaryDifficulty",
+        "secondaryDifficulties",
+        "learningGoals",
+        "supportLevel",
+        "dailyDurationMinutes",
+        "coLearningMode",
+        "interests",
+        "accessibilityPreferences",
+        "currentPathId",
+        "currentProgramId",
+        "selectedAt",
+        "createdAt",
+        "updatedAt"
+      ]);
+    }
+
+    function safeOwnerChildUpdate() {
+      return request.resource.data.userId == resource.data.userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "displayName",
+          "name",
+          "age",
+          "gender",
+          "note",
+          "primaryDifficulty",
+          "secondaryDifficulties",
+          "learningGoals",
+          "supportLevel",
+          "dailyDurationMinutes",
+          "coLearningMode",
+          "interests",
+          "accessibilityPreferences",
+          "currentPathId",
+          "currentProgramId",
+          "selectedAt",
+          "updatedAt"
+        ]);
+    }
+
+    function isPublished() {
+      return resource.data.status == "PUBLISHED";
+    }
+
+    function safeUserCreate() {
+      return request.resource.data.keys().hasOnly([
+          "uid",
+          "email",
+          "fullName",
+          "displayName",
+          "avatarUrl",
+          "role",
+          "isActive",
+          "emailVerified",
+          "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "PARENT"
+        && request.resource.data.isActive == true
+        && request.resource.data.emailVerified == false;
+    }
+
+    function safeOwnerUserUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        "fullName",
+        "displayName",
+        "avatarUrl",
+        "updatedAt"
+      ]);
     }
 
     match /users/{userId} {
-      allow create: if signedIn()
-        && request.auth.uid == userId
-        && request.resource.data.role == "PARENT"
-        && request.resource.data.isActive == true;
+      allow create: if signedIn() && request.auth.uid == userId && safeUserCreate();
       allow read: if isAdmin() || isOwner(userId);
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow update: if isAdmin() || (isOwner(userId) && safeOwnerUserUpdate());
       allow delete: if isAdmin();
     }
 
     match /otps/{userId} {
-      allow read, write: if signedIn() && request.auth.uid == userId;
+      allow read, write: if isAdmin();
     }
 
     match /children/{childId} {
       allow read: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update, delete: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if writesOwnUserData() && safeChildProfileKeys();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && safeOwnerChildUpdate());
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     match /npcs/{id} {
@@ -58,10 +138,43 @@ service cloud.firestore {
     match /qrCodes/{id} {
       allow read: if signedIn();
       allow write: if isAdmin();
-      allow update: if isAdmin()
+    }
+
+    match /activationCodes/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /developmentCategories/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /learningGoals/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /skills/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /programs/{id} {
+      allow read: if isAdmin() || (signedIn() && isPublished());
+      allow write: if isAdmin();
+    }
+
+    match /learningPaths/{id} {
+      allow read: if isAdmin() || (signedIn() && isPublished());
+      allow write: if isAdmin();
+    }
+
+    match /pathItems/{id} {
+      allow read: if isAdmin()
         || (signedIn()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["usedCount", "updatedAt"])
-          && request.resource.data.usedCount == resource.data.usedCount + 1);
+          && get(/databases/$(database)/documents/learningPaths/$(resource.data.pathId)).data.status == "PUBLISHED");
+      allow write: if isAdmin();
     }
 
     match /lessons/{id} {
@@ -84,34 +197,51 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /activities/{id} {
+      allow read: if isAdmin()
+        || (signedIn()
+          && resource.data.isActive == true
+          && get(/databases/$(database)/documents/lessons/$(resource.data.lessonId)).data.isActive == true);
+      allow write: if isAdmin();
+    }
+
+    match /activationRedemptions/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
+    }
+
     match /userUnlockedNpcs/{id} {
       allow get: if signedIn()
         && (!exists(/databases/$(database)/documents/userUnlockedNpcs/$(id))
           || isAdmin()
           || isOwner(resource.data.userId));
       allow list: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /activityAttempts/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
+    }
+
+    match /lessonProgress/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
     }
 
     match /progress/{id} {
       allow read: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update: if isAdmin() || isOwner(resource.data.userId);
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /xpLogs/{id} {
       allow read: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /streaks/{id} {
       allow read: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update: if isAdmin() || isOwner(resource.data.userId);
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /badges/{id} {
@@ -121,8 +251,7 @@ service cloud.firestore {
 
     match /userBadges/{id} {
       allow read: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /dailyMissions/{id} {
@@ -132,9 +261,22 @@ service cloud.firestore {
 
     match /userMissionProgress/{id} {
       allow read: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update: if isAdmin() || isOwner(resource.data.userId);
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /subscriptions/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
+    }
+
+    match /voiceUsageLogs/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
+    }
+
+    match /transactions/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
     }
 
     match /userMascotCompanions/{id} {
@@ -143,9 +285,7 @@ service cloud.firestore {
           || isAdmin()
           || isOwner(resource.data.userId));
       allow list: if isAdmin() || isOwner(resource.data.userId);
-      allow create: if signedIn() && writesOwnUserData();
-      allow update: if isAdmin() || isOwner(resource.data.userId);
-      allow delete: if isAdmin() || isOwner(resource.data.userId);
+      allow create, update, delete: if isAdmin();
     }
   }
 }

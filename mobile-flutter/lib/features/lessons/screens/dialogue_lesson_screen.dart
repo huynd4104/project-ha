@@ -37,12 +37,13 @@ class _DialogueLessonScreenState extends State<DialogueLessonScreen> {
 
   Future<({Lesson lesson, List<Dialogue> items})> load() async {
     final state = context.read<AppState>();
-    final lessons = await repo.listLessons(
+    final lesson = await repo.lessonForChild(
       state.firebaseUser!.uid,
-      state.activeChild!.id,
+      state.activeChild!,
+      widget.lessonId,
     );
     return (
-      lesson: lessons.firstWhere((e) => e.id == widget.lessonId),
+      lesson: lesson,
       items: await repo.dialogues(widget.lessonId),
     );
   }
@@ -60,6 +61,15 @@ class _DialogueLessonScreenState extends State<DialogueLessonScreen> {
       } else {
         context.go('/lesson/${widget.lessonId}');
       }
+    }
+  }
+
+  Future<void> playAudio(String? audioUrl) async {
+    final played = await SoundService.instance.playUrl(audioUrl);
+    if (!played && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Audio chưa sẵn sàng cho nội dung này.')),
+      );
     }
   }
 
@@ -120,7 +130,7 @@ class _DialogueLessonScreenState extends State<DialogueLessonScreen> {
                             label: (item.audioUrl ?? '').isEmpty
                                 ? 'Nghe hướng dẫn'
                                 : 'Phát audio',
-                            onPressed: () => SoundService.instance.play('tap'),
+                            onPressed: () => playAudio(item.audioUrl),
                           ),
                         ],
                       ),

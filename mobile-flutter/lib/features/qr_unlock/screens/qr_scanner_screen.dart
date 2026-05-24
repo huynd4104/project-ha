@@ -80,13 +80,20 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         value,
         state.firebaseUser!.uid,
         state.activeChild!.id,
+        source: tab.index == 0 ? 'QR' : 'MANUAL',
       );
       await state.refreshStats();
       if (mounted) context.go('/unlock-success', extra: result);
     } catch (e) {
       if (mounted) {
+        String msg = friendlyFirebaseError(e);
+        if (msg.contains('kích hoạt Mascot/NPC') ||
+            msg.contains('Phase 1 chỉ hỗ trợ') ||
+            e.toString().contains('kích hoạt Mascot/NPC')) {
+          msg = 'Mã này đã được chuẩn bị cho giai đoạn sau và hiện chưa thể kích hoạt.';
+        }
         setState(() {
-          error = friendlyFirebaseError(e);
+          error = msg;
           scanned = false; // Reset scanned state on error so user can try again
         });
         scannerController.start(); // Restart scanner on error
@@ -106,7 +113,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Quét QR', style: AppTextStyles.headline),
+                Text('Quét QR', style: AppTextStyles.headline),
                 const SizedBox(height: 10),
                 const AppCard(
                   color: AppColors.cream,

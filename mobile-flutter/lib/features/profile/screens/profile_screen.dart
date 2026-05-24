@@ -101,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label: const Text('Sửa hồ sơ bé'),
           ),
           const SizedBox(height: 20),
-          const Text('Trợ năng', style: AppTextStyles.title),
+          Text('Trợ năng', style: AppTextStyles.title),
           const SizedBox(height: 10),
           AppCard(
             child: Column(

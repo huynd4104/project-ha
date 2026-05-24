@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
+import '../../../core/services/sound_service.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_image.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
 import '../../learning_path/data/lesson_repository.dart';
+import '../widgets/audio_button.dart';
 import '../widgets/lesson_header.dart';
 import '../widgets/mascot_message_bubble.dart';
 
@@ -34,12 +36,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   Future<({Lesson lesson, List<Flashcard> cards})> load() async {
     final state = context.read<AppState>();
-    final lessons = await repo.listLessons(
+    final lesson = await repo.lessonForChild(
       state.firebaseUser!.uid,
-      state.activeChild!.id,
+      state.activeChild!,
+      widget.lessonId,
     );
     return (
-      lesson: lessons.firstWhere((e) => e.id == widget.lessonId),
+      lesson: lesson,
       cards: await repo.flashcards(widget.lessonId),
     );
   }
@@ -57,6 +60,15 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       } else {
         context.go('/lesson/${widget.lessonId}');
       }
+    }
+  }
+
+  Future<void> playAudio(String? audioUrl) async {
+    final played = await SoundService.instance.playUrl(audioUrl);
+    if (!played && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Audio chưa sẵn sàng cho thẻ này.')),
+      );
     }
   }
 
@@ -121,6 +133,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
+                                if ((card.audioUrl ?? '').isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  AudioButton(
+                                    label: 'Phát audio',
+                                    onPressed: () => playAudio(card.audioUrl),
+                                  ),
+                                ],
                                 const SizedBox(height: 12),
                                 Text(back ? 'Mặt sau' : 'Chạm để lật thẻ'),
                               ],

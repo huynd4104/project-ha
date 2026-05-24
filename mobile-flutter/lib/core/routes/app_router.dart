@@ -21,6 +21,8 @@ import '../../features/npcs/screens/npc_detail_screen.dart';
 import '../../features/parent_dashboard/screens/parent_dashboard_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/qr_unlock/screens/qr_scanner_screen.dart';
+import '../../features/learning_path/screens/path_selection_screen.dart';
+import '../../features/lessons/screens/activity_lesson_screen.dart';
 import '../config/app_config.dart';
 import '../services/app_state.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -127,6 +129,14 @@ GoRouter buildRouter(AppState state) {
       GoRoute(
         path: '/lesson/:id/flashcard',
         builder: (_, s) => FlashcardScreen(lessonId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/lesson/:id/activity',
+        builder: (_, s) => ActivityLessonScreen(lessonId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/path-selection',
+        builder: (_, __) => const PathSelectionScreen(),
       ),
       GoRoute(
         path: '/result',

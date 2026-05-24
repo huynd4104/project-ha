@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'model_helpers.dart';
+import 'domain.dart';
 
 class ChildProfile {
   const ChildProfile({
@@ -8,6 +10,17 @@ class ChildProfile {
     required this.age,
     this.gender = '',
     this.note = '',
+    this.primaryDifficulty = DevelopmentCategoryKey.other,
+    this.secondaryDifficulties = const [],
+    this.learningGoals = const [],
+    this.supportLevel = SupportLevel.medium,
+    this.dailyDurationMinutes = 5,
+    this.coLearningMode = CoLearningMode.parentChildTogether,
+    this.interests = const [],
+    this.accessibilityPreferences = const {},
+    this.currentPathId,
+    this.currentProgramId,
+    this.selectedAt,
   });
 
   final String id;
@@ -16,23 +29,65 @@ class ChildProfile {
   final int age;
   final String gender;
   final String note;
+  final DevelopmentCategoryKey primaryDifficulty;
+  final List<DevelopmentCategoryKey> secondaryDifficulties;
+  final List<LearningGoalKey> learningGoals;
+  final SupportLevel supportLevel;
+  final int dailyDurationMinutes;
+  final CoLearningMode coLearningMode;
+  final List<String> interests;
+  final Map<String, dynamic> accessibilityPreferences;
+  final String? currentPathId;
+  final String? currentProgramId;
+  final DateTime? selectedAt;
+
+  String get displayName => name;
 
   factory ChildProfile.fromMap(String id, Map<String, dynamic> map) =>
       ChildProfile(
         id: id,
         userId: '${map['userId'] ?? ''}',
-        name: '${map['name'] ?? ''}',
+        name: '${map['displayName'] ?? map['name'] ?? ''}',
         age: readInt(map['age']),
         gender: '${map['gender'] ?? ''}',
         note: '${map['note'] ?? ''}',
+        primaryDifficulty: developmentCategoryFromString(
+          map['primaryDifficulty'],
+        ),
+        secondaryDifficulties: developmentCategoryListFrom(
+          map['secondaryDifficulties'],
+        ),
+        learningGoals: learningGoalListFrom(map['learningGoals']),
+        supportLevel: supportLevelFromString(map['supportLevel']),
+        dailyDurationMinutes: readInt(map['dailyDurationMinutes'], 5),
+        coLearningMode: coLearningModeFromString(map['coLearningMode']),
+        interests: readStringList(map['interests']),
+        accessibilityPreferences: readMap(map['accessibilityPreferences']),
+        currentPathId: map['currentPathId'] as String?,
+        currentProgramId: map['currentProgramId'] as String?,
+        selectedAt: readDate(map['selectedAt']),
       );
 
   Map<String, dynamic> toMap() => {
     'userId': userId,
+    'displayName': name,
     'name': name,
     'age': age,
     'gender': gender,
     'note': note,
+    'primaryDifficulty': primaryDifficulty.firestoreValue,
+    'secondaryDifficulties': secondaryDifficulties
+        .map((item) => item.firestoreValue)
+        .toList(),
+    'learningGoals': learningGoals.map((item) => item.firestoreValue).toList(),
+    'supportLevel': supportLevel.firestoreValue,
+    'dailyDurationMinutes': dailyDurationMinutes,
+    'coLearningMode': coLearningMode.firestoreValue,
+    'interests': interests,
+    'accessibilityPreferences': accessibilityPreferences,
+    'currentPathId': currentPathId,
+    'currentProgramId': currentProgramId,
+    'selectedAt': selectedAt != null ? Timestamp.fromDate(selectedAt!) : null,
   };
 
   ChildProfile copyWith({
@@ -40,6 +95,17 @@ class ChildProfile {
     int? age,
     String? gender,
     String? note,
+    DevelopmentCategoryKey? primaryDifficulty,
+    List<DevelopmentCategoryKey>? secondaryDifficulties,
+    List<LearningGoalKey>? learningGoals,
+    SupportLevel? supportLevel,
+    int? dailyDurationMinutes,
+    CoLearningMode? coLearningMode,
+    List<String>? interests,
+    Map<String, dynamic>? accessibilityPreferences,
+    String? currentPathId,
+    String? currentProgramId,
+    DateTime? selectedAt,
   }) => ChildProfile(
     id: id,
     userId: userId,
@@ -47,5 +113,17 @@ class ChildProfile {
     age: age ?? this.age,
     gender: gender ?? this.gender,
     note: note ?? this.note,
+    primaryDifficulty: primaryDifficulty ?? this.primaryDifficulty,
+    secondaryDifficulties: secondaryDifficulties ?? this.secondaryDifficulties,
+    learningGoals: learningGoals ?? this.learningGoals,
+    supportLevel: supportLevel ?? this.supportLevel,
+    dailyDurationMinutes: dailyDurationMinutes ?? this.dailyDurationMinutes,
+    coLearningMode: coLearningMode ?? this.coLearningMode,
+    interests: interests ?? this.interests,
+    accessibilityPreferences:
+        accessibilityPreferences ?? this.accessibilityPreferences,
+    currentPathId: currentPathId ?? this.currentPathId,
+    currentProgramId: currentProgramId ?? this.currentProgramId,
+    selectedAt: selectedAt ?? this.selectedAt,
   );
 }

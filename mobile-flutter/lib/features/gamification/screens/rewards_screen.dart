@@ -67,9 +67,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(18, 56, 18, 24),
             children: [
-              const Text('Phần thưởng', style: AppTextStyles.headline),
+              Text('Phần thưởng', style: AppTextStyles.headline),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Ghi nhận nỗ lực của bé, không so sánh hay xếp hạng.',
                 style: AppTextStyles.muted,
               ),

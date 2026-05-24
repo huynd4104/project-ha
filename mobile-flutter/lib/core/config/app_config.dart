@@ -7,4 +7,8 @@ class AppConfig {
     'ALLOW_ALL_LESSONS_FOR_DEMO',
     defaultValue: true,
   );
+  static const enableDemoPremiumUpgrade = bool.fromEnvironment(
+    'ENABLE_DEMO_PREMIUM_UPGRADE',
+    defaultValue: true,
+  );
 }

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../models/models.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
@@ -14,7 +15,11 @@ import '../../../core/widgets/app_image.dart';
 import '../../../core/widgets/progress_bar.dart';
 import '../../gamification/data/gamification_repository.dart';
 import '../../gamification/widgets/daily_mission_card.dart';
+import '../../learning_path/data/lesson_repository.dart';
 import '../../lessons/widgets/mascot_message_bubble.dart';
+import '../../../core/utils/access_check.dart';
+import '../../../core/utils/parent_gate.dart';
+import '../../parent_dashboard/screens/paywall_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -36,7 +41,7 @@ class HomeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Hôm nay mình cùng học nhé!',
                         style: AppTextStyles.headline,
                       ),
@@ -46,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                             ? (state.appUser?.fullName ?? 'Phụ huynh')
                             : '${child.name} • ${child.age} tuổi',
                         style: AppTextStyles.muted.copyWith(
-                           fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -157,59 +162,276 @@ class HomeScreen extends StatelessWidget {
             MascotMessageBubble(
               npc: state.activeNpc,
               message: state.activeNpc != null
-                  ? (state.activeNpc!.defaultDialogue.isNotEmpty
-                      ? state.activeNpc!.defaultDialogue
-                      : 'Hôm nay mình cùng học nhé!')
+                  ? (state.activeNpc!.dialogueTemplates.welcome.isNotEmpty
+                        ? state.activeNpc!.dialogueTemplates.welcome
+                        : (state.activeNpc!.defaultDialogue.isNotEmpty
+                            ? state.activeNpc!.defaultDialogue
+                            : 'Hôm nay mình cùng học nhé!'))
                   : 'Bé chưa có bạn đồng hành nào. Hãy quét mã QR trên đồ chơi để mở khóa bạn nhỏ nhé!',
             ).animate().fadeIn().slideY(begin: .08),
             const SizedBox(height: 14),
-            AppCard(
-              borderColor: AppColors.sky.withValues(alpha: .25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            FutureBuilder<({LearningPlan plan, List<UserProgress> progress})>(
+              future: child == null
+                  ? null
+                  : Future.wait([
+                      LessonRepository().currentLearningPlan(state.firebaseUser!.uid, child.id),
+                      LessonRepository().progress(state.firebaseUser!.uid, child.id),
+                    ]).then((res) => (
+                      plan: res[0] as LearningPlan,
+                      progress: res[1] as List<UserProgress>
+                    )),
+              builder: (_, pathSnap) {
+                if (child == null) return const SizedBox.shrink();
+                if (!pathSnap.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final value = pathSnap.data!;
+                final plan = value.plan;
+                final List<UserProgress> progressList = List<UserProgress>.from(value.progress);
+
+                // Nếu chưa chọn lộ trình
+                if (child.currentPathId == null || child.currentPathId!.isEmpty) {
+                  return AppCard(
+                    borderColor: AppColors.orange.withOpacity(.25),
+                    color: const Color(0xFFFDF8F6),
+                    onTap: () => context.push('/path-selection'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              backgroundColor: AppColors.orange,
+                              child: Icon(Icons.explore_outlined, color: Colors.white),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Đề xuất lộ trình học',
+                                    style: AppTextStyles.title,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'Bé chưa chọn lộ trình học phù hợp.',
+                                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Nhấn vào đây để khám phá các lộ trình học phù hợp nhất cho bé!',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF9A3412),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        AppButton(
+                          label: 'Khám phá ngay',
+                          icon: Icons.chevron_right_rounded,
+                          backgroundColor: AppColors.orange,
+                          onPressed: () => context.push('/path-selection'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Nếu đã chọn lộ trình, tìm bài học tiếp theo chưa hoàn thành
+                final completedLessonIds = progressList
+                    .where((p) => p.status == 'COMPLETED')
+                    .map((p) => p.lessonId)
+                    .toSet();
+
+                Lesson? nextLesson;
+                for (final lesson in plan.lessons) {
+                  if (!completedLessonIds.contains(lesson.id)) {
+                    nextLesson = lesson;
+                    break;
+                  }
+                }
+
+                final pathName = plan.title;
+                final isCompletedAll = nextLesson == null && plan.lessons.isNotEmpty;
+
+                return AppCard(
+                  borderColor: AppColors.sky.withOpacity(.25),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const CircleAvatar(
+                            backgroundColor: AppColors.sky,
+                            child: Icon(
+                              Icons.play_arrow_rounded,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Hoạt động hôm nay',
+                                  style: AppTextStyles.title,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(pathName, style: AppTextStyles.muted),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      if (isCompletedAll) ...[
+                        const Text(
+                          'Bé đã hoàn thành xuất sắc tất cả bài học trong lộ trình này! 🎉',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        AppButton(
+                          label: 'Chọn lộ trình mới',
+                          icon: Icons.explore_rounded,
+                          onPressed: () => context.push('/path-selection'),
+                        ),
+                      ] else if (nextLesson != null) ...[
+                        Text(
+                          'Bài tiếp theo: ${nextLesson.title}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          nextLesson.description,
+                          style: AppTextStyles.caption.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 14),
+                        AppButton(
+                          label: 'Bắt đầu học',
+                          icon: Icons.play_arrow_rounded,
+                          onPressed: () {
+                            final hasAccess = AccessCheck.canAccessContent(
+                              accessType: nextLesson!.accessType,
+                              summary: state.appUser?.subscriptionSummary,
+                            );
+                            if (!hasAccess) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('✨ Bài học Premium'),
+                                  content: const Text(
+                                    'Bài học này cần tài khoản Premium để truy cập. Bé hãy nhờ bố mẹ mở khóa giúp nhé!',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: const Text('Để sau', style: TextStyle(color: Colors.grey)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        ParentGate.show(context, () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => const PaywallScreen(),
+                                            ),
+                                          );
+                                        });
+                                      },
+                                      child: const Text('Dành cho Bố Mẹ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else {
+                              context.push('/lesson/${nextLesson!.id}/activity');
+                            }
+                          },
+                        ),
+                      ] else ...[
+                        const Text(
+                          'Chưa có bài học nào trong lộ trình.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 12),
+                        AppButton(
+                          label: 'Chọn lộ trình khác',
+                          icon: Icons.explore_rounded,
+                          onPressed: () => context.push('/path-selection'),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+            if (child != null && (child.secondaryDifficulties.isEmpty || child.interests.isEmpty || child.learningGoals.isEmpty))
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: AppCard(
+                  color: const Color(0xFFF0FDF4),
+                  borderColor: const Color(0xFFBBF7D0),
+                  onTap: () => context.push('/child-profile'),
+                  child: Row(
                     children: [
                       const CircleAvatar(
-                        backgroundColor: AppColors.sky,
-                        child: Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                        ),
+                        backgroundColor: Color(0xFFDCFCE7),
+                        child: Icon(Icons.edit_note_rounded, color: Color(0xFF10B981)),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'Hoạt động hôm nay',
-                              style: AppTextStyles.title,
+                              'Hoàn thiện hồ sơ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF166534),
+                                fontSize: 16,
+                              ),
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Bài ngắn • khoảng 3 phút',
-                              style: AppTextStyles.muted,
+                              'Cập nhật sở thích & khó khăn của trẻ để nhận gợi ý lộ trình tối ưu hơn.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF1E293B),
+                              ),
                             ),
                           ],
                         ),
                       ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.grey[600],
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  const Text(
-                    'Tiếp tục lộ trình học của bé',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 14),
-                  AppButton(
-                    label: 'Bắt đầu',
-                    icon: Icons.play_arrow_rounded,
-                    onPressed: () => context.go('/learning'),
-                  ),
-                ],
+                ),
               ),
-            ),
             const SizedBox(height: 14),
             FutureBuilder(
               future: GamificationRepository().dailyMissions(
@@ -226,7 +448,7 @@ class HomeScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Nhiệm vụ hôm nay',
                           style: AppTextStyles.title,
                         ),
@@ -246,20 +468,27 @@ class HomeScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 6),
-            const Text('Đi nhanh', style: AppTextStyles.title),
+            Text('Đi nhanh', style: AppTextStyles.title),
             const SizedBox(height: 10),
             _ActionCard(
-              title: 'Lộ trình',
+              title: 'Lộ trình học',
               subtitle: 'Xem bản đồ bài học',
               icon: Icons.route_rounded,
               color: AppColors.sky,
               onTap: () => context.go('/learning'),
             ),
             _ActionCard(
+              title: 'Đổi lộ trình học',
+              subtitle: 'Chọn lộ trình phù hợp cho bé',
+              icon: Icons.explore_rounded,
+              color: AppColors.orange,
+              onTap: () => context.push('/path-selection'),
+            ),
+            _ActionCard(
               title: 'Quét QR',
               subtitle: 'Mở khóa bạn đồng hành',
               icon: Icons.qr_code_scanner_rounded,
-              color: AppColors.purple,
+              color: AppColors.primary,
               onTap: () => context.go('/scan'),
             ),
             _ActionCard(

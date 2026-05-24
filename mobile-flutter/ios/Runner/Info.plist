@@ -47,5 +47,7 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Ứng dụng cần truy cập camera để quét mã QR mở khóa Mascot.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ứng dụng cần sử dụng microphone để cho phép con trả lời câu hỏi bằng giọng nói.</string>
 </dict>
 </plist>

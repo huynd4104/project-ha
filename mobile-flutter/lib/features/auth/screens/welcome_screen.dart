@@ -43,19 +43,19 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Project HA',
                 style: AppTextStyles.display,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Học từng chút, tiến bộ mỗi ngày.',
                 style: AppTextStyles.body,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Bài học ngắn, bạn đồng hành và phần thưởng tích cực cho bé tại nhà.',
                 style: AppTextStyles.muted,
                 textAlign: TextAlign.center,

@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 String friendlyFirebaseError(Object error) {
@@ -18,6 +19,9 @@ String friendlyFirebaseError(Object error) {
       case 'requires-recent-login':
         return 'Vui lòng đăng nhập lại trước khi đổi mật khẩu.';
     }
+  }
+  if (error is FirebaseFunctionsException) {
+    return error.message ?? 'Không thể xử lý yêu cầu. Vui lòng thử lại.';
   }
   final text = error.toString();
   if (text.contains('FIREBASE_PROJECT_ID') || text.contains('projectId')) {

@@ -1,3 +1,6 @@
+import 'model_helpers.dart';
+import 'subscription_summary.dart';
+
 class AppUser {
   const AppUser({
     required this.id,
@@ -6,6 +9,7 @@ class AppUser {
     required this.role,
     required this.isActive,
     this.emailVerified = false,
+    this.subscriptionSummary = const SubscriptionSummary(),
   });
 
   final String id;
@@ -14,6 +18,7 @@ class AppUser {
   final String role;
   final bool isActive;
   final bool emailVerified;
+  final SubscriptionSummary subscriptionSummary;
 
   factory AppUser.fromMap(String id, Map<String, dynamic> map) => AppUser(
     id: id,
@@ -22,6 +27,9 @@ class AppUser {
     role: '${map['role'] ?? 'PARENT'}',
     isActive: map['isActive'] != false,
     emailVerified: map['emailVerified'] == true,
+    subscriptionSummary: SubscriptionSummary.fromMap(
+      readMap(map['subscriptionSummary']),
+    ),
   );
 
   Map<String, dynamic> toMap() => {
@@ -31,9 +39,15 @@ class AppUser {
     'role': role,
     'isActive': isActive,
     'emailVerified': emailVerified,
+    'subscriptionSummary': subscriptionSummary.toMap(),
   };
 
-  AppUser copyWith({String? fullName, bool? isActive, bool? emailVerified}) =>
+  AppUser copyWith({
+    String? fullName,
+    bool? isActive,
+    bool? emailVerified,
+    SubscriptionSummary? subscriptionSummary,
+  }) =>
       AppUser(
         id: id,
         email: email,
@@ -41,5 +55,6 @@ class AppUser {
         role: role,
         isActive: isActive ?? this.isActive,
         emailVerified: emailVerified ?? this.emailVerified,
+        subscriptionSummary: subscriptionSummary ?? this.subscriptionSummary,
       );
 }

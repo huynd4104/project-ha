@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
+import { seedDomainData } from './seed-domain-helpers';
 
 type SeedContext = {
   adminUid: string;
@@ -226,6 +227,8 @@ export async function seedLearningContent(db: admin.firestore.Firestore, context
   await flashcards.add({ lessonId: lessonRefs.dialogue[0].id, frontText: 'Xin chào', backText: 'Lời chào thân thiện', imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44b.svg', orderIndex: 1, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
   await flashcards.add({ lessonId: lessonRefs.dialogue[1].id, frontText: 'Mèo', backText: 'Con vật nhỏ, kêu meo meo', imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f431.svg', orderIndex: 2, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
   await flashcards.add({ lessonId: lessonRefs.dialogue[2].id, frontText: 'Vui', backText: 'Cảm xúc vui vẻ', imageUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg', orderIndex: 3, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+
+  await seedDomainData(db);
 
   console.log('\x1b[32mSeeding of learning content and metadata from templates complete.\x1b[0m');
   return { adminUid: context.adminUid, parentUid: context.parentUid };

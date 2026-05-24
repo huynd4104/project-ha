@@ -28,6 +28,7 @@ export function DataTable({ rows, columns, onEdit, onDelete }: { rows: any[]; co
 }
 
 function formatCell(value: unknown) {
+  if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "boolean") return value ? "Có" : "Không";
   if (value === null || value === undefined) return "";
   if (value === "PARENT") return "Phụ huynh";
@@ -42,12 +43,16 @@ function formatCell(value: unknown) {
 
 const columnLabels: Record<string, string> = {
   age: "Tuổi",
+  accessType: "Quyền truy cập",
   backText: "Mặt sau",
   code: "Mã",
   completedAt: "Hoàn thành lúc",
+  coLearningMode: "Cách học",
   correctAnswers: "Câu đúng",
   correctOption: "Đáp án đúng",
+  dailyDurationMinutes: "Phút/ngày",
   description: "Mô tả",
+  difficultyCategories: "Nhóm khó khăn",
   email: "Email",
   frontText: "Mặt trước",
   fullName: "Họ tên",
@@ -55,16 +60,26 @@ const columnLabels: Record<string, string> = {
   imageUrl: "URL hình ảnh",
   isActive: "Đang hoạt động",
   label: "Nhãn",
+  learningGoals: "Mục tiêu",
+  level: "Cấp độ",
   lessonId: "ID bài học",
   maxUses: "Lượt dùng tối đa",
   name: "Tên",
   note: "Ghi chú",
   npcId: "ID NPC",
   orderIndex: "Thứ tự",
+  primaryDifficulty: "Khó khăn chính",
+  programId: "ID chương trình",
+  publishStatus: "Trạng thái xuất bản",
   questionText: "Câu hỏi",
   role: "Vai trò",
   score: "Điểm",
+  sequence: "Thứ tự",
+  skillTags: "Kỹ năng",
   status: "Trạng thái",
+  supportLevel: "Mức hỗ trợ",
+  targetAgeMin: "Tuổi từ",
+  targetAgeMax: "Tuổi đến",
   title: "Tiêu đề",
   totalQuestions: "Tổng câu hỏi",
   type: "Loại",

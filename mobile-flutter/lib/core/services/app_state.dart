@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/data/auth_repository.dart';
@@ -10,8 +11,9 @@ import '../../features/gamification/data/gamification_repository.dart';
 import '../../features/npcs/data/npc_repository.dart';
 import '../../models/models.dart';
 import 'sound_service.dart';
+import '../../features/parent/data/subscription_service.dart';
 
-class AppState extends ChangeNotifier {
+class AppState extends ChangeNotifier with WidgetsBindingObserver {
   AppState({this.firebaseError});
 
   final Object? firebaseError;
@@ -19,6 +21,7 @@ class AppState extends ChangeNotifier {
   late final ChildRepository childRepository = ChildRepository();
   late final GamificationRepository gamificationRepository =
       GamificationRepository();
+  late final SubscriptionService subscriptionService = SubscriptionService();
 
   StreamSubscription<User?>? _sub;
   bool loading = true;
@@ -44,6 +47,7 @@ class AppState extends ChangeNotifier {
   bool get hasChild => activeChild != null;
 
   Future<void> start() async {
+    WidgetsBinding.instance.addObserver(this);
     await SoundService.instance.load();
     await _loadAccessibility();
     if (firebaseError != null) {
@@ -170,8 +174,47 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateActiveChildPath(String programId, String pathId) {
+    if (activeChild != null) {
+      activeChild = activeChild!.copyWith(
+        currentProgramId: programId,
+        currentPathId: pathId,
+        selectedAt: DateTime.now(),
+      );
+      children = children.map((c) => c.id == activeChild!.id ? activeChild! : c).toList();
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshSubscription() async {
+    if (firebaseUser == null) return;
+    try {
+      final summary =
+          await subscriptionService.getSubscriptionSummary(firebaseUser!.uid);
+      if (summary != null && appUser != null) {
+        appUser = appUser!.copyWith(subscriptionSummary: summary);
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error refreshing subscription: $e');
+    }
+  }
+
+  Future<void> upgradeDemoPremium() async {
+    await subscriptionService.demoUpgradePremium();
+    await refreshSubscription();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      refreshSubscription();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
     super.dispose();
   }

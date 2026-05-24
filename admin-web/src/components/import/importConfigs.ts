@@ -376,3 +376,77 @@ function normalizedQuestion(row: Record<string, string>) {
     correctOption: normalizeString(row.correctOption)
   };
 }
+
+export function developmentCategoriesImportConfig(existingItems: NamedRecord[]): ImportConfig {
+  const keys = duplicateSet(existingItems, "key" as any);
+  return {
+    title: "Import CSV Nhóm khó khăn",
+    templateFilename: "dev-categories-template.csv",
+    templateHeaders: ["key", "label", "description", "isActive", "orderIndex"],
+    templateExampleRows: [{ key: "language_delay", label: "Chậm nói", description: "Trẻ chậm phát triển ngôn ngữ", isActive: "true", orderIndex: "1" }],
+    validateRow(row) {
+      const errors: string[] = [];
+      const key = normalizeString(row.key);
+      if (!key) errors.push("key bắt buộc.");
+      if (key && keys.has(key.toLowerCase())) errors.push("Key đã tồn tại.");
+      return ok({
+        key,
+        label: normalizeString(row.label),
+        description: normalizeString(row.description),
+        isActive: boolField(row.isActive, "isActive", true, errors),
+        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+      }, errors);
+    }
+  };
+}
+
+export function learningGoalsImportConfig(existingItems: NamedRecord[]): ImportConfig {
+  const keys = duplicateSet(existingItems, "key" as any);
+  return {
+    title: "Import CSV Mục tiêu học tập",
+    templateFilename: "learning-goals-template.csv",
+    templateHeaders: ["key", "label", "description", "skillTags", "isActive", "orderIndex"],
+    templateExampleRows: [{ key: "expressive_lang", label: "Ngôn ngữ diễn đạt", description: "Cải thiện diễn đạt", skillTags: "naming,requesting", isActive: "true", orderIndex: "1" }],
+    validateRow(row) {
+      const errors: string[] = [];
+      const key = normalizeString(row.key);
+      if (!key) errors.push("key bắt buộc.");
+      if (key && keys.has(key.toLowerCase())) errors.push("Key đã tồn tại.");
+      return ok({
+        key,
+        label: normalizeString(row.label),
+        description: normalizeString(row.description),
+        skillTags: normalizeString(row.skillTags).split(",").filter(Boolean),
+        isActive: boolField(row.isActive, "isActive", true, errors),
+        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+      }, errors);
+    }
+  };
+}
+
+export function skillsImportConfig(existingItems: NamedRecord[]): ImportConfig {
+  const keys = duplicateSet(existingItems, "key" as any);
+  return {
+    title: "Import CSV Kỹ năng",
+    templateFilename: "skills-template.csv",
+    templateHeaders: ["key", "label", "domain", "parentDescription", "isActive", "orderIndex"],
+    templateExampleRows: [{ key: "naming_objects", label: "Gọi tên đồ vật", domain: "LANGUAGE", parentDescription: "Trẻ có thể gọi tên", isActive: "true", orderIndex: "1" }],
+    validateRow(row) {
+      const errors: string[] = [];
+      const key = normalizeString(row.key);
+      if (!key) errors.push("key bắt buộc.");
+      if (key && keys.has(key.toLowerCase())) errors.push("Key đã tồn tại.");
+      return ok({
+        key,
+        label: normalizeString(row.label),
+        domain: normalizeString(row.domain),
+        parentDescription: normalizeString(row.parentDescription),
+        isActive: boolField(row.isActive, "isActive", true, errors),
+        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+      }, errors);
+    }
+  };
+}
+
+// Keeping it simple for other complex types due to relational needs.
+// For real deployment, we'd add complete configs for programs, learningPaths, activities, etc.
