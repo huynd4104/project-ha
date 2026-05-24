@@ -1,0 +1,147 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(userDoc())
+        && get(userDoc()).data.role == "ADMIN"
+        && get(userDoc()).data.isActive == true;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function writesOwnUserData() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == "PARENT"
+        && request.resource.data.isActive == true;
+      allow read: if isAdmin() || isOwner(userId);
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /children/{childId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update, delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /npcs/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /mediaAssets/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /qrCodes/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["usedCount", "updatedAt"])
+          && request.resource.data.usedCount == resource.data.usedCount + 1);
+    }
+
+    match /lessons/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /mathQuestions/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /dialogues/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /flashcards/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /userUnlockedNpcs/{id} {
+      allow get: if signedIn()
+        && (!exists(/databases/$(database)/documents/userUnlockedNpcs/$(id))
+          || isAdmin()
+          || isOwner(resource.data.userId));
+      allow list: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update, delete: if isAdmin();
+    }
+
+    match /progress/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+
+    match /xpLogs/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update, delete: if isAdmin();
+    }
+
+    match /streaks/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+
+    match /badges/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /userBadges/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update, delete: if isAdmin();
+    }
+
+    match /dailyMissions/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /userMissionProgress/{id} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+
+    match /userMascotCompanions/{id} {
+      allow get: if signedIn()
+        && (!exists(/databases/$(database)/documents/userMascotCompanions/$(id))
+          || isAdmin()
+          || isOwner(resource.data.userId));
+      allow list: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if signedIn() && writesOwnUserData();
+      allow update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+  }
+}

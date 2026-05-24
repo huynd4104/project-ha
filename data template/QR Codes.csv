@@ -1,0 +1,11 @@
+label,code,npcName,isActive,maxUses
+Thẻ Mèo Mimi,CAT_001_UNLOCK_MIMI,Mèo Mimi,true,
+Thẻ Gấu Bobo,BEAR_001_UNLOCK_BOBO,Gấu Bobo,true,
+Thẻ Thỏ Nana,RABBIT_001_UNLOCK_NANA,Thỏ Nana,true,
+Thẻ Chó Pipi,DOG_001_UNLOCK_PIPI,Chó Pipi,true,
+Thẻ Sư tử Lilo,LION_001_UNLOCK_LILO,Sư tử Lilo,true,
+Thẻ Cáo Kiki,FOX_001_UNLOCK_KIKI,Cáo Kiki,true,
+Thẻ Gấu trúc Pana,PANDA_001_UNLOCK_PANA,Gấu trúc Pana,true,
+Thẻ Khỉ Momo,MONKEY_001_UNLOCK_MOMO,Khỉ Momo,true,
+Thẻ Ếch Koko,FROG_001_UNLOCK_KOKO,Ếch Koko,true,
+Thẻ Koala Lala,KOALA_001_UNLOCK_LALA,Koala Lala,true,

@@ -1,0 +1,15 @@
+name,description,iconUrl,type,conditionType,conditionValue,isActive
+Bước đầu tiên,Hoàn thành bài học đầu tiên,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c6.svg,LESSON,COMPLETE_LESSONS,1,true
+Ngôi sao nhỏ,Hoàn thành 3 bài học,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2b50.svg,LESSON,COMPLETE_LESSONS,3,true
+Nhà vô địch nhỏ,Hoàn thành 5 bài học,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c5.svg,LESSON,COMPLETE_LESSONS,5,true
+Chăm chỉ 3 ngày,Duy trì streak 3 ngày,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f525.svg,STREAK,STREAK_DAYS,3,true
+Siêu chăm chỉ,Duy trì streak 7 ngày,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4c5.svg,STREAK,STREAK_DAYS,7,true
+100 XP đầu tiên,Đạt tổng cộng 100 XP,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f48e.svg,XP,TOTAL_XP,100,true
+300 XP cố gắng,Đạt tổng cộng 300 XP,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f680.svg,XP,TOTAL_XP,300,true
+Người bạn NPC,Mở khóa 3 NPC,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f451.svg,NPC,UNLOCK_NPCS,3,true
+Nhà sưu tập nhỏ,Mở khóa 5 NPC,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2728.svg,NPC,UNLOCK_NPCS,5,true
+Hoàn thành nhiệm vụ,Hoàn thành 3 nhiệm vụ hằng ngày,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3af.svg,MISSION,COMPLETE_DAILY_MISSIONS,3,true
+Nhà thông thái,Hoàn thành 15 bài học,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4da.svg,LESSON,COMPLETE_LESSONS,15,true
+Chuyên gia bền bỉ,Duy trì streak 15 ngày,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f947.svg,STREAK,STREAK_DAYS,15,true
+Tri thức vô hạn,Đạt tổng cộng 1000 XP,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f680.svg,XP,TOTAL_XP,1000,true
+Bạn của muôn loài,Mở khóa 10 bạn nhỏ NPC,https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f451.svg,NPC,UNLOCK_NPCS,10,true

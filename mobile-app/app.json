@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Project HA",
+    "slug": "project-ha",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F2EB"
+      }
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-asset"
+    ]
+  }
+}

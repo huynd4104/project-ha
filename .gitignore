@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.expo/
+.firebase/
+
+.env
+.env.*
+!.env.example
+
+admin-web/dist/
+mobile-app/.expo/
+backend/dist/
+backend/prisma/dev.db
+
+# Service Account Private Key
+firebase-service-account.json
