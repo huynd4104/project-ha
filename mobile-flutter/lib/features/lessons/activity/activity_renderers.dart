@@ -43,11 +43,16 @@ class ChoiceAnswerRenderer extends StatefulWidget {
 }
 
 class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
-  String? _selectedOptionId;
+  int? _selectedOptionIndex;
+  bool _isAnswered = false;
 
-  void _submit(ActivityOption option) {
+  void _submit(ActivityOption option, int index) {
+    // Prevent multiple submissions
+    if (_isAnswered) return;
+
     setState(() {
-      _selectedOptionId = option.id;
+      _selectedOptionIndex = index;
+      _isAnswered = true;
     });
 
     final isCorrect = option.isCorrect || 
@@ -124,53 +129,56 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                   itemCount: activity.options.length,
                   itemBuilder: (context, idx) {
                     final option = activity.options[idx];
-                    final isSelected = _selectedOptionId == option.id;
+                    final isSelected = _selectedOptionIndex == idx;
                     return GestureDetector(
-                      onTap: () => _submit(option),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          border: Border.all(
-                            color: isSelected ? AppColors.primary : Colors.grey[200]!,
-                            width: isSelected ? 3.5 : 2,
+                      onTap: _isAnswered ? null : () => _submit(option, idx),
+                      child: Opacity(
+                        opacity: _isAnswered && !isSelected ? 0.5 : 1.0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : Colors.grey[200]!,
+                              width: isSelected ? 3.5 : 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isSelected 
+                                    ? AppColors.primary.withOpacity(0.15) 
+                                    : Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isSelected 
-                                  ? AppColors.primary.withOpacity(0.15) 
-                                  : Colors.black.withOpacity(0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-                                child: option.imageUrl != null && option.imageUrl!.isNotEmpty
-                                    ? AppImage(imageUrl: option.imageUrl!, fit: BoxFit.cover)
-                                    : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-                              child: Text(
-                                option.text,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                  color: AppColors.text,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                                  child: option.imageUrl != null && option.imageUrl!.isNotEmpty
+                                      ? AppImage(imageUrl: option.imageUrl!, fit: BoxFit.cover)
+                                      : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
                                 ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                                child: Text(
+                                  option.text,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    color: AppColors.text,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -180,22 +188,25 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                   itemCount: activity.options.length,
                   itemBuilder: (context, idx) {
                     final option = activity.options[idx];
-                    final isSelected = _selectedOptionId == option.id;
+                    final isSelected = _selectedOptionIndex == idx;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 14.0),
-                      child: AppCard(
-                        borderColor: isSelected ? AppColors.primary : Colors.grey[200]!,
-                        color: isSelected ? AppColors.cream : Colors.white,
-                        onTap: () => _submit(option),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              option.text,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: isSelected ? AppColors.primary : AppColors.text,
+                      child: Opacity(
+                        opacity: _isAnswered && !isSelected ? 0.5 : 1.0,
+                        child: AppCard(
+                          borderColor: isSelected ? AppColors.primary : Colors.grey[200]!,
+                          color: isSelected ? AppColors.cream : Colors.white,
+                          onTap: _isAnswered ? null : () => _submit(option, idx),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(
+                                option.text,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: isSelected ? AppColors.primary : AppColors.text,
+                                ),
                               ),
                             ),
                           ),
