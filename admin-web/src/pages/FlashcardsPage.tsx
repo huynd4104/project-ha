@@ -173,8 +173,7 @@ export function FlashcardsPage() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho flashcard có thể tái sử dụng để tạo hoạt động học trong bài học mới.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Thẻ Học</button>
         </div>
       </div>

@@ -236,8 +236,7 @@ export function TaxonomyPage() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kiểm tra dữ liệu nền gồm nhóm trẻ, mục tiêu học và kỹ năng dùng để gắn vào chương trình, lộ trình và bài học.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal}>➕ Thêm mới</button>
         </div>
       </div>

@@ -187,8 +187,7 @@ export function LessonsPage() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho bài học có thể dùng làm nguồn tham chiếu hoặc tách thành hoạt động trong kiến trúc mới.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal}>➕ Thêm Bài Học</button>
         </div>
       </div>

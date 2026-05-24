@@ -161,8 +161,7 @@ export function NPCsPage() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Kho nhân vật có thể tái sử dụng làm người đồng hành trong bài học và hoạt động mới.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal}>➕ Thêm Nhân Vật</button>
         </div>
       </div>

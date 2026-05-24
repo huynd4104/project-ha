@@ -192,8 +192,7 @@ export function NPCsPageV2() {
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Quản lý nhân vật hướng dẫn, động viên và phản hồi trong quá trình học.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal}>➕ Thêm nhân vật</button>
         </div>
       </div>

@@ -158,8 +158,7 @@ export function DailyMissionsPage() {
       <div className="toolbar">
         <h1>Nhiệm Vụ Hàng Ngày</h1>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button className="secondary" onClick={() => downloadExcelTemplate(toExcelTemplateFilename(importConfig.templateFilename), importConfig.templateHeaders, importConfig.templateExampleRows)}>Tải mẫu Excel</button>
-          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import CSV</button>
+          <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
           <button onClick={openAddModal}>➕ Thêm Nhiệm Vụ</button>
         </div>
       </div>
