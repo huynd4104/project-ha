@@ -6,13 +6,17 @@ import { mediaService, MediaAsset } from "../services/mediaService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
 import { TableControls } from "../components/TableControls";
 import { useTableControls } from "../utils/tableControls";
+import { httpClient } from "../api/httpClient";
 
 function isTikTokUrl(url: string) {
   return /(^|\.)tiktok\.com\//i.test(url);
 }
 
 function isDirectVideoUrl(url: string) {
-  return /\.(mp4|webm|ogg|ogv)(\?.*)?$/i.test(url);
+  if (!url) return false;
+  // Match common video formats, including files with query parameters
+  const cleanUrl = url.split("?")[0].split("#")[0].toLowerCase();
+  return /\.(mp4|webm|ogg|ogv|mov|m4v)$/i.test(cleanUrl) || url.includes("/project-ha-media/") || url.includes("pub-c3e597d1bd9840aba57416b46544277f.r2.dev");
 }
 
 function VideoPreview({ asset, onPreview }: { asset: MediaAsset; onPreview: () => void }) {
@@ -98,6 +102,19 @@ export function MediaPage() {
   const [url, setUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [formError, setFormError] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [localFileUrl, setLocalFileUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (selectedFile) {
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setLocalFileUrl(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    } else {
+      setLocalFileUrl("");
+    }
+  }, [selectedFile]);
 
   async function loadAssets() {
     setLoading(true);
@@ -135,11 +152,12 @@ export function MediaPage() {
     setTimeout(() => setToastMsg(""), 3000);
   };
   const table = useTableControls(filtered, [
-    { value: "name", label: "Tên", getValue: (item) => item.name },
-    { value: "category", label: "Danh mục", getValue: (item) => item.category },
-    { value: "type", label: "Định dạng", getValue: (item) => item.type },
-    { value: "url", label: "URL", getValue: (item) => item.url }
-  ], "name");
+    { value: "createdAt", label: "Ngày thêm", getValue: (item) => item.createdAt ? new Date(item.createdAt).getTime() : 0 }
+  ], "createdAt");
+
+  useEffect(() => {
+    table.setSortDirection("desc");
+  }, []);
 
   const handleCopy = (val: string) => {
     navigator.clipboard.writeText(val);
@@ -168,6 +186,8 @@ export function MediaPage() {
     setUrl("");
     setThumbnailUrl("");
     setFormError("");
+    setSelectedFile(null);
+    setUploading(false);
   };
 
   const openAddModal = () => {
@@ -193,27 +213,95 @@ export function MediaPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !url) {
-      setFormError("Vui lòng điền Tên và URL.");
+    if (!name || (!url && !selectedFile)) {
+      setFormError("Vui lòng điền Tên và URL hoặc chọn tệp để tải lên.");
       return;
     }
     setFormError("");
+
+    let finalUrl = url;
+
+    // Handle upload if a file was selected
+    if (selectedFile) {
+      setUploading(true);
+      try {
+        showToast("Đang chuẩn bị tải tệp...");
+        
+        // 1. Request presigned upload URL
+        const presignRes = await httpClient.post("/api/media/presign-upload", {
+          fileName: selectedFile.name,
+          contentType: selectedFile.type,
+          sizeBytes: selectedFile.size
+        });
+        
+        const { uploadUrl, objectKey, mediaFile } = presignRes.data;
+        if (!uploadUrl) {
+          throw new Error("Không lấy được URL upload. Vui lòng kiểm tra lại cấu hình R2/S3.");
+        }
+        
+        showToast("Đang tải tệp lên cloud...");
+        
+        // 2. Upload to S3/R2 directly
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": selectedFile.type
+          },
+          body: selectedFile
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error("Tải file lên cloud storage thất bại.");
+        }
+        
+        showToast("Đang hoàn tất lưu thông tin tệp...");
+        
+        // 3. Complete the upload in backend
+        const completeRes = await httpClient.post("/api/media/complete-upload", {
+          mediaFileId: mediaFile.id,
+          metadata: {
+            originalName: selectedFile.name,
+            sizeBytes: selectedFile.size
+          }
+        });
+        
+        const completedMedia = completeRes.data;
+        if (completedMedia && completedMedia.publicUrl) {
+          finalUrl = completedMedia.publicUrl;
+        } else {
+          throw new Error("Không nhận được URL công khai sau khi upload.");
+        }
+      } catch (err: any) {
+        console.error(err);
+        setFormError(err.message || "Tải tệp lên thất bại.");
+        setUploading(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
     const payload = {
       name,
       category: assetCategory,
       type: assetType,
-      url,
+      url: finalUrl,
       thumbnailUrl: thumbnailUrl || undefined
     };
-    if (editingAsset) {
-      await mediaService.update(editingAsset.id, payload);
-      showToast("Cập nhật media asset thành công!");
-    } else {
-      await mediaService.create(payload);
-      showToast("Thêm media asset thành công!");
+
+    try {
+      if (editingAsset) {
+        await mediaService.update(editingAsset.id, payload);
+        showToast("Cập nhật media asset thành công!");
+      } else {
+        await mediaService.create(payload);
+        showToast("Thêm media asset thành công!");
+      }
+      closeModal();
+      loadAssets();
+    } catch (err: any) {
+      setFormError(err.message || "Lưu thông tin thất bại.");
     }
-    closeModal();
-    loadAssets();
   };
 
   const importConfig = mediaAssetsImportConfig();
@@ -357,38 +445,114 @@ export function MediaPage() {
                 </div>
 
                 <div className="field">
-                  <label>Đường dẫn tệp tin (URL) *</label>
-                  <input
-                    type="text"
-                    placeholder="Nhập đường dẫn http hoặc public/media/... của file"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    required
-                  />
-                  <span className="helper">Link ảnh/audio/video đầy đủ. Ví dụ: https://images.unsplash.com/photo-... hoặc /media/npcs/mimi.png</span>
+                  <label>Đường dẫn tệp tin (URL) hoặc Tải tệp lên *</label>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <input
+                      type="text"
+                      placeholder="Nhập đường dẫn http hoặc tải tệp lên..."
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      required={!selectedFile}
+                      style={{ flex: 1 }}
+                    />
+                    <label 
+                      className="button secondary" 
+                      style={{ 
+                        margin: 0, 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center", 
+                        cursor: "pointer", 
+                        whiteSpace: "nowrap",
+                        padding: "10px 16px",
+                        border: "1px dashed var(--primary)",
+                        color: "var(--primary)",
+                        background: "var(--primary-light)",
+                        borderRadius: "var(--radius-md)",
+                        fontWeight: "600",
+                        transition: "all 0.2s ease"
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = "var(--primary)"; e.currentTarget.style.color = "white"; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = "var(--primary-light)"; e.currentTarget.style.color = "var(--primary)"; }}
+                    >
+                      📤 Chọn tệp
+                      <input
+                        type="file"
+                        id="file-upload-input"
+                        accept={assetType === "IMAGE" ? "image/*" : assetType === "AUDIO" ? "audio/*" : assetType === "VIDEO" ? "video/*" : "*"}
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setSelectedFile(file);
+                          if (!name) {
+                            const cleanName = file.name.replace(/\.[^/.]+$/, "");
+                            setName(cleanName);
+                          }
+                          setUrl(file.name);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {selectedFile && (
+                    <span className="helper" style={{ color: "var(--primary)", fontWeight: "600", marginTop: "4px" }}>
+                      📎 Tệp đã chọn: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB) - Nhấn &quot;Lưu lại&quot; để bắt đầu tải lên.
+                    </span>
+                  )}
+                  <span className="helper">Ví dụ: https://images.unsplash.com/photo-... hoặc /media/npcs/mimi.png</span>
                   {assetType === "VIDEO" && (
-                    <span className="helper">Video phát trực tiếp trong admin cần URL file .mp4/.webm/.ogg. Link TikTok chỉ được lưu để mở xem ở tab gốc.</span>
+                    <span className="helper">Video phát trực tiếp trong admin cần URL file .mp4/.webm/.ogg.</span>
                   )}
                 </div>
 
-                <div className="field">
-                  <label>Đường dẫn thumbnail (Tùy chọn)</label>
-                  <input
-                    type="text"
-                    placeholder="Không bắt buộc"
-                    value={thumbnailUrl}
-                    onChange={(e) => setThumbnailUrl(e.target.value)}
-                  />
+                {(localFileUrl || (url && (url.startsWith("http") || url.startsWith("/")))) && (
+                  <div className="field" style={{
+                    background: "#f8fafc",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginTop: "12px"
+                  }}>
+                    <label style={{ alignSelf: "flex-start", marginBottom: "4px" }}>Xem trước nội dung</label>
+                    {assetType === "IMAGE" ? (
+                      <img
+                        src={localFileUrl || url}
+                        alt="Preview"
+                        style={{ maxWidth: "100%", maxHeight: "160px", objectFit: "contain", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
+                      />
+                    ) : assetType === "AUDIO" ? (
+                      <audio src={localFileUrl || url} controls style={{ width: "100%" }} />
+                    ) : (
+                      <video src={localFileUrl || url} controls style={{ maxWidth: "100%", maxHeight: "160px", borderRadius: "var(--radius-sm)", background: "#000" }} />
+                    )}
+                  </div>
+                )}
+
+                  <div className="field">
+                    <label>Đường dẫn thumbnail (Tùy chọn)</label>
+                    <input
+                      type="text"
+                      placeholder="Không bắt buộc"
+                      value={thumbnailUrl}
+                      onChange={(e) => setThumbnailUrl(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="secondary" onClick={closeModal}>Hủy</button>
-                <button type="submit">{editingAsset ? "Cập nhật" : "Lưu lại"}</button>
-              </div>
-            </form>
+                <div className="modal-footer">
+                  <button type="button" className="secondary" onClick={closeModal}>Hủy</button>
+                  <button type="submit" disabled={uploading}>
+                    {uploading ? "⏳ Đang tải tệp lên..." : editingAsset ? "Cập nhật" : "Lưu lại"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {reviewAsset && (
         <VideoReviewModal asset={reviewAsset} onClose={() => setReviewAsset(null)} />

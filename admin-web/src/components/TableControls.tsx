@@ -41,16 +41,36 @@ export function TableControls<T>({
         </select>
       </div>
       <div className="table-controls-right">
-        <label>
-          Sắp xếp
-          <select value={sortKey} onChange={(e) => onSortKeyChange(e.target.value)} aria-label="Sắp xếp theo">
-            {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-        </label>
-        <select value={sortDirection} onChange={(e) => onSortDirectionChange(e.target.value as SortDirection)} aria-label="Chiều sắp xếp">
-          <option value="asc">Tăng dần</option>
-          <option value="desc">Giảm dần</option>
-        </select>
+        {sortOptions.length === 1 ? (
+          <button
+            type="button"
+            className="secondary sort-toggle-button"
+            onClick={() => onSortDirectionChange(sortDirection === "asc" ? "desc" : "asc")}
+            title="Đổi chiều sắp xếp"
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+          >
+            <strong>{sortOptions[0].label}</strong>
+            <span style={{ fontSize: "11px" }}>{sortDirection === "asc" ? "▲ Tăng dần" : "▼ Giảm dần"}</span>
+          </button>
+        ) : sortOptions.length > 1 ? (
+          <>
+            <label>
+              Sắp xếp
+              <select value={sortKey} onChange={(e) => onSortKeyChange(e.target.value)} aria-label="Sắp xếp theo">
+                {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="secondary icon-button sort-direction-toggle"
+              onClick={() => onSortDirectionChange(sortDirection === "asc" ? "desc" : "asc")}
+              title={sortDirection === "asc" ? "Sắp xếp tăng dần - Nhấp để giảm dần" : "Sắp xếp giảm dần - Nhấp để tăng dần"}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: "34px" }}
+            >
+              {sortDirection === "asc" ? "▲" : "▼"}
+            </button>
+          </>
+        ) : null}
         <button className="secondary" type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Trước</button>
         <span>Trang {page}/{totalPages}</span>
         <button className="secondary" type="button" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Sau</button>

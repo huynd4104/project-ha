@@ -74,11 +74,35 @@ public class MediaService {
     }
 
     public void delete(UUID id, UUID userId) {
+        try {
+            Map<String, Object> media = repo.byId(id);
+            String key = String.valueOf(media.get("objectKey"));
+            if (key != null && !key.isBlank() && !endpoint.isBlank() && !accessKey.isBlank() && !secretKey.isBlank() && !bucket.isBlank()) {
+                try (software.amazon.awssdk.services.s3.S3Client s3 = s3Client()) {
+                    s3.deleteObject(software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .build());
+                }
+            }
+        } catch (Exception e) {
+            // Log warning or handle gracefully
+            System.err.println("Lỗi khi xóa file trên R2: " + e.getMessage());
+        }
         repo.delete(id, userId);
     }
 
     private S3Presigner presigner() {
         return S3Presigner.builder()
+            .endpointOverride(URI.create(endpoint))
+            .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
+            .region(Region.of(region == null || region.isBlank() ? "auto" : region))
+            .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+            .build();
+    }
+
+    private software.amazon.awssdk.services.s3.S3Client s3Client() {
+        return software.amazon.awssdk.services.s3.S3Client.builder()
             .endpointOverride(URI.create(endpoint))
             .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
             .region(Region.of(region == null || region.isBlank() ? "auto" : region))

@@ -18,6 +18,14 @@ interface DailyMission {
   isActive: boolean;
 }
 
+const MISSION_TYPE_LABELS: Record<DailyMission["type"], string> = {
+  COMPLETE_LESSON: "Hoàn thành bài học",
+  REVIEW_FLASHCARD: "Ôn tập Flashcard",
+  SCAN_QR: "Quét mã QR",
+  COMPLETE_DIALOGUE: "Hoàn thành hội thoại",
+  COMPLETE_MATH: "Hoàn thành bài toán"
+};
+
 export function DailyMissionsPage() {
   const [items, setItems] = useState<DailyMission[]>([]);
   const [filtered, setFiltered] = useState<DailyMission[]>([]);
@@ -68,7 +76,7 @@ export function DailyMissionsPage() {
   };
   const table = useTableControls(filtered, [
     { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
-    { value: "type", label: "Phân loại", getValue: (item) => item.type },
+    { value: "type", label: "Phân loại", getValue: (item) => MISSION_TYPE_LABELS[item.type] || item.type },
     { value: "target", label: "Mục tiêu", getValue: (item) => item.targetValue },
     { value: "reward", label: "Phần thưởng", getValue: (item) => item.rewardXp },
     { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
@@ -200,7 +208,7 @@ export function DailyMissionsPage() {
                 <tr key={item.id}>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description}</td>
-                  <td><span className="badge info">{item.type}</span></td>
+                  <td><span className="badge info">{MISSION_TYPE_LABELS[item.type] || item.type}</span></td>
                   <td style={{ fontWeight: "bold" }}>{item.targetValue} lần</td>
                   <td><strong style={{ color: "#22c55e" }}>+{item.rewardXp} XP</strong></td>
                   <td>
@@ -255,11 +263,11 @@ export function DailyMissionsPage() {
                 <div className="field">
                   <label>Phân loại hành động</label>
                   <select value={type} onChange={(e) => setType(e.target.value as any)}>
-                    <option value="COMPLETE_LESSON">COMPLETE_LESSON (Hoàn thành bài học nói chung)</option>
-                    <option value="REVIEW_FLASHCARD">REVIEW_FLASHCARD (Ôn tập thẻ học Flashcard)</option>
-                    <option value="SCAN_QR">Quét QR mở khóa nhân vật</option>
-                    <option value="COMPLETE_DIALOGUE">COMPLETE_DIALOGUE (Hoàn thành bài Hội thoại)</option>
-                    <option value="COMPLETE_MATH">COMPLETE_MATH (Hoàn thành bài Toán)</option>
+                    <option value="COMPLETE_LESSON">Hoàn thành bài học</option>
+                    <option value="REVIEW_FLASHCARD">Ôn tập Flashcard</option>
+                    <option value="SCAN_QR">Quét mã QR</option>
+                    <option value="COMPLETE_DIALOGUE">Hoàn thành hội thoại</option>
+                    <option value="COMPLETE_MATH">Hoàn thành bài toán</option>
                   </select>
                 </div>
 

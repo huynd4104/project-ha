@@ -49,13 +49,16 @@ const valueLabels: Record<string, string> = {
   COMPLETED: "Đã hoàn thành",
   IN_PROGRESS: "Đang học",
   NOT_STARTED: "Chưa bắt đầu",
+  STARTED: "Đã bắt đầu",
   DRAFT: "Bản nháp",
   PUBLISHED: "Đã xuất bản",
   ARCHIVED: "Đã lưu trữ",
+  RECORDED: "Đã ghi nhận",
 
   // Subjects / Type
   MATH: "Toán",
   DIALOGUE: "Hội thoại",
+  FLASHCARD: "Flashcard",
 
   // Support Level
   LOW: "Cần hỗ trợ ít",
@@ -92,6 +95,12 @@ function formatSingleValue(value: unknown): string {
   if (typeof value === "boolean") return value ? "Có" : "Không";
   if (typeof value === "object") return "";
   const strVal = String(value);
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleString("vi-VN");
+    }
+  }
   return valueLabels[strVal] ?? strVal;
 }
 

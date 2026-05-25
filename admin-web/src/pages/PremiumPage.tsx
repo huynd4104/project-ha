@@ -82,14 +82,11 @@ export function PremiumPage() {
     setFilteredUsers(result);
   }, [users, search, planFilter, statusFilter]);
 
-  // Set default expiresAt date (30 days from now) when opening modal or changing plan
+  // Set default expiresAt date when opening modal
   const openGrantModal = (user: any) => {
     setSelectedUser(user);
     setPlan("PREMIUM");
-    
-    const defaultDate = new Date();
-    defaultDate.setDate(defaultDate.getDate() + 30);
-    setExpiresAt(defaultDate.toISOString().slice(0, 10));
+    setExpiresAt(""); // Default to no expiration for premium
 
     setPremiumContent(true);
     setVoiceQuiz(true);
@@ -521,7 +518,17 @@ export function PremiumPage() {
                       <label>Gói cước <span style={{ color: "red" }}>*</span></label>
                       <select
                         value={plan}
-                        onChange={(e) => setPlan(e.target.value as "PREMIUM" | "TRIAL")}
+                        onChange={(e) => {
+                          const val = e.target.value as "PREMIUM" | "TRIAL";
+                          setPlan(val);
+                          if (val === "TRIAL") {
+                            const defaultDate = new Date();
+                            defaultDate.setDate(defaultDate.getDate() + 30);
+                            setExpiresAt(defaultDate.toISOString().slice(0, 10));
+                          } else {
+                            setExpiresAt("");
+                          }
+                        }}
                       >
                         <option value="PREMIUM">Premium</option>
                         <option value="TRIAL">Dùng thử</option>
@@ -530,12 +537,29 @@ export function PremiumPage() {
 
                     <div className="field">
                       <label>Ngày hết hạn {plan === "TRIAL" && <span style={{ color: "red" }}>*</span>}</label>
-                      <input
-                        type="date"
-                        value={expiresAt}
-                        onChange={(e) => setExpiresAt(e.target.value)}
-                        required={plan === "TRIAL"}
-                      />
+                      <div className="date-input-wrap">
+                        <span aria-hidden="true">📅</span>
+                        <input
+                          type="date"
+                          value={expiresAt}
+                          onChange={(e) => setExpiresAt(e.target.value)}
+                          required={plan === "TRIAL"}
+                        />
+                        {expiresAt && plan !== "TRIAL" && (
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => setExpiresAt("")}
+                          >
+                            Bỏ hạn
+                          </button>
+                        )}
+                      </div>
+                      <span className="field-help">
+                        {plan === "TRIAL"
+                          ? "Gói dùng thử bắt buộc phải có ngày hết hạn."
+                          : "Để trống nếu không giới hạn thời gian (Vô hạn)."}
+                      </span>
                     </div>
                   </div>
 

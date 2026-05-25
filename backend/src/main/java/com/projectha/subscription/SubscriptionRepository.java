@@ -32,7 +32,7 @@ public class SubscriptionRepository {
             INSERT INTO subscriptions(user_id, plan, status, provider, expires_at, entitlement_flags)
             VALUES (?, ?, 'ACTIVE', ?, ?, CAST(? AS jsonb))
             RETURNING *
-            """, userId, plan, provider, expiresAt, Db.json(entitlements)));
+            """, userId, plan, provider, expiresAt == null ? null : java.sql.Timestamp.from(expiresAt), Db.json(entitlements)));
         jdbc.update("""
             UPDATE users SET subscription_summary = CAST(? AS jsonb)
             WHERE id = ?
