@@ -2,6 +2,8 @@ package com.projectha.admin;
 
 import com.projectha.audit.AuditService;
 import com.projectha.common.AuthPrincipal;
+import com.projectha.subscription.SubscriptionService;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,10 +24,43 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
     private final AdminService admin;
     private final AuditService audit;
+    private final SubscriptionService subscriptionService;
 
-    public AdminController(AdminService admin, AuditService audit) {
+    public AdminController(AdminService admin, AuditService audit, SubscriptionService subscriptionService) {
         this.admin = admin;
         this.audit = audit;
+        this.subscriptionService = subscriptionService;
+    }
+
+    @GetMapping("/dashboard")
+    public Map<String, Object> dashboard() {
+        return admin.dashboard();
+    }
+
+    @PostMapping("/{resource}/batch")
+    public List<Map<String, Object>> createBatch(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable String resource, @RequestBody List<Map<String, Object>> payloads) {
+        return admin.createBatch(principal.id(), resource, payloads);
+    }
+
+    @SuppressWarnings("unchecked")
+    @PostMapping("/subscription/grant")
+    public Map<String, Object> grantPremium(@RequestBody Map<String, Object> payload) {
+        UUID userId = UUID.fromString(String.valueOf(payload.get("userId")));
+        String plan = String.valueOf(payload.get("plan"));
+        Object expiresAtObj = payload.get("expiresAt");
+        Instant expiresAt = null;
+        if (expiresAtObj != null) {
+            expiresAt = Instant.ofEpochMilli(Long.parseLong(String.valueOf(expiresAtObj)));
+        }
+        Map<String, Object> entitlements = (Map<String, Object>) payload.get("entitlements");
+        return subscriptionService.grant(userId, plan, expiresAt, entitlements);
+    }
+
+    @PostMapping("/subscription/revoke")
+    public Map<String, Object> revokePremium(@RequestBody Map<String, Object> payload) {
+        UUID userId = UUID.fromString(String.valueOf(payload.get("userId")));
+        subscriptionService.revoke(userId);
+        return Map.of("ok", true);
     }
 
     @GetMapping("/{resource}")

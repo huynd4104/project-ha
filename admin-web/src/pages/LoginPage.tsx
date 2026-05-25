@@ -1,7 +1,6 @@
 import { FormEvent, useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { authApi } from "../api/authApi";
-import { auth } from "../firebase/firebase";
 import { PasswordInput } from "../components/PasswordInput";
 import { FormError } from "../components/FormError";
 import { LoadingButton } from "../components/LoadingButton";
@@ -36,25 +35,9 @@ export function LoginPage() {
     };
   }, [cooldown]);
 
+
   const handleResendVerification = async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      setError("Phiên làm việc đã hết hạn. Vui lòng nhập mật khẩu đăng nhập lại để gửi lại email xác thực.");
-      return;
-    }
-    try {
-      setSendingVerification(true);
-      setError("");
-      setVerificationSuccess("");
-      const { sendEmailVerification } = await import("firebase/auth");
-      await sendEmailVerification(currentUser);
-      setVerificationSuccess("Đã gửi lại email xác thực thành công. Bố mẹ vui lòng kiểm tra hộp thư.");
-      setCooldown(60);
-    } catch (e: any) {
-      setError("Không thể gửi lại email xác thực: " + (e.message || e));
-    } finally {
-      setSendingVerification(false);
-    }
+    alert("Hệ thống đã chuyển sang Supabase. Vui lòng liên hệ quản trị hệ thống.");
   };
 
   async function submit(event: FormEvent) {
@@ -178,5 +161,5 @@ function formatLoginError(error: unknown) {
     return "Tài khoản quản trị của bạn đã bị khóa hoạt động.";
   }
   
-  return message || "Đăng nhập thất bại. Vui lòng kiểm tra lại cấu hình Firebase.";
+  return message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập hoặc kết nối hệ thống.";
 }

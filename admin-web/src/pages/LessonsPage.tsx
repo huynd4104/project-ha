@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase/firebase";
 import { adminApi } from "../api/adminApi";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
@@ -106,18 +104,22 @@ export function LessonsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const [mathSnap, dialogueSnap, flashcardSnap] = await Promise.all([
-        getDocs(query(collection(db, "mathQuestions"), where("lessonId", "==", id))),
-        getDocs(query(collection(db, "dialogues"), where("lessonId", "==", id))),
-        getDocs(query(collection(db, "flashcards"), where("lessonId", "==", id)))
+      const [mathRes, dialogueRes, flashcardRes] = await Promise.all([
+        adminApi.list("/math-questions"),
+        adminApi.list("/dialogues"),
+        adminApi.list("/flashcards")
       ]);
 
-      if (!mathSnap.empty || !dialogueSnap.empty || !flashcardSnap.empty) {
+      const mathSnap = (mathRes.data.data || []).filter((q: any) => q.lessonId === id);
+      const dialogueSnap = (dialogueRes.data.data || []).filter((d: any) => d.lessonId === id);
+      const flashcardSnap = (flashcardRes.data.data || []).filter((f: any) => f.lessonId === id);
+
+      if (mathSnap.length > 0 || dialogueSnap.length > 0 || flashcardSnap.length > 0) {
         alert(
           `Không thể xóa bài học này vì đang có dữ liệu liên kết tồn tại:\n` +
-          `• Câu hỏi toán: ${mathSnap.size} câu\n` +
-          `• Câu hội thoại: ${dialogueSnap.size} câu\n` +
-          `• Thẻ học (Flashcard): ${flashcardSnap.size} thẻ\n\n` +
+          `• Câu hỏi toán: ${mathSnap.length} câu\n` +
+          `• Câu hội thoại: ${dialogueSnap.length} câu\n` +
+          `• Thẻ học (Flashcard): ${flashcardSnap.length} thẻ\n\n` +
           `Vui lòng xóa các câu hỏi/thẻ học liên quan trước khi xóa bài học.`
         );
         return;

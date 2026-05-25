@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase/firebase";
 import { adminApi } from "../api/adminApi";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { CSVImportModal } from "../components/import/CSVImportModal";
@@ -95,9 +93,10 @@ export function NPCsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const qrSnap = await getDocs(query(collection(db, "qrCodes"), where("npcId", "==", id)));
-      if (!qrSnap.empty) {
-        alert(`Không thể xóa nhân vật này vì đang có ${qrSnap.size} mã QR được liên kết. Vui lòng cập nhật hoặc xóa các mã QR đó trước.`);
+      const qrRes = await adminApi.list("/qr-codes");
+      const qrSnap = (qrRes.data.data || []).filter((q: any) => q.targetId === id || q.npcId === id);
+      if (qrSnap.length > 0) {
+        alert(`Không thể xóa nhân vật này vì đang có ${qrSnap.length} mã QR được liên kết. Vui lòng cập nhật hoặc xóa các mã QR đó trước.`);
         return;
       }
       if (!window.confirm("Bạn có chắc chắn muốn xóa nhân vật này?")) return;

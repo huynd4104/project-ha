@@ -1,7 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../firebase/firebase";
+import { authApi } from "../api/authApi";
 import { FormError } from "../components/FormError";
 import { FormSuccess } from "../components/FormSuccess";
 import { LoadingButton } from "../components/LoadingButton";
@@ -24,8 +23,8 @@ export function ForgotPasswordPage() {
 
     try {
       setLoading(true);
-      await sendPasswordResetEmail(auth, email.trim());
-      setSuccess("Nếu email đã tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.");
+      await authApi.forgotPassword(email.trim());
+      setSuccess("Nếu email đã tồn tại trong hệ thống, mã đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.");
       setEmail("");
     } catch (err: any) {
       console.error(err);

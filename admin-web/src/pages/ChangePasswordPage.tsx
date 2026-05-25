@@ -1,10 +1,10 @@
 import { FormEvent, useState } from "react";
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { PasswordInput } from "../components/PasswordInput";
 import { FormError } from "../components/FormError";
 import { FormSuccess } from "../components/FormSuccess";
 import { LoadingButton } from "../components/LoadingButton";
+import { authApi } from "../api/authApi";
 
 export function ChangePasswordPage() {
   const { user } = useAuth();
@@ -57,12 +57,8 @@ export function ChangePasswordPage() {
     try {
       setLoading(true);
       
-      // 1. Reauthenticate
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-
-      // 2. Update
-      await updatePassword(user, newPassword);
+      // Call backend API to change password
+      await authApi.changePassword(currentPassword, newPassword);
       
       setSuccess("Thay đổi mật khẩu thành công!");
       setCurrentPassword("");

@@ -1,65 +1,22 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  serverTimestamp,
-  orderBy,
-  updateDoc
-} from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { mediaApi, MediaAsset } from "../api/mediaApi";
 
-export interface MediaAsset {
-  id: string;
-  name: string;
-  type: "IMAGE" | "AUDIO" | "VIDEO";
-  category: "NPC" | "FLASHCARD" | "DIALOGUE" | "BADGE" | "GENERAL";
-  url: string;
-  thumbnailUrl?: string;
-  createdAt?: any;
-  updatedAt?: any;
-}
+export type { MediaAsset };
 
 export const mediaService = {
   async list(): Promise<MediaAsset[]> {
-    const snap = await getDocs(query(collection(db, "mediaAssets"), orderBy("createdAt", "desc")));
-    return snap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data()
-    })) as MediaAsset[];
+    return mediaApi.list();
   },
 
   async create(data: Omit<MediaAsset, "id" | "createdAt" | "updatedAt">): Promise<MediaAsset> {
-    const now = serverTimestamp();
-    const payload = {
-      ...data,
-      createdAt: now,
-      updatedAt: now
-    };
-    const ref = await addDoc(collection(db, "mediaAssets"), payload);
-    return {
-      id: ref.id,
-      ...payload
-    } as any;
+    return mediaApi.create(data);
   },
 
   async update(id: string, data: Omit<MediaAsset, "id" | "createdAt" | "updatedAt">): Promise<MediaAsset> {
-    const payload = {
-      ...data,
-      updatedAt: serverTimestamp()
-    };
-    await updateDoc(doc(db, "mediaAssets", id), payload);
-    return {
-      id,
-      ...payload
-    } as any;
+    return mediaApi.update(id, data);
   },
 
   async remove(id: string): Promise<boolean> {
-    await deleteDoc(doc(db, "mediaAssets", id));
-    return true;
+    return mediaApi.remove(id);
   },
 
   async seedPresets(): Promise<void> {

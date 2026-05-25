@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../firebase/firebase";
+import { httpClient } from "../api/httpClient";
 import { uiLabel } from "../utils/adminLabels";
 import { TableControls } from "../components/TableControls";
 import { ToggleSwitch } from "../components/ToggleSwitch";
@@ -109,10 +108,9 @@ export function PremiumPage() {
 
     setSubmitting(true);
     try {
-      const grantFn = httpsCallable<any, any>(functions, "adminGrantPremium");
       const expiresMillis = expiresAt ? new Date(expiresAt).getTime() : null;
 
-      await grantFn({
+      await httpClient.post("/api/admin/subscription/grant", {
         userId: selectedUser.id,
         plan,
         expiresAt: expiresMillis,
@@ -148,8 +146,7 @@ export function PremiumPage() {
 
     setLoading(true);
     try {
-      const revokeFn = httpsCallable<any, any>(functions, "adminRevokePremium");
-      await revokeFn({ userId: user.id });
+      await httpClient.post("/api/admin/subscription/revoke", { userId: user.id });
       showToast(`Đã thu hồi gói của ${user.fullName || user.email}`);
       loadData();
     } catch (e: any) {

@@ -22,7 +22,7 @@ export function Navbar() {
             gap: "8px"
           }}
         >
-          <span>⚠️ Email quản trị chưa được xác thực. Vui lòng xác minh địa chỉ email trong email gửi từ Firebase.</span>
+          <span>⚠️ Email quản trị chưa được xác thực. Vui lòng xác minh địa chỉ email trong email hướng dẫn.</span>
         </div>
       )}
       

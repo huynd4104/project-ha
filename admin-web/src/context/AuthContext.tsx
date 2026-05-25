@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, reload, signOut, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../firebase/firebase";
+import { authApi } from "../api/authApi";
 
 export interface UserProfile {
   id: string;
@@ -14,8 +12,14 @@ export interface UserProfile {
   updatedAt: any;
 }
 
+export interface CustomUser {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: CustomUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   isAuthenticated: boolean;
@@ -28,40 +32,38 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<CustomUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (firebaseUser: User): Promise<UserProfile | null> => {
-    try {
-      const docRef = doc(db, "users", firebaseUser.uid);
-      const snap = await getDoc(docRef);
-      if (!snap.exists()) {
-        return null;
-      }
-      return { id: snap.id, ...snap.data() } as UserProfile;
-    } catch (err) {
-      console.error("Error reading admin user document:", err);
-      return null;
-    }
-  };
-
   const refreshUserProfile = async () => {
-    if (!auth.currentUser) return;
     try {
-      await reload(auth.currentUser);
-      const profile = await fetchProfile(auth.currentUser);
-      setUser(auth.currentUser);
-      setUserProfile(profile);
+      const res = await authApi.me();
+      const profile = res.data.data;
+      if (profile && profile.role === "ADMIN" && profile.isActive !== false) {
+        setUserProfile(profile);
+        setUser({
+          uid: profile.id,
+          email: profile.email,
+          emailVerified: profile.emailVerified
+        });
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
     } catch (err) {
       console.error("Error refreshing admin profile:", err);
+      setUser(null);
+      setUserProfile(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     setLoading(true);
     try {
-      await signOut(auth);
+      await authApi.logout();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
@@ -72,34 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
-      if (firebaseUser) {
-        try {
-          await reload(firebaseUser);
-        } catch (e) {
-          console.log("Could not reload admin user:", e);
-        }
-        
-        const profile = await fetchProfile(firebaseUser);
-        
-        if (!profile || profile.role !== "ADMIN" || profile.isActive === false) {
-          // Force sign out immediately if they are not an active admin
-          await signOut(auth);
-          setUser(null);
-          setUserProfile(null);
-        } else {
-          setUser(firebaseUser);
-          setUserProfile(profile);
-        }
-      } else {
-        setUser(null);
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    refreshUserProfile();
   }, []);
 
   const isAuthenticated = !!user;

@@ -1,28 +1,43 @@
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../firebase/firebase";
+import { httpClient } from "./httpClient";
 
 export const authApi = {
   async login(email: string, password: string) {
-    const credential = await signInWithEmailAndPassword(auth, email, password);
-    const userSnap = await getDoc(doc(db, "users", credential.user.uid));
-    const user = userSnap.exists() ? ({ id: userSnap.id, ...userSnap.data() } as any) : null;
-
-    if (!user || user.role !== "ADMIN") {
-      await signOut(auth);
-      throw new Error("Tài khoản này không có quyền quản trị.");
-    }
-    if (user.isActive === false) {
-      await signOut(auth);
-      throw new Error("Tài khoản quản trị đã bị khóa.");
-    }
-
-    return { data: { data: { token: await credential.user.getIdToken(), user } } };
+    const res = await httpClient.post("/api/auth/login", { email, password });
+    const { accessToken, refreshToken, user } = res.data;
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+    return { data: { data: { token: accessToken, user } } };
   },
   async me() {
-    if (!auth.currentUser) return { data: { data: null } };
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    return { data: { data: userSnap.exists() ? { id: userSnap.id, ...userSnap.data() } : null } };
+    const token = localStorage.getItem("accessToken");
+    if (!token) return { data: { data: null } };
+    try {
+      const res = await httpClient.get("/api/me");
+      return { data: { data: res.data } };
+    } catch (e) {
+      this.logout();
+      return { data: { data: null } };
+    }
   },
-  logout: () => signOut(auth)
+  async logout() {
+    const refreshToken = localStorage.getItem("refreshToken");
+    try {
+      if (refreshToken) {
+        await httpClient.post("/api/auth/logout", { refreshToken });
+      }
+    } catch (e) {
+      console.error("Logout failed on backend:", e);
+    } finally {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+    }
+  },
+  async changePassword(currentPassword: string, newPassword: string) {
+    const res = await httpClient.post("/api/auth/change-password", { currentPassword, newPassword });
+    return res.data;
+  },
+  async forgotPassword(email: string) {
+    const res = await httpClient.post("/api/auth/forgot-password", { email });
+    return res.data;
+  }
 };

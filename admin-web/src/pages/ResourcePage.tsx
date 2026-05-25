@@ -1,11 +1,33 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { adminApi, resources } from "../api/adminApi";
+import { adminApi } from "../api/adminApi";
 import { AnyRecord } from "../api/client";
+
+const resources = [
+  { key: "users", label: "Người dùng" },
+  { key: "children", label: "Trẻ em" },
+  { key: "npcs", label: "Nhân vật đồng hành" },
+  { key: "qr-codes", label: "Mã QR" },
+  { key: "development-categories", label: "Nhóm trẻ" },
+  { key: "learning-goals", label: "Mục tiêu học tập" },
+  { key: "skills", label: "Kỹ năng" },
+  { key: "programs", label: "Chương trình" },
+  { key: "learning-paths", label: "Lộ trình học" },
+  { key: "path-items", label: "Mục lộ trình" },
+  { key: "activities", label: "Hoạt động" },
+  { key: "activation-codes", label: "Mã kích hoạt" },
+  { key: "lessons", label: "Bài học" },
+  { key: "math-questions", label: "Câu hỏi toán" },
+  { key: "dialogues", label: "Hội thoại" },
+  { key: "flashcards", label: "Thẻ học" },
+  { key: "badges", label: "Huy hiệu" },
+  { key: "daily-missions", label: "Nhiệm vụ hàng ngày" },
+  { key: "audit-logs", label: "Nhật ký hệ thống" }
+];
 
 export function ResourcePage() {
   const { resource = "users" } = useParams();
-  const title = resources.find((item) => item.key === resource)?.label ?? resource;
+  const title = resources.find((item: any) => item.key === resource)?.label ?? resource;
   const [items, setItems] = useState<AnyRecord[]>([]);
   const [selected, setSelected] = useState<AnyRecord | null>(null);
   const [json, setJson] = useState("{}");
@@ -21,7 +43,8 @@ export function ResourcePage() {
   async function load() {
     setError("");
     try {
-      setItems(await adminApi.list(resource));
+      const res = await adminApi.list(resource);
+      setItems(res.data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Cannot load data");
     }

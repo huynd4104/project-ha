@@ -28,7 +28,14 @@ public class AdminRepository {
         Map.entry("npcs", "npcs"),
         Map.entry("daily-missions", "daily_missions"),
         Map.entry("badges", "badges"),
-        Map.entry("audit-logs", "audit_logs")
+        Map.entry("audit-logs", "audit_logs"),
+        Map.entry("activation-codes", "activation_codes"),
+        Map.entry("qr-codes", "qr_codes"),
+        Map.entry("development-categories", "development_categories"),
+        Map.entry("learning-goals", "learning_goals"),
+        Map.entry("skills", "skills"),
+        Map.entry("transactions", "transactions"),
+        Map.entry("media-assets", "media_assets")
     );
 
     private static final Set<String> READ_ONLY = Set.of("audit_logs");
@@ -37,6 +44,53 @@ public class AdminRepository {
     public AdminRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
+
+    public Map<String, Object> dashboard() {
+        int totalUsers = jdbc.queryForObject("SELECT COUNT(*) FROM users", Integer.class);
+        int totalChildren = jdbc.queryForObject("SELECT COUNT(*) FROM children", Integer.class);
+        int totalNPCs = jdbc.queryForObject("SELECT COUNT(*) FROM npcs", Integer.class);
+        int totalQRCodes = jdbc.queryForObject("SELECT COUNT(*) FROM qr_codes", Integer.class);
+        int totalLessons = jdbc.queryForObject("SELECT COUNT(*) FROM lessons", Integer.class);
+        int totalCompletedLessons = jdbc.queryForObject("SELECT COUNT(*) FROM progress WHERE status = 'COMPLETED'", Integer.class);
+        int totalBadges = jdbc.queryForObject("SELECT COUNT(*) FROM badges", Integer.class);
+        int totalActiveMissions = jdbc.queryForObject("SELECT COUNT(*) FROM daily_missions WHERE is_active = true", Integer.class);
+        int badgesEarnedCount = jdbc.queryForObject("SELECT COUNT(*) FROM user_badges", Integer.class);
+        int missionCompletionsToday = jdbc.queryForObject("SELECT COUNT(*) FROM user_mission_progress WHERE date = CURRENT_DATE AND is_completed = true", Integer.class);
+
+        List<Map<String, Object>> recentUsers = Db.rows(jdbc.queryForList("SELECT * FROM users ORDER BY created_at DESC LIMIT 5"));
+        recentUsers.forEach(u -> u.remove("passwordHash"));
+
+        List<Map<String, Object>> popularLessonsRaw = jdbc.queryForList("""
+            SELECT l.*, COUNT(p.id) as completed_count
+            FROM lessons l
+            LEFT JOIN progress p ON l.id::text = p.lesson_id AND p.status = 'COMPLETED'
+            GROUP BY l.id
+            ORDER BY completed_count DESC, l.title ASC
+            LIMIT 5
+            """);
+        List<Map<String, Object>> popularLessons = new ArrayList<>();
+        for (Map<String, Object> row : popularLessonsRaw) {
+            Map<String, Object> camelRow = Db.row(row);
+            camelRow.put("completedCount", ((Number) row.get("completed_count")).intValue());
+            popularLessons.add(camelRow);
+        }
+
+        return Map.ofEntries(
+            Map.entry("totalUsers", totalUsers),
+            Map.entry("totalChildren", totalChildren),
+            Map.entry("totalNPCs", totalNPCs),
+            Map.entry("totalQRCodes", totalQRCodes),
+            Map.entry("totalLessons", totalLessons),
+            Map.entry("totalCompletedLessons", totalCompletedLessons),
+            Map.entry("recentUsers", recentUsers),
+            Map.entry("popularLessons", popularLessons),
+            Map.entry("totalBadges", totalBadges),
+            Map.entry("totalActiveMissions", totalActiveMissions),
+            Map.entry("badgesEarnedCount", badgesEarnedCount),
+            Map.entry("missionCompletionsToday", missionCompletionsToday)
+        );
+    }
+
 
     public String table(String resource) {
         String table = TABLES.get(resource);
