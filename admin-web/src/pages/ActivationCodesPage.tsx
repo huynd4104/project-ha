@@ -3,12 +3,11 @@ import { adminApi } from "../api/adminApi";
 import { TableControls } from "../components/TableControls";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import QRCode from "qrcode";
-import type { ActivationType, ActivationSource } from "../types/firebaseModels";
+import type { ActivationType } from "../types/firebaseModels";
 import { ACTIVATION_TYPE_LABELS, uiLabel } from "../utils/adminLabels";
 import { useTableControls } from "../utils/tableControls";
 
 const ACTIVATION_TYPES: ActivationType[] = ["NPC", "LESSON", "PATH", "REWARD", "PHYSICAL_TOY"];
-const SOURCES: ActivationSource[] = ["QR", "NFC", "MANUAL"];
 
 const TYPE_LABELS: Record<string, string> = {
   ...ACTIVATION_TYPE_LABELS
@@ -72,7 +71,6 @@ export function ActivationCodesPage() {
   const [active, setActive] = useState(true);
   const [maxUses, setMaxUses] = useState<number | "">("");
   const [perUserLimit, setPerUserLimit] = useState<number | "">("");
-  const [source, setSource] = useState<ActivationSource>("QR");
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -105,7 +103,6 @@ export function ActivationCodesPage() {
     { value: "code", label: "Mã", getValue: (item) => item.code },
     { value: "label", label: "Nhãn", getValue: (item) => item.label },
     { value: "type", label: "Loại", getValue: (item) => TYPE_LABELS[item.activationType] || item.activationType },
-    { value: "source", label: "Nguồn", getValue: (item) => item.source },
     { value: "expires", label: "Hạn dùng", getValue: (item) => item.expiresAt },
     { value: "used", label: "Đã dùng", getValue: (item) => item.usedCount || 0 },
     { value: "status", label: "Trạng thái", getValue: (item) => item.active !== false }
@@ -131,7 +128,7 @@ export function ActivationCodesPage() {
     setEditingItem(null); setCode(generateRandomCode());
     setActivationType("NPC"); setTargetId(""); setLabel("");
     setActive(true); setMaxUses(""); setPerUserLimit("");
-    setSource("QR"); setExpiresAt(""); setErrors({}); setQrPreviewUrl(null); setQrPreviewCode("");
+    setExpiresAt(""); setErrors({}); setQrPreviewUrl(null); setQrPreviewCode("");
     setIsModalOpen(true);
   };
 
@@ -140,7 +137,7 @@ export function ActivationCodesPage() {
     setActivationType(item.activationType || "NPC"); setTargetId(item.targetId || "");
     setLabel(item.label || ""); setActive(item.active !== false);
     setMaxUses(item.maxUses ?? ""); setPerUserLimit(item.perUserLimit ?? "");
-    setSource(item.source || "QR"); setExpiresAt(item.expiresAt ? toDateInputString(item.expiresAt) : "");
+    setExpiresAt(item.expiresAt ? toDateInputString(item.expiresAt) : "");
     setErrors({}); setQrPreviewUrl(null); setQrPreviewCode("");
     setIsModalOpen(true);
   };
@@ -163,7 +160,7 @@ export function ActivationCodesPage() {
     if (!validate()) return;
     const payload: any = {
       code: code.trim(), activationType, targetId: targetId || null,
-      label: label.trim(), active, source,
+      label: label.trim(), active,
       maxUses: maxUses === "" ? null : Number(maxUses),
       perUserLimit: perUserLimit === "" ? null : Number(perUserLimit),
       expiresAt: expiresAt ? new Date(expiresAt) : null,
@@ -253,7 +250,6 @@ export function ActivationCodesPage() {
                 <th>Nhãn</th>
                 <th>Loại</th>
                 <th>Đối tượng</th>
-                <th>Nguồn</th>
                 <th>Hạn dùng</th>
                 <th>Đã dùng</th>
                 <th style={{ width: "100px" }}>Trạng thái</th>
@@ -267,7 +263,6 @@ export function ActivationCodesPage() {
                   <td style={{ fontWeight: "600" }}>{item.label || "—"}</td>
                   <td><span className="badge info">{TYPE_LABELS[item.activationType] || item.activationType}</span></td>
                   <td style={{ fontSize: "13px" }}>{getTargetLabel(item.activationType, item.targetId)}</td>
-                  <td><span className="badge yellow">{uiLabel(item.source || "QR")}</span></td>
                   <td>{formatExpiration(item.expiresAt)}</td>
                   <td style={{ fontWeight: "600" }}>{item.usedCount || 0}{item.maxUses ? `/${item.maxUses}` : ""}</td>
                   <td><span className={`badge ${item.active !== false ? "active" : "inactive"}`}>{item.active !== false ? "Đang bật" : "Đang tắt"}</span></td>
@@ -340,19 +335,11 @@ export function ActivationCodesPage() {
                       {errors.label && <span className="error-msg">{errors.label}</span>}
                     </div>
 
-                    <div className="form-grid">
-                      <div className="field">
-                        <label>Loại mở khóa</label>
-                        <select value={activationType} onChange={(e) => { setActivationType(e.target.value as ActivationType); setTargetId(""); }}>
-                          {ACTIVATION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
-                        </select>
-                      </div>
-                      <div className="field">
-                        <label>Nguồn</label>
-                        <select value={source} onChange={(e) => setSource(e.target.value as ActivationSource)}>
-                          {SOURCES.map((s) => <option key={s} value={s}>{uiLabel(s)}</option>)}
-                        </select>
-                      </div>
+                    <div className="field">
+                      <label>Loại mở khóa</label>
+                      <select value={activationType} onChange={(e) => { setActivationType(e.target.value as ActivationType); setTargetId(""); }}>
+                        {ACTIVATION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
+                      </select>
                     </div>
 
                     {activationType !== "PHYSICAL_TOY" && (

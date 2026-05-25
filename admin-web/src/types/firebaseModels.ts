@@ -270,7 +270,6 @@ export type LessonProgress = {
 };
 
 export type ActivationType = "NPC" | "LESSON" | "PATH" | "REWARD" | "PHYSICAL_TOY";
-export type ActivationSource = "QR" | "NFC" | "MANUAL";
 
 export type ActivationCode = {
   id: string;
@@ -283,7 +282,6 @@ export type ActivationCode = {
   usedCount: number;
   perUserLimit?: number | null;
   expiresAt?: any;
-  source: ActivationSource;
   createdAt: any;
   updatedAt: any;
 };

@@ -23,8 +23,7 @@ public class ActivationController {
         return service.redeem(
             principal.id(),
             String.valueOf(payload.get("code")),
-            UUID.fromString(String.valueOf(payload.get("childId"))),
-            String.valueOf(payload.getOrDefault("source", "MANUAL"))
+            UUID.fromString(String.valueOf(payload.get("childId")))
         );
     }
 }

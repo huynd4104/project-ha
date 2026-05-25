@@ -27,7 +27,7 @@ public class ActivationService {
     }
 
     @Transactional
-    public Map<String, Object> redeem(UUID userId, String code, UUID childId, String source) {
+    public Map<String, Object> redeem(UUID userId, String code, UUID childId) {
         children.requireOwned(userId, childId);
         Map<String, Object> match = findCode(code);
         if (match == null) throw new NotFoundException("Mã kích hoạt không tồn tại. Vui lòng kiểm tra lại mã.");
@@ -59,10 +59,10 @@ public class ActivationService {
         String table = String.valueOf(match.get("_table"));
         UUID codeId = UUID.fromString(String.valueOf(match.get("id")));
         jdbc.update("""
-            INSERT INTO activation_redemptions(code_id, code_collection, user_id, child_id, target_type, target_id, source)
-            VALUES (CAST(? AS uuid), ?, CAST(? AS uuid), CAST(? AS uuid), ?, CAST(? AS uuid), ?)
+            INSERT INTO activation_redemptions(code_id, code_collection, user_id, child_id, target_type, target_id)
+            VALUES (CAST(? AS uuid), ?, CAST(? AS uuid), CAST(? AS uuid), ?, CAST(? AS uuid))
             ON CONFLICT DO NOTHING
-            """, codeId, table, userId, childId, targetType, npcId, source);
+            """, codeId, table, userId, childId, targetType, npcId);
         jdbc.update("""
             INSERT INTO user_unlocked_npcs(user_id, child_id, npc_id, qr_code_id, activation_code_id)
             VALUES (CAST(? AS uuid), CAST(? AS uuid), CAST(? AS uuid), CAST(? AS uuid), CAST(? AS uuid))

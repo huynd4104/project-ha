@@ -71,6 +71,10 @@ flutter:
   assets:
     - assets/sounds/
 
+    - assets/images/mascot/
+    - assets/images/mascot/reactions/
+    - assets/images/mascot/reference/
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
