@@ -155,6 +155,7 @@ export function ActivityBuilderPage() {
   const [accessType, setAccessType] = useState<AccessType>("FREE");
   const [voicePremiumRequired, setVoicePremiumRequired] = useState(false);
   const [openLessonGroups, setOpenLessonGroups] = useState<Record<string, boolean>>({});
+  const [activityCounts, setActivityCounts] = useState<Record<string, number>>({});
   const [isReorderingActivities, setIsReorderingActivities] = useState(false);
   const [draftActivities, setDraftActivities] = useState<Activity[]>([]);
   const [draggingActivityId, setDraggingActivityId] = useState("");
@@ -162,12 +163,13 @@ export function ActivityBuilderPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [lRes, sRes, fRes, dRes, qRes] = await Promise.all([
+      const [lRes, sRes, fRes, dRes, qRes, aRes] = await Promise.all([
         adminApi.list("/lessons"),
         adminApi.list("/skills"),
         adminApi.list("/flashcards"),
         adminApi.list("/dialogues"),
-        adminApi.list("/math-questions")
+        adminApi.list("/math-questions"),
+        adminApi.list("/activities")
       ]);
       const all = (lRes.data.data || []) as Lesson[];
       all.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
@@ -176,6 +178,16 @@ export function ActivityBuilderPage() {
       const flashcards = (fRes.data.data || []) as FlashcardLibraryItem[];
       const dialogues = (dRes.data.data || []) as DialogueLibraryItem[];
       const questions = (qRes.data.data || []) as ChoiceLibraryItem[];
+      const acts = (aRes.data.data || []) as Activity[];
+
+      const counts: Record<string, number> = {};
+      acts.forEach((act) => {
+        if (act.lessonId) {
+          counts[act.lessonId] = (counts[act.lessonId] || 0) + 1;
+        }
+      });
+      setActivityCounts(counts);
+
       const lessonById = new Map(all.map((lesson) => [lesson.id, lesson]));
       const questionsByLessonType = (type: Lesson["type"]) =>
         questions.filter((item) => lessonById.get(item.lessonId || "")?.type === type);
@@ -206,6 +218,14 @@ export function ActivityBuilderPage() {
       const filtered = all.filter((a) => a.lessonId === lessonId);
       filtered.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
       setActivities(filtered);
+
+      const counts: Record<string, number> = {};
+      all.forEach((act) => {
+        if (act.lessonId) {
+          counts[act.lessonId] = (counts[act.lessonId] || 0) + 1;
+        }
+      });
+      setActivityCounts(counts);
     } catch (e) { console.error(e); }
     finally { setLoadingActivities(false); }
   }
@@ -364,7 +384,7 @@ export function ActivityBuilderPage() {
   };
 
   const toggleLessonGroup = (groupKey: string) => {
-    setOpenLessonGroups((prev) => ({ ...prev, [groupKey]: !(prev[groupKey] ?? true) }));
+    setOpenLessonGroups((prev) => ({ ...prev, [groupKey]: !(prev[groupKey] ?? false) }));
   };
 
   const startActivityReorder = () => {
@@ -942,8 +962,8 @@ export function ActivityBuilderPage() {
           <div className="panel" style={{ padding: "12px" }}>
             <input type="text" placeholder="Tìm bài học..." value={lessonSearch} onChange={(e) => setLessonSearch(e.target.value)} style={{ marginBottom: "12px" }} />
             <div style={{ maxHeight: "480px", overflowY: "auto" }}>
-              {loading ? <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Đang tải dữ liệu...</p> : lessonGroupKeys.map((groupKey) => {
-                const isOpen = openLessonGroups[groupKey] ?? true;
+               {loading ? <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Đang tải dữ liệu...</p> : lessonGroupKeys.map((groupKey) => {
+                const isOpen = openLessonGroups[groupKey] ?? false;
                 return (
                   <div key={groupKey} style={{ marginBottom: "8px" }}>
                     <button
@@ -963,10 +983,20 @@ export function ActivityBuilderPage() {
                           padding: "8px 12px", borderRadius: "6px", cursor: "pointer", margin: "4px 0 0 10px", fontSize: "13px",
                           background: selectedLessonId === l.id ? "var(--primary-light)" : "transparent",
                           color: selectedLessonId === l.id ? "var(--primary)" : "var(--text-main)",
-                          fontWeight: selectedLessonId === l.id ? "600" : "400"
+                          fontWeight: selectedLessonId === l.id ? "600" : "400",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
                         }}
                       >
-                        {l.title}
+                        <span>{l.title}</span>
+                        <span style={{
+                          fontSize: "11px",
+                          color: selectedLessonId === l.id ? "var(--primary)" : "var(--text-muted)",
+                          opacity: 0.8
+                        }}>
+                          ({activityCounts[l.id] || 0})
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -996,15 +1026,6 @@ export function ActivityBuilderPage() {
                       <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{selectedLesson.lessonType || selectedLesson.type}</span>
                     </div>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {activities.length > 1 && !isReorderingActivities && (
-                        <button className="secondary" onClick={startActivityReorder}>Sắp xếp thứ tự</button>
-                      )}
-                      {isReorderingActivities && (
-                        <>
-                          <button className="secondary" onClick={cancelActivityReorder}>Hủy sắp xếp</button>
-                          <button onClick={saveActivityOrder}>Lưu thứ tự</button>
-                        </>
-                      )}
                       <button onClick={openAddModal} disabled={isReorderingActivities}>➕ Thêm hoạt động</button>
                     </div>
                   </div>
@@ -1048,6 +1069,17 @@ export function ActivityBuilderPage() {
                 </div>
               ) : (
                 <div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginBottom: "12px" }}>
+                    {activities.length > 1 && !isReorderingActivities && (
+                      <button className="secondary" onClick={startActivityReorder}>Sắp xếp</button>
+                    )}
+                    {isReorderingActivities && (
+                      <>
+                        <button className="secondary" onClick={cancelActivityReorder}>Hủy sắp xếp</button>
+                        <button onClick={saveActivityOrder}>Lưu thứ tự</button>
+                      </>
+                    )}
+                  </div>
                   {visibleActivities.map((act, idx) => (
                     <div
                       key={act.id}

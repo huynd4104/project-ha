@@ -21,7 +21,6 @@ export function PathBuilderPage() {
 
   const [selectedProgramId, setSelectedProgramId] = useState("");
   const [selectedPathId, setSelectedPathId] = useState("");
-  const [addLessonId, setAddLessonId] = useState("");
   const [lessonSearch, setLessonSearch] = useState("");
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [accessFilter, setAccessFilter] = useState("");
@@ -89,18 +88,17 @@ export function PathBuilderPage() {
   const labelsFor = (keys: string[] | undefined, lookup: (key: string) => string) =>
     keys?.length ? keys.map(lookup).join(", ") : "—";
 
-  const handleAddLesson = async () => {
-    if (!addLessonId || !selectedPathId) return;
+  const handleAddLessonDirectly = async (lessonId: string) => {
+    if (!lessonId || !selectedPathId) return;
     const nextSeq = pathItems.length > 0 ? Math.max(...pathItems.map((pi) => pi.sequence ?? 0)) + 1 : 1;
     await adminApi.create("/path-items", {
       pathId: selectedPathId,
-      lessonId: addLessonId,
+      lessonId: lessonId,
       sequence: nextSeq,
       unlockRule: "ALWAYS_OPEN",
       prerequisiteLessonIds: [],
       requiredCompletion: true
     });
-    setAddLessonId("");
     setLessonSearch("");
     showToast("Đã thêm bài học vào lộ trình!");
     loadData();
@@ -210,196 +208,266 @@ export function PathBuilderPage() {
         </div>
       ) : (
         <>
-          {/* Path info */}
-          {selectedPath && (
-            <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <strong>{selectedPath.title}</strong>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{uiLabel(selectedPath.status || "DRAFT")} • {pathItems.length} bài học</span>
-                </div>
-                {pathItems.length > 1 && (
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    {!isReordering ? (
-                      <button className="secondary" onClick={startReorder}>Sắp xếp thứ tự</button>
-                    ) : (
-                      <>
-                        <button className="secondary" onClick={cancelReorder}>Hủy sắp xếp</button>
-                        <button onClick={savePathOrder}>Lưu thứ tự</button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Add lesson */}
-          <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-              <div className="field" style={{ marginBottom: 0 }}>
-                <label>Tìm bài học</label>
-                <input type="text" placeholder="Tìm theo tên, mục tiêu, kỹ năng..." value={lessonSearch} onChange={(e) => setLessonSearch(e.target.value)} />
-              </div>
-              <div className="field" style={{ marginBottom: 0 }}>
-                <label>Loại bài học</label>
-                <select value={lessonTypeFilter} onChange={(e) => setLessonTypeFilter(e.target.value)}>
-                  <option value="">Tất cả</option>
-                  {lessonTypes.map((type) => <option key={type} value={type}>{uiLabel(type)}</option>)}
-                </select>
-              </div>
-              <div className="field" style={{ marginBottom: 0 }}>
-                <label>Loại truy cập</label>
-                <select value={accessFilter} onChange={(e) => setAccessFilter(e.target.value)}>
-                  <option value="">Tất cả</option>
-                  <option value="FREE">Miễn phí</option>
-                  <option value="PREMIUM">Premium</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: "12px", alignItems: "end" }}>
-              <div className="field" style={{ marginBottom: 0, flex: 1 }}>
-                <label>Thêm bài học vào lộ trình</label>
-                <select value={addLessonId} onChange={(e) => setAddLessonId(e.target.value)} disabled={isReordering}>
-                  <option value="">-- Chọn bài học ({availableLessons.length}) --</option>
-                  {availableLessons.map((l) => <option key={l.id} value={l.id}>{l.title} ({uiLabel(l.lessonType || l.type)} • {uiLabel(l.accessType || "FREE")})</option>)}
-                </select>
-                {addLessonId && (() => {
-                  const lesson = getLesson(addLessonId);
-                  if (!lesson) return null;
-                  return (
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px", fontSize: "12px", color: "var(--text-muted)" }}>
-                      <span>Nhóm: {labelsFor(lesson.difficultyCategories as any, categoryLabel)}</span>
-                      <span>Mục tiêu: {labelsFor(lesson.learningGoals as any, goalLabel)}</span>
-                      <span>Kỹ năng: {labelsFor(lesson.skillTags, skillLabel)}</span>
-                    </div>
-                  );
-                })()}
-              </div>
-              <button onClick={handleAddLesson} disabled={!addLessonId || isReordering}>➕ Thêm</button>
-            </div>
-          </div>
-
-          {/* Path items list */}
-          {pathItems.length === 0 ? (
-            <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
-              <div style={{ fontSize: "40px", marginBottom: "12px" }}>🧩</div>
-              <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Lộ trình này chưa có bài học nào</h3>
-              <p style={{ color: "var(--text-muted)", margin: "0", fontSize: "14px" }}>
-                Hãy chọn một bài học có sẵn ở mục trên và bấm <strong>Thêm</strong> để đưa vào lộ trình học tập của bé.
-              </p>
-            </div>
-          ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", alignItems: "start" }}>
+            {/* Cột trái: Lộ trình học tập */}
             <div>
-              {visiblePathItems.map((pi, idx) => {
-                const lesson = getLesson(pi.lessonId);
-                const isEditing = editingItemId === pi.id;
-                return (
-                  <div
-                    key={pi.id}
-                    className={`path-item-card ${draggingPathItemId === pi.id ? "dragging" : ""}`}
-                    style={{ flexWrap: "wrap" }}
-                    draggable={isReordering}
-                    onDragStart={(e) => {
-                      setDraggingPathItemId(pi.id);
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", pi.id);
-                    }}
-                    onDragOver={(e) => {
-                      if (isReordering) e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      if (!isReordering) return;
-                      e.preventDefault();
-                      reorderDraftPathItems(e.dataTransfer.getData("text/plain") || draggingPathItemId, pi.id);
-                    }}
-                    onDragEnd={() => setDraggingPathItemId("")}
-                  >
-                    <div className="path-item-seq">{idx + 1}</div>
-                    <div className="path-item-info" style={{ flex: 1 }}>
-                      <strong
-                        onClick={() => lesson && setDetailLesson(lesson)}
-                        style={{ cursor: lesson ? "pointer" : "default" }}
-                      >
-                        {lesson?.title || pi.lessonId}
-                      </strong>
-                      <small>
-                        <span className="badge info" style={{ marginRight: "4px" }}>{uiLabel(lesson?.lessonType || lesson?.type)}</span>
-                        <span className={`badge ${lesson?.accessType === "PREMIUM" ? "premium" : "free"}`} style={{ marginRight: "4px" }}>{uiLabel(lesson?.accessType || "FREE")}</span>
-                        <span className="badge yellow" style={{ marginRight: "4px" }}>{UNLOCK_LABELS[pi.unlockRule] || pi.unlockRule}</span>
-                        {pi.requiredCompletion && <span className="badge green">Bắt buộc</span>}
-                      </small>
-                      {lesson && (
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px", fontSize: "11px", color: "var(--text-muted)" }}>
-                          <span>Nhóm: {labelsFor(lesson.difficultyCategories as any, categoryLabel)}</span>
-                          <span>Mục tiêu: {labelsFor(lesson.learningGoals as any, goalLabel)}</span>
-                          <span>Kỹ năng: {labelsFor(lesson.skillTags, skillLabel)}</span>
-                        </div>
-                      )}
+              {/* Path info */}
+              {selectedPath && (
+                <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <strong>{selectedPath.title}</strong>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{uiLabel(selectedPath.status || "DRAFT")} • {pathItems.length} bài học</span>
                     </div>
-                    <div className="path-item-actions">
-                      {isReordering ? (
-                        <span className="badge info">Kéo thả</span>
-                      ) : (
-                        <>
-                          <button className="secondary" onClick={() => lesson && setDetailLesson(lesson)}>Chi tiết</button>
-                          <button className="secondary" onClick={() => isEditing ? saveEditItem() : startEditItem(pi)}>
-                            {isEditing ? "💾 Lưu" : "⚙ Cấu hình"}
-                          </button>
-                          <button className="danger" onClick={() => handleRemoveItem(pi.id)}>Gỡ</button>
-                        </>
-                      )}
-                    </div>
-
-                    {isEditing && !isReordering && (
-                      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
-                        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-                          <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: "200px" }}>
-                            <label style={{ fontSize: "12px" }}>Điều kiện mở khóa</label>
-                            <select value={editUnlockRule} onChange={(e) => setEditUnlockRule(e.target.value as UnlockRule)} style={{ fontSize: "13px" }}>
-                              {UNLOCK_RULES.map((r) => <option key={r} value={r}>{UNLOCK_LABELS[r]}</option>)}
-                            </select>
-                          </div>
-                          <div className="field" style={{ marginBottom: 0 }}>
-                            <ToggleSwitch id={`req-${pi.id}`} label="Bắt buộc hoàn thành" checked={editReqCompletion} onChange={setEditReqCompletion} />
-                          </div>
-                        </div>
-
-                        {editUnlockRule === "PREVIOUS_COMPLETED" && (
-                          <div style={{ width: "100%", marginTop: "8px" }}>
-                            <MultiSelect
-                              label="Bài học cần hoàn thành trước"
-                              options={pathItems
-                                .filter((item) => item.id !== pi.id)
-                                .map((item) => {
-                                  const l = getLesson(item.lessonId);
-                                  return { value: item.lessonId, label: l?.title || item.lessonId };
-                                })}
-                              selected={editPrereqs}
-                              onChange={setEditPrereqs}
-                              placeholder="Chọn bài học tiên quyết..."
-                            />
-                          </div>
+                    {pathItems.length > 1 && (
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        {!isReordering ? (
+                          <button className="secondary" onClick={startReorder}>Sắp xếp thứ tự</button>
+                        ) : (
+                          <>
+                            <button className="secondary" onClick={cancelReorder}>Hủy</button>
+                            <button onClick={savePathOrder}>Lưu</button>
+                          </>
                         )}
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* Summary */}
-          {pathItems.length > 0 && (
-            <div className="panel" style={{ padding: "16px", marginTop: "16px" }}>
-              <h3 style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "8px" }}>Tóm tắt lộ trình</h3>
-              <div style={{ fontSize: "13px", display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                <span>📚 {pathItems.length} bài học</span>
-                <span>🔒 {pathItems.filter((pi) => pi.unlockRule === "PREMIUM_ONLY").length} premium</span>
-                <span>✅ {pathItems.filter((pi) => pi.requiredCompletion).length} bắt buộc</span>
+              {/* Path items list */}
+              {pathItems.length === 0 ? (
+                <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "12px" }}>🧩</div>
+                  <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Lộ trình này chưa có bài học nào</h3>
+                  <p style={{ color: "var(--text-muted)", margin: "0", fontSize: "14px" }}>
+                    Hãy chọn một bài học có sẵn ở thư viện bên phải và bấm <strong>Thêm</strong> để đưa vào lộ trình học tập của bé.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {visiblePathItems.map((pi, idx) => {
+                    const lesson = getLesson(pi.lessonId);
+                    const isEditing = editingItemId === pi.id;
+                    return (
+                      <div
+                        key={pi.id}
+                        className={`path-item-card ${draggingPathItemId === pi.id ? "dragging" : ""}`}
+                        style={{ flexWrap: "wrap" }}
+                        draggable={isReordering}
+                        onDragStart={(e) => {
+                          setDraggingPathItemId(pi.id);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", pi.id);
+                        }}
+                        onDragOver={(e) => {
+                          if (isReordering) e.preventDefault();
+                        }}
+                        onDrop={(e) => {
+                          if (!isReordering) return;
+                          e.preventDefault();
+                          reorderDraftPathItems(e.dataTransfer.getData("text/plain") || draggingPathItemId, pi.id);
+                        }}
+                        onDragEnd={() => setDraggingPathItemId("")}
+                      >
+                        <div className="path-item-seq">{idx + 1}</div>
+                        <div className="path-item-info" style={{ flex: 1 }}>
+                          <strong
+                            onClick={() => lesson && setDetailLesson(lesson)}
+                            style={{ cursor: lesson ? "pointer" : "default" }}
+                          >
+                            {lesson?.title || pi.lessonId}
+                          </strong>
+                          <small style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "2px" }}>
+                            <span className="badge info">{uiLabel(lesson?.lessonType || lesson?.type)}</span>
+                            <span className={`badge ${lesson?.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(lesson?.accessType || "FREE")}</span>
+                            <span className="badge yellow">{UNLOCK_LABELS[pi.unlockRule] || pi.unlockRule}</span>
+                            {pi.requiredCompletion && <span className="badge green">Bắt buộc</span>}
+                          </small>
+
+                        </div>
+                        <div className="path-item-actions">
+                          {isReordering ? (
+                            <span className="badge info">Kéo thả</span>
+                          ) : (
+                            <>
+                              <button className="secondary" onClick={() => isEditing ? saveEditItem() : startEditItem(pi)}>
+                                {isEditing ? "💾 Lưu" : "⚙ Cấu hình"}
+                              </button>
+                              <button className="danger" onClick={() => handleRemoveItem(pi.id)}>Gỡ</button>
+                            </>
+                          )}
+                        </div>
+
+                        {isEditing && !isReordering && (
+                          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
+                            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                              <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: "200px" }}>
+                                <label style={{ fontSize: "12px" }}>Điều kiện mở khóa</label>
+                                <select value={editUnlockRule} onChange={(e) => setEditUnlockRule(e.target.value as UnlockRule)} style={{ fontSize: "13px" }}>
+                                  {UNLOCK_RULES.map((r) => <option key={r} value={r}>{UNLOCK_LABELS[r]}</option>)}
+                                </select>
+                              </div>
+                              <div className="field" style={{ marginBottom: 0 }}>
+                                <ToggleSwitch id={`req-${pi.id}`} label="Bắt buộc hoàn thành" checked={editReqCompletion} onChange={setEditReqCompletion} />
+                              </div>
+                            </div>
+
+                            {editUnlockRule === "PREVIOUS_COMPLETED" && (
+                              <div style={{ width: "100%", marginTop: "8px" }}>
+                                <MultiSelect
+                                  label="Bài học cần hoàn thành trước"
+                                  options={pathItems
+                                    .filter((item) => item.id !== pi.id)
+                                    .map((item) => {
+                                      const l = getLesson(item.lessonId);
+                                      return { value: item.lessonId, label: l?.title || item.lessonId };
+                                    })}
+                                  selected={editPrereqs}
+                                  onChange={setEditPrereqs}
+                                  placeholder="Chọn bài học tiên quyết..."
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Summary */}
+              {pathItems.length > 0 && (
+                <div className="panel" style={{ padding: "16px", marginTop: "16px" }}>
+                  <h3 style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "8px" }}>Tóm tắt lộ trình</h3>
+                  <div style={{ fontSize: "13px", display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                    <span>📚 {pathItems.length} bài học</span>
+                    <span>🔒 {pathItems.filter((pi) => pi.unlockRule === "PREMIUM_ONLY").length} premium</span>
+                    <span>✅ {pathItems.filter((pi) => pi.requiredCompletion).length} bắt buộc</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cột phải: Thư viện bài học khả dụng */}
+            <div
+              className="panel"
+              style={{
+                position: "sticky",
+                top: "16px",
+                maxHeight: "calc(100vh - 120px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                opacity: isReordering ? 0.5 : 1,
+                pointerEvents: isReordering ? "none" : "auto",
+                transition: "opacity 0.2s ease, transform 0.2s ease",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Thư viện bài học ({availableLessons.length})</h3>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm bài học..."
+                  value={lessonSearch}
+                  onChange={(e) => setLessonSearch(e.target.value)}
+                  className="search-input"
+                  style={{ margin: 0 }}
+                />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <select value={lessonTypeFilter} onChange={(e) => setLessonTypeFilter(e.target.value)}>
+                    <option value="">Mọi thể loại</option>
+                    {lessonTypes.map((type) => (
+                      <option key={type} value={type}>{uiLabel(type)}</option>
+                    ))}
+                  </select>
+                  <select value={accessFilter} onChange={(e) => setAccessFilter(e.target.value)}>
+                    <option value="">Mọi truy cập</option>
+                    <option value="FREE">Miễn phí</option>
+                    <option value="PREMIUM">Premium</option>
+                  </select>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  paddingRight: "4px",
+                  marginTop: "4px",
+                }}
+              >
+                {availableLessons.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "30px 10px", color: "var(--text-muted)", fontSize: "13px" }}>
+                    Không tìm thấy bài học phù hợp hoặc bài học đã hết.
+                  </div>
+                ) : (
+                  availableLessons.map((l) => (
+                    <div
+                      key={l.id}
+                      className="available-lesson-card"
+                      style={{
+                        padding: "12px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-md)",
+                        background: "var(--bg-card)",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: "600",
+                            fontSize: "14px",
+                            color: "var(--text-main)",
+                            marginBottom: "4px",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => setDetailLesson(l)}
+                          title="Xem chi tiết bài học"
+                        >
+                          {l.title}
+                        </div>
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "6px" }}>
+                          <span className="badge info" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                            {uiLabel(l.lessonType || l.type)}
+                          </span>
+                          <span
+                            className={`badge ${l.accessType === "PREMIUM" ? "premium" : "free"}`}
+                            style={{ fontSize: "10px", padding: "2px 6px" }}
+                          >
+                            {uiLabel(l.accessType || "FREE")}
+                          </span>
+                        </div>
+
+                      </div>
+                      <button
+                        className="secondary"
+                        onClick={() => handleAddLessonDirectly(l.id)}
+                        style={{
+                          padding: "6px 10px",
+                          fontSize: "12.5px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        ➕ Thêm
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          )}
+          </div>
         </>
       )}
 
