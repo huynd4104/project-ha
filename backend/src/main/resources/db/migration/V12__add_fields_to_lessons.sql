@@ -1,0 +1,4 @@
+ALTER TABLE lessons ADD COLUMN level TEXT NOT NULL DEFAULT 'BEGINNER';
+ALTER TABLE lessons ADD COLUMN difficulty_categories JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE lessons ADD COLUMN learning_goals JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE lessons ADD COLUMN publish_status TEXT NOT NULL DEFAULT 'DRAFT';
