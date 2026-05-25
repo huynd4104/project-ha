@@ -14,7 +14,7 @@ export const httpClient = {
     return this.request(url, "DELETE");
   },
   async request(url: string, method: string, body?: any) {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("admin_access_token");
     const headers: Record<string, string> = {
       "Content-Type": "application/json"
     };

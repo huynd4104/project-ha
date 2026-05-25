@@ -4,8 +4,10 @@ import { authApi } from "../api/authApi";
 import { PasswordInput } from "../components/PasswordInput";
 import { FormError } from "../components/FormError";
 import { LoadingButton } from "../components/LoadingButton";
+import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
+  const { refreshUserProfile } = useAuth();
   const [email, setEmail] = useState("admin@demo.com");
   const [password, setPassword] = useState("123456");
   const [loading, setLoading] = useState(false);
@@ -63,6 +65,7 @@ export function LoginPage() {
     try {
       setLoading(true);
       await authApi.login(email.trim(), password);
+      await refreshUserProfile();
       navigate("/dashboard");
     } catch (err) {
       console.error("Login failed:", err);
