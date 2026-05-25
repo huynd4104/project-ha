@@ -234,6 +234,11 @@ export type Activity = {
   skillTags?: string[];
   parentInstruction?: string;
   accessType?: AccessType;
+  sourceLibrary?: string;
+  sourceCollection?: string;
+  sourceId?: string;
+  sourceLessonId?: string | null;
+  sourceSnapshot?: Record<string, unknown>;
   isActive: boolean;
   createdAt: any;
   updatedAt: any;
