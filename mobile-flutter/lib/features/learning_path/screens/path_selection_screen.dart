@@ -4,11 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/services/app_state.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
-import '../data/lesson_repository.dart';
 import '../data/path_recommendation_service.dart';
 
 class PathSelectionScreen extends StatefulWidget {
@@ -19,8 +17,14 @@ class PathSelectionScreen extends StatefulWidget {
 }
 
 class _PathSelectionScreenState extends State<PathSelectionScreen> {
-  final _lessonRepo = LessonRepository();
-  late Future<({List<LearningPath> paths, List<Program> programs})> _loadDataFuture;
+  late Future<
+    ({
+      List<LearningPath> paths,
+      List<Program> programs,
+      Map<LearningGoalKey, List<String>> goalSkillTags,
+    })
+  >
+  _loadDataFuture;
   String? _selectedPathId;
   String? _selectedProgramId;
   bool _isSaving = false;
@@ -31,7 +35,14 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
     _loadDataFuture = _loadData();
   }
 
-  Future<({List<LearningPath> paths, List<Program> programs})> _loadData() async {
+  Future<
+    ({
+      List<LearningPath> paths,
+      List<Program> programs,
+      Map<LearningGoalKey, List<String>> goalSkillTags,
+    })
+  >
+  _loadData() async {
     // Proactively fetch lists directly using underlying helper methods or listing
     // We can fetch paths and programs via a custom fetch or using our repo
     // Let's call them. Since LessonRepository doesn't expose listAll directly,
@@ -54,16 +65,24 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
         .collection('learningPaths')
         .where('status', isEqualTo: 'PUBLISHED')
         .get();
+    final learningGoalSnap = await firestore.collection('learningGoals').get();
 
     final programs = programSnap.docs
         .map((doc) => Program.fromMap(doc.id, doc.data()))
         .toList();
-    final paths = pathSnap.docs
-        .map((doc) => LearningPath.fromMap(doc.id, doc.data()))
-        .toList()
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    final paths =
+        pathSnap.docs
+            .map((doc) => LearningPath.fromMap(doc.id, doc.data()))
+            .toList()
+          ..sort((a, b) => a.title.compareTo(b.title));
+    final goalSkillTags = {
+      for (final goal in learningGoalSnap.docs.map(
+        (doc) => LearningGoal.fromMap(doc.id, doc.data()),
+      ))
+        goal.key: goal.skillTags,
+    };
 
-    return (paths: paths, programs: programs);
+    return (paths: paths, programs: programs, goalSkillTags: goalSkillTags);
   }
 
   Future<void> _saveSelection() async {
@@ -117,9 +136,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
     if (child == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Chọn lộ trình học')),
-        body: const Center(
-          child: Text('Vui lòng chọn hồ sơ của bé trước.'),
-        ),
+        body: const Center(child: Text('Vui lòng chọn hồ sơ của bé trước.')),
       );
     }
 
@@ -128,7 +145,10 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
       appBar: AppBar(
         title: Text(
           'Lộ trình của ${child.name}',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -173,6 +193,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
             child: child,
             programs: programs,
             paths: paths,
+            goalSkillTags: data.goalSkillTags,
           );
 
           // Build a map for easy lookup of programs
@@ -180,7 +201,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
 
           // Combine and sort: paths that are recommended first (sorted by score descending), then the rest
           final Map<String, int> pathScores = {
-            for (final r in recommendations) r.path.id: r.score
+            for (final r in recommendations) r.path.id: r.score,
           };
 
           final sortedPaths = List<LearningPath>.from(paths)
@@ -190,13 +211,16 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
               if (scoreA != scoreB) {
                 return scoreB.compareTo(scoreA); // High score first
               }
-              return a.orderIndex.compareTo(b.orderIndex);
+              return a.title.compareTo(b.title);
             });
 
           // Pre-select active path if not selected yet
           if (_selectedPathId == null && child.currentPathId != null) {
             _selectedPathId = child.currentPathId;
-            final path = paths.firstWhere((p) => p.id == _selectedPathId, orElse: () => paths.first);
+            final path = paths.firstWhere(
+              (p) => p.id == _selectedPathId,
+              orElse: () => paths.first,
+            );
             _selectedProgramId = path.programId;
           }
 
@@ -219,30 +243,34 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Hệ thống tự động chấm điểm và gợi ý lộ trình dựa trên đặc điểm phát triển của bé.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      'Hệ thống tự động chấm điểm và gợi ý lộ trình dựa trên mục tiêu học, kỹ năng và mức hỗ trợ của bé.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
                   itemCount: sortedPaths.length,
                   itemBuilder: (context, index) {
                     final path = sortedPaths[index];
                     final program = programMap[path.programId];
                     final score = pathScores[path.id] ?? 0;
-                    final isRecommended = recommendations.any((r) => r.path.id == path.id && r.score > 0);
+                    final isRecommended = recommendations.any(
+                      (r) => r.path.id == path.id && r.score > 0,
+                    );
                     final isSelected = _selectedPathId == path.id;
                     final isActivePath = child.currentPathId == path.id;
 
                     // Detect if this is the absolute top recommended path (highest score)
-                    final isTopRecommended = isRecommended && 
-                        (recommendations.isNotEmpty && recommendations.first.path.id == path.id);
+                    final isTopRecommended =
+                        isRecommended &&
+                        (recommendations.isNotEmpty &&
+                            recommendations.first.path.id == path.id);
 
                     return GestureDetector(
                       onTap: () {
@@ -264,7 +292,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: isSelected 
+                              color: isSelected
                                   ? const Color(0xFF0EA5E9).withOpacity(0.08)
                                   : Colors.black.withOpacity(0.03),
                               blurRadius: 10,
@@ -285,7 +313,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: isSelected 
+                                        color: isSelected
                                             ? const Color(0xFF0EA5E9)
                                             : const Color(0xFF1E293B),
                                       ),
@@ -293,16 +321,25 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                   ),
                                   if (isTopRecommended)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF0FDF4),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                                        border: Border.all(
+                                          color: const Color(0xFFBBF7D0),
+                                        ),
                                       ),
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.star, size: 12, color: Color(0xFF10B981)),
+                                          Icon(
+                                            Icons.star,
+                                            size: 12,
+                                            color: Color(0xFF10B981),
+                                          ),
                                           SizedBox(width: 4),
                                           Text(
                                             'Đề xuất tốt nhất',
@@ -317,11 +354,16 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                     )
                                   else if (isRecommended)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF0F9FF),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFFBAE6FD)),
+                                        border: Border.all(
+                                          color: const Color(0xFFBAE6FD),
+                                        ),
                                       ),
                                       child: Text(
                                         'Khuyên dùng ($scoređ)',
@@ -359,22 +401,34 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.child_care, size: 16, color: Colors.grey[500]),
+                                  Icon(
+                                    Icons.child_care,
+                                    size: 16,
+                                    color: Colors.grey[500],
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     program != null
                                         ? 'Độ tuổi: ${program.targetAgeMin}-${program.targetAgeMax} tuổi'
                                         : 'Độ tuổi: Mọi lứa tuổi',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                   const Spacer(),
                                   if (isActivePath)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF8FAFC),
                                         borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: Colors.grey[300]!),
+                                        border: Border.all(
+                                          color: Colors.grey[300]!,
+                                        ),
                                       ),
                                       child: const Text(
                                         'Đang học',
@@ -387,14 +441,20 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                     ),
                                 ],
                               ),
-                              if (program != null && program.skillTags.isNotEmpty) ...[
+                              if (program != null &&
+                                  program.skillTags.isNotEmpty) ...[
                                 const SizedBox(height: 10),
                                 Wrap(
                                   spacing: 6,
                                   runSpacing: 6,
-                                  children: program.skillTags.take(3).map((tag) {
+                                  children: program.skillTags.take(3).map((
+                                    tag,
+                                  ) {
                                     return Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF1F5F9),
                                         borderRadius: BorderRadius.circular(6),
@@ -422,7 +482,9 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ElevatedButton(
-                    onPressed: _selectedPathId == null || _isSaving ? null : _saveSelection,
+                    onPressed: _selectedPathId == null || _isSaving
+                        ? null
+                        : _saveSelection,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0EA5E9),
                       minimumSize: const Size(double.infinity, 50),
@@ -437,7 +499,9 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text(

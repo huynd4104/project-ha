@@ -1574,6 +1574,16 @@ tr:hover td {
   box-shadow: var(--shadow-md);
 }
 
+.path-item-card[draggable="true"] {
+  cursor: grab;
+}
+
+.path-item-card.dragging {
+  opacity: 0.55;
+  border-style: dashed;
+  box-shadow: var(--shadow-md);
+}
+
 .path-item-seq {
   width: 32px;
   height: 32px;

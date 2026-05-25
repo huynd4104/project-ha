@@ -74,6 +74,7 @@ class LessonRepository {
   Future<LearningPlan> currentLearningPlanForChild(ChildProfile child) async {
     final programs = await _publishedPrograms();
     final paths = await _publishedPaths();
+    final goalSkillTags = await _goalSkillTags();
 
     // 1. Check if the child has selected a specific path
     if (child.currentPathId != null && child.currentPathId!.isNotEmpty) {
@@ -104,6 +105,7 @@ class LessonRepository {
         child: child,
         programs: programs,
         paths: paths,
+        goalSkillTags: goalSkillTags,
       );
       final candidates = recommendations.isNotEmpty
           ? recommendations
@@ -134,7 +136,8 @@ class LessonRepository {
     );
   }
 
-  Future<({List<Lesson> lessons, List<PathItem> pathItems})> _lessonsAndItemsForPath(LearningPath path) async {
+  Future<({List<Lesson> lessons, List<PathItem> pathItems})>
+  _lessonsAndItemsForPath(LearningPath path) async {
     final itemSnap = await _db
         .collection('pathItems')
         .where('pathId', isEqualTo: path.id)
@@ -144,7 +147,9 @@ class LessonRepository {
             .map((doc) => PathItem.fromMap(doc.id, doc.data()))
             .toList()
           ..sort((a, b) => a.sequence.compareTo(b.sequence));
-    if (items.isEmpty) return (lessons: const <Lesson>[], pathItems: const <PathItem>[]);
+    if (items.isEmpty) {
+      return (lessons: const <Lesson>[], pathItems: const <PathItem>[]);
+    }
 
     final npcSnap = await _db.collection('npcs').get();
     final npcs = {
@@ -244,8 +249,18 @@ class LessonRepository {
     final paths = snap.docs
         .map((doc) => LearningPath.fromMap(doc.id, doc.data()))
         .toList();
-    paths.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    paths.sort((a, b) => a.title.compareTo(b.title));
     return paths;
+  }
+
+  Future<Map<LearningGoalKey, List<String>>> _goalSkillTags() async {
+    final snap = await _db.collection('learningGoals').get();
+    return {
+      for (final goal in snap.docs.map(
+        (doc) => LearningGoal.fromMap(doc.id, doc.data()),
+      ))
+        goal.key: goal.skillTags,
+    };
   }
 
   Program? _programForPath(List<Program> programs, LearningPath path) {
@@ -267,38 +282,8 @@ class LessonRepository {
     final lessons = lessonsSnap.docs
         .map((doc) => _lessonFromDoc(doc, npcs))
         .toList();
-    lessons.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    lessons.sort((a, b) => a.title.compareTo(b.title));
     return lessons;
-  }
-
-  Future<List<Lesson>> _lessonsForPath(LearningPath path) async {
-    final itemSnap = await _db
-        .collection('pathItems')
-        .where('pathId', isEqualTo: path.id)
-        .get();
-    final items =
-        itemSnap.docs
-            .map((doc) => PathItem.fromMap(doc.id, doc.data()))
-            .toList()
-          ..sort((a, b) => a.sequence.compareTo(b.sequence));
-    if (items.isEmpty) return const [];
-
-    final npcSnap = await _db.collection('npcs').get();
-    final npcs = {
-      for (final doc in npcSnap.docs) doc.id: NPC.fromMap(doc.id, doc.data()),
-    };
-    final lessonDocs = await Future.wait(
-      items.map((item) => _db.collection('lessons').doc(item.lessonId).get()),
-    );
-    final lessonsById = {
-      for (final doc in lessonDocs)
-        if (doc.exists) doc.id: _lessonFromDoc(doc, npcs),
-    };
-    return items
-        .map((item) => lessonsById[item.lessonId])
-        .whereType<Lesson>()
-        .where((lesson) => lesson.isActive)
-        .toList();
   }
 
   Lesson _lessonFromDoc(
@@ -332,7 +317,7 @@ class LessonRepository {
     final items = snap.docs
         .map((doc) => MathQuestion.fromMap(doc.id, doc.data()))
         .toList();
-    items.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    items.sort((a, b) => a.questionText.compareTo(b.questionText));
     return items;
   }
 
@@ -344,7 +329,7 @@ class LessonRepository {
     final items = snap.docs
         .map((doc) => Dialogue.fromMap(doc.id, doc.data()))
         .toList();
-    items.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    items.sort((a, b) => a.title.compareTo(b.title));
     return items;
   }
 
@@ -356,7 +341,7 @@ class LessonRepository {
     final items = snap.docs
         .map((doc) => Flashcard.fromMap(doc.id, doc.data()))
         .toList();
-    items.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    items.sort((a, b) => a.frontText.compareTo(b.frontText));
     return items;
   }
 

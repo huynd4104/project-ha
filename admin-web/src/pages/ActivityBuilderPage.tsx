@@ -154,6 +154,10 @@ export function ActivityBuilderPage() {
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [accessType, setAccessType] = useState<AccessType>("FREE");
   const [voicePremiumRequired, setVoicePremiumRequired] = useState(false);
+  const [openLessonGroups, setOpenLessonGroups] = useState<Record<string, boolean>>({});
+  const [isReorderingActivities, setIsReorderingActivities] = useState(false);
+  const [draftActivities, setDraftActivities] = useState<Activity[]>([]);
+  const [draggingActivityId, setDraggingActivityId] = useState("");
 
   async function loadData() {
     setLoading(true);
@@ -166,7 +170,7 @@ export function ActivityBuilderPage() {
         adminApi.list("/math-questions")
       ]);
       const all = (lRes.data.data || []) as Lesson[];
-      all.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      all.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       setLessons(all);
       setSkills(sRes.data.data || []);
       const flashcards = (fRes.data.data || []) as FlashcardLibraryItem[];
@@ -207,10 +211,21 @@ export function ActivityBuilderPage() {
   }
 
   useEffect(() => { if (selectedLessonId) loadActivities(selectedLessonId); }, [selectedLessonId]);
+  useEffect(() => {
+    if (!isReorderingActivities) setDraftActivities(activities);
+  }, [activities, isReorderingActivities]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
   const selectedLesson = lessons.find((l) => l.id === selectedLessonId);
   const filteredLessons = lessonSearch ? lessons.filter((l) => l.title?.toLowerCase().includes(lessonSearch.toLowerCase())) : lessons;
+  const groupedLessons = filteredLessons.reduce<Record<string, Lesson[]>>((acc, lesson) => {
+    const key = lesson.lessonType || lesson.type || "OTHER";
+    acc[key] = acc[key] || [];
+    acc[key].push(lesson);
+    return acc;
+  }, {});
+  const lessonGroupKeys = Object.keys(groupedLessons).sort((a, b) => uiLabel(a).localeCompare(uiLabel(b)));
+  const visibleActivities = isReorderingActivities ? draftActivities : activities;
   const skillOptions = skills.filter((s: any) => s.isActive).map((s: any) => ({ value: s.key, label: s.label }));
 
   const needsOptions = ["MULTIPLE_CHOICE", "LISTEN_AND_CHOOSE_IMAGE", "LOOK_AND_CHOOSE_WORD", "EMOTION_RECOGNITION", "DAILY_LIFE_SCENARIO"].includes(activityType);
@@ -345,6 +360,43 @@ export function ActivityBuilderPage() {
       adminApi.update("/activities", act.id, { orderIndex: other.orderIndex }),
       adminApi.update("/activities", other.id, { orderIndex: act.orderIndex })
     ]);
+    loadActivities(selectedLessonId);
+  };
+
+  const toggleLessonGroup = (groupKey: string) => {
+    setOpenLessonGroups((prev) => ({ ...prev, [groupKey]: !(prev[groupKey] ?? true) }));
+  };
+
+  const startActivityReorder = () => {
+    setDraftActivities(activities);
+    setIsReorderingActivities(true);
+  };
+
+  const cancelActivityReorder = () => {
+    setDraftActivities(activities);
+    setDraggingActivityId("");
+    setIsReorderingActivities(false);
+  };
+
+  const reorderDraftActivities = (fromId: string, toId: string) => {
+    if (!fromId || fromId === toId) return;
+    const fromIndex = draftActivities.findIndex((item) => item.id === fromId);
+    const toIndex = draftActivities.findIndex((item) => item.id === toId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const next = [...draftActivities];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    setDraftActivities(next);
+  };
+
+  const saveActivityOrder = async () => {
+    if (!selectedLessonId) return;
+    await Promise.all(draftActivities.map((activity, index) => (
+      adminApi.update("/activities", activity.id, { orderIndex: (index + 1) * 10 })
+    )));
+    setIsReorderingActivities(false);
+    setDraggingActivityId("");
+    showToast("Đã lưu thứ tự hoạt động.");
     loadActivities(selectedLessonId);
   };
 
@@ -890,21 +942,36 @@ export function ActivityBuilderPage() {
           <div className="panel" style={{ padding: "12px" }}>
             <input type="text" placeholder="Tìm bài học..." value={lessonSearch} onChange={(e) => setLessonSearch(e.target.value)} style={{ marginBottom: "12px" }} />
             <div style={{ maxHeight: "480px", overflowY: "auto" }}>
-              {loading ? <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Đang tải dữ liệu...</p> : filteredLessons.map((l) => (
-                <div
-                  key={l.id}
-                  onClick={() => setSelectedLessonId(l.id)}
-                  style={{
-                    padding: "8px 12px", borderRadius: "6px", cursor: "pointer", marginBottom: "4px", fontSize: "13px",
-                    background: selectedLessonId === l.id ? "var(--primary-light)" : "transparent",
-                    color: selectedLessonId === l.id ? "var(--primary)" : "var(--text-main)",
-                    fontWeight: selectedLessonId === l.id ? "600" : "400"
-                  }}
-                >
-                  {l.title}
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{uiLabel(l.lessonType || l.type)}</div>
-                </div>
-              ))}
+              {loading ? <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Đang tải dữ liệu...</p> : lessonGroupKeys.map((groupKey) => {
+                const isOpen = openLessonGroups[groupKey] ?? true;
+                return (
+                  <div key={groupKey} style={{ marginBottom: "8px" }}>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => toggleLessonGroup(groupKey)}
+                      style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", fontSize: "12px" }}
+                    >
+                      <span>{isOpen ? "▾" : "▸"} {uiLabel(groupKey)}</span>
+                      <span className="badge info">{groupedLessons[groupKey].length}</span>
+                    </button>
+                    {isOpen && groupedLessons[groupKey].map((l) => (
+                      <div
+                        key={l.id}
+                        onClick={() => { setSelectedLessonId(l.id); cancelActivityReorder(); }}
+                        style={{
+                          padding: "8px 12px", borderRadius: "6px", cursor: "pointer", margin: "4px 0 0 10px", fontSize: "13px",
+                          background: selectedLessonId === l.id ? "var(--primary-light)" : "transparent",
+                          color: selectedLessonId === l.id ? "var(--primary)" : "var(--text-main)",
+                          fontWeight: selectedLessonId === l.id ? "600" : "400"
+                        }}
+                      >
+                        {l.title}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -928,7 +995,18 @@ export function ActivityBuilderPage() {
                       <strong>{selectedLesson.title}</strong>
                       <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{selectedLesson.lessonType || selectedLesson.type}</span>
                     </div>
-                    <button onClick={openAddModal}>➕ Thêm hoạt động</button>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {activities.length > 1 && !isReorderingActivities && (
+                        <button className="secondary" onClick={startActivityReorder}>Sắp xếp thứ tự</button>
+                      )}
+                      {isReorderingActivities && (
+                        <>
+                          <button className="secondary" onClick={cancelActivityReorder}>Hủy sắp xếp</button>
+                          <button onClick={saveActivityOrder}>Lưu thứ tự</button>
+                        </>
+                      )}
+                      <button onClick={openAddModal} disabled={isReorderingActivities}>➕ Thêm hoạt động</button>
+                    </div>
                   </div>
                   <div style={{ borderTop: "1px solid var(--border)", marginTop: "14px", paddingTop: "14px" }}>
                     <strong style={{ display: "block", marginBottom: "4px" }}>Tạo hoạt động từ kho nội dung</strong>
@@ -970,8 +1048,26 @@ export function ActivityBuilderPage() {
                 </div>
               ) : (
                 <div>
-                  {activities.map((act, idx) => (
-                    <div key={act.id} className="path-item-card">
+                  {visibleActivities.map((act, idx) => (
+                    <div
+                      key={act.id}
+                      className={`path-item-card ${draggingActivityId === act.id ? "dragging" : ""}`}
+                      draggable={isReorderingActivities}
+                      onDragStart={(e) => {
+                        setDraggingActivityId(act.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", act.id);
+                      }}
+                      onDragOver={(e) => {
+                        if (isReorderingActivities) e.preventDefault();
+                      }}
+                      onDrop={(e) => {
+                        if (!isReorderingActivities) return;
+                        e.preventDefault();
+                        reorderDraftActivities(e.dataTransfer.getData("text/plain") || draggingActivityId, act.id);
+                      }}
+                      onDragEnd={() => setDraggingActivityId("")}
+                    >
                       <div className="path-item-seq">{idx + 1}</div>
                       <div className="path-item-info">
                         <strong>{act.prompt || "Hoạt động"}</strong>
@@ -991,10 +1087,14 @@ export function ActivityBuilderPage() {
                         </small>
                       </div>
                       <div className="path-item-actions">
-                        <button className="secondary" disabled={idx === 0} onClick={() => moveActivity(act, "up")}>↑</button>
-                        <button className="secondary" disabled={idx === activities.length - 1} onClick={() => moveActivity(act, "down")}>↓</button>
-                        <button className="secondary" onClick={() => openEditModal(act)}>Sửa</button>
-                        <button className="danger" onClick={() => handleDelete(act.id)}>Xóa</button>
+                        {isReorderingActivities ? (
+                          <span className="badge info">Kéo thả</span>
+                        ) : (
+                          <>
+                            <button className="secondary" onClick={() => openEditModal(act)}>Sửa</button>
+                            <button className="danger" onClick={() => handleDelete(act.id)}>Xóa</button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -7,7 +7,7 @@ import { ToggleSwitch } from "../components/ToggleSwitch";
 import { uiLabel } from "../utils/adminLabels";
 import { validateLessonPublish } from "../utils/publishValidation";
 import { useTableControls } from "../utils/tableControls";
-import type { Lesson, Program, LearningPath, NPC, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
+import type { Lesson, NPC, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
 const LESSON_TYPES = [
   "MATH", "DIALOGUE", "FLASHCARD", "THINKING", "SPELLING", "RHYME",
@@ -26,8 +26,6 @@ export function LessonsPageV2() {
   const [filtered, setFiltered] = useState<Lesson[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [paths, setPaths] = useState<LearningPath[]>([]);
   const [npcs, setNpcs] = useState<NPC[]>([]);
   const [allActivities, setAllActivities] = useState<any[]>([]);
   const [filter, setFilter] = useState("ALL");
@@ -42,8 +40,6 @@ export function LessonsPageV2() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [lessonType, setLessonType] = useState("MIXED");
-  const [programId, setProgramId] = useState("");
-  const [pathId, setPathId] = useState("");
   const [level, setLevel] = useState<LearningLevel>("BEGINNER");
   const [skillTags, setSkillTags] = useState<string[]>([]);
   const [difficultyCategories, setDifficultyCategories] = useState<string[]>([]);
@@ -52,7 +48,6 @@ export function LessonsPageV2() {
   const [npcId, setNpcId] = useState("");
   const [accessType, setAccessType] = useState<AccessType>("FREE");
   const [publishStatus, setPublishStatus] = useState<PublishStatus>("DRAFT");
-  const [orderIndex, setOrderIndex] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [publishWarnings, setPublishWarnings] = useState<string[]>([]);
@@ -60,16 +55,14 @@ export function LessonsPageV2() {
   async function loadData() {
     setLoading(true);
     try {
-      const [lRes, pRes, lpRes, nRes, cRes, gRes, sRes, aRes] = await Promise.all([
-        adminApi.list("/lessons"), adminApi.list("/programs"), adminApi.list("/learning-paths"),
+      const [lRes, nRes, cRes, gRes, sRes, aRes] = await Promise.all([
+        adminApi.list("/lessons"),
         adminApi.list("/npcs"), adminApi.list("/development-categories"),
         adminApi.list("/learning-goals"), adminApi.list("/skills"), adminApi.list("/activities")
       ]);
       const lessons = (lRes.data.data || []) as Lesson[];
-      lessons.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      lessons.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       setItems(lessons);
-      setPrograms(pRes.data.data || []);
-      setPaths(lpRes.data.data || []);
       setNpcs(nRes.data.data || []);
       setCategories(cRes.data.data || []);
       setGoals(gRes.data.data || []);
@@ -101,16 +94,13 @@ export function LessonsPageV2() {
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
 
-  const filteredPaths = programId ? paths.filter((p) => p.programId === programId) : paths;
   const table = useTableControls(filtered, [
-    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
     { value: "type", label: "Loại", getValue: (item) => item.lessonType || item.type },
-    { value: "program", label: "Chương trình", getValue: (item) => programs.find((p) => p.id === item.programId)?.title },
     { value: "level", label: "Cấp độ", getValue: (item) => item.level },
     { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
     { value: "status", label: "Xuất bản", getValue: (item) => item.publishStatus }
-  ], "order");
+  ], "title");
   const categoryOptions = categories.filter((c: any) => c.isActive).map((c: any) => ({ value: c.key, label: c.label }));
   const goalOptions = goals.filter((g: any) => g.isActive).map((g: any) => ({ value: g.key, label: g.label }));
   const skillOptions = skills.filter((s: any) => s.isActive).map((s: any) => ({ value: s.key, label: s.label }));
@@ -118,10 +108,9 @@ export function LessonsPageV2() {
   const openAddModal = () => {
     setEditingItem(null);
     setTitle(""); setDescription(""); setLessonType("MIXED");
-    setProgramId(""); setPathId(""); setLevel("BEGINNER");
+    setLevel("BEGINNER");
     setSkillTags([]); setDifficultyCategories([]); setLearningGoals([]);
     setEstimatedMinutes(5); setNpcId(""); setAccessType("FREE"); setPublishStatus("DRAFT");
-    setOrderIndex(items.length ? Math.max(...items.map((i) => i.orderIndex ?? 0)) + 10 : 10);
     setIsActive(true); setErrors({}); setPublishWarnings([]);
     setIsModalOpen(true);
   };
@@ -130,13 +119,12 @@ export function LessonsPageV2() {
     setEditingItem(item);
     setTitle(item.title || ""); setDescription(item.description || "");
     setLessonType(item.lessonType || item.type || "MIXED");
-    setProgramId(item.programId || ""); setPathId(item.pathId || "");
     setLevel(item.level || "BEGINNER");
     setSkillTags(item.skillTags || []); setDifficultyCategories(item.difficultyCategories || []);
     setLearningGoals(item.learningGoals || []);
     setEstimatedMinutes(item.estimatedMinutes ?? 5); setNpcId(item.npcId || "");
     setAccessType(item.accessType || "FREE"); setPublishStatus(item.publishStatus || "DRAFT");
-    setOrderIndex(item.orderIndex ?? 0); setIsActive(item.isActive !== false);
+    setIsActive(item.isActive !== false);
     setErrors({}); setPublishWarnings([]);
     setIsModalOpen(true);
   };
@@ -168,10 +156,9 @@ export function LessonsPageV2() {
     const payload: any = {
       title: title.trim(), description: description.trim(),
       lessonType, type: lessonType,
-      programId: programId || null, pathId: pathId || null,
       level, skillTags, difficultyCategories, learningGoals,
       estimatedMinutes, npcId: npcId || null,
-      accessType, publishStatus, orderIndex: Number(orderIndex), isActive
+      accessType, publishStatus, isActive
     };
     try {
       if (editingItem) await adminApi.update("/lessons", editingItem.id, payload);
@@ -233,10 +220,8 @@ export function LessonsPageV2() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "60px" }}>#</th>
                 <th>Tiêu đề</th>
                 <th>Loại</th>
-                <th>Chương trình</th>
                 <th>Nhân vật</th>
                 <th>Cấp độ</th>
                 <th>Truy cập</th>
@@ -247,16 +232,13 @@ export function LessonsPageV2() {
             <tbody>
               {table.pagedItems.map((item) => {
                 const npc = npcs.find((n) => n.id === item.npcId);
-                const prog = programs.find((p) => p.id === item.programId);
                 return (
                   <tr key={item.id}>
-                    <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                     <td style={{ fontWeight: "600" }}>
                       {item.title}
                       {!item.lessonType && item.type && <span className="badge yellow" style={{ marginLeft: "8px" }}>Dữ liệu cũ</span>}
                     </td>
                     <td><span className="badge info">{uiLabel(item.lessonType || item.type)}</span></td>
-                    <td style={{ fontSize: "13px" }}>{prog?.title || "—"}</td>
                     <td>{npc ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         {npc.imageUrl && <img src={npc.imageUrl} alt="" style={{ width: "20px", height: "20px", borderRadius: "4px" }} />}
@@ -330,23 +312,6 @@ export function LessonsPageV2() {
 
                     <div className="form-grid">
                       <div className="field">
-                        <label>Chương trình</label>
-                        <select value={programId} onChange={(e) => { setProgramId(e.target.value); setPathId(""); }}>
-                          <option value="">-- Không --</option>
-                          {programs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                        </select>
-                      </div>
-                      <div className="field">
-                        <label>Lộ trình</label>
-                        <select value={pathId} onChange={(e) => setPathId(e.target.value)}>
-                          <option value="">-- Không --</option>
-                          {filteredPaths.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="form-grid">
-                      <div className="field">
                         <label>Nhân vật đồng hành</label>
                         <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
                           <option value="">-- Không --</option>
@@ -359,9 +324,9 @@ export function LessonsPageV2() {
                       </div>
                     </div>
 
-                    <MultiSelect label="Kỹ năng" options={skillOptions} selected={skillTags} onChange={setSkillTags} />
                     <MultiSelect label="Nhóm khó khăn" options={categoryOptions} selected={difficultyCategories} onChange={setDifficultyCategories} />
                     <MultiSelect label="Mục tiêu học tập" options={goalOptions} selected={learningGoals} onChange={setLearningGoals} />
+                    <MultiSelect label="Kỹ năng" options={skillOptions} selected={skillTags} onChange={setSkillTags} />
 
                     <div className="form-grid">
                       <div className="field">
@@ -374,14 +339,8 @@ export function LessonsPageV2() {
                       </div>
                     </div>
 
-                    <div className="form-grid">
-                      <div className="field">
-                        <label>Thứ tự hiển thị</label>
-                        <input type="number" value={orderIndex} onChange={(e) => setOrderIndex(Number(e.target.value))} />
-                      </div>
-                      <div className="field" style={{ justifyContent: "end" }}>
-                        <ToggleSwitch id="lessonActive" label="Đang bật" checked={isActive} onChange={setIsActive} />
-                      </div>
+                    <div className="field" style={{ justifyContent: "end" }}>
+                      <ToggleSwitch id="lessonActive" label="Đang bật" checked={isActive} onChange={setIsActive} />
                     </div>
                   </div>
 

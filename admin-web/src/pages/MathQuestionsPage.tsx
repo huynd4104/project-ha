@@ -28,7 +28,6 @@ interface Question {
   optionD: string;
   correctOption: "A" | "B" | "C" | "D";
   explanation: string;
-  orderIndex: number;
 }
 
 export function MathQuestionsPage() {
@@ -58,7 +57,6 @@ export function MathQuestionsPage() {
   const [optionD, setOptionD] = useState("");
   const [correctOption, setCorrectOption] = useState<"A" | "B" | "C" | "D">("A");
   const [explanation, setExplanation] = useState("");
-  const [orderIndex, setOrderIndex] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function loadData() {
@@ -107,11 +105,10 @@ export function MathQuestionsPage() {
     return `${lesson.title} (${getLessonTypeLabel(lesson.type)})`;
   };
   const table = useTableControls(filtered, [
-    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
     { value: "question", label: "Câu hỏi", getValue: (item) => item.questionText },
     { value: "correct", label: "Đáp án đúng", getValue: (item) => item.correctOption }
-  ], "order");
+  ], "question");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -124,11 +121,6 @@ export function MathQuestionsPage() {
     setOptionD("");
     setCorrectOption("A");
     setExplanation("");
-    const moduleQuestions = items.filter((item) => {
-      const lesson = allLessons.find((l) => l.id === item.lessonId);
-      return lesson && lesson.type === moduleKey;
-    });
-    setOrderIndex(moduleQuestions.length ? Math.max(...moduleQuestions.map(i => i.orderIndex ?? 0)) + 10 : 10);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -144,7 +136,6 @@ export function MathQuestionsPage() {
     setOptionD(item.optionD || "");
     setCorrectOption(item.correctOption || "A");
     setExplanation(item.explanation || "");
-    setOrderIndex(item.orderIndex ?? 0);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -181,8 +172,7 @@ export function MathQuestionsPage() {
       optionC: optionC.trim(),
       optionD: optionD.trim(),
       correctOption,
-      explanation: explanation.trim(),
-      orderIndex: Number(orderIndex)
+      explanation: explanation.trim()
     };
 
     try {
@@ -251,7 +241,6 @@ export function MathQuestionsPage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "80px" }}>Thứ tự</th>
                 <th>Bài học</th>
                 <th>Câu hỏi</th>
                 <th>Đáp án đúng</th>
@@ -262,7 +251,6 @@ export function MathQuestionsPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
                   <td style={{ fontSize: "13px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -394,14 +382,6 @@ export function MathQuestionsPage() {
                       <span className="helper">Bé đếm: 1, 2, 3 quả táo. Đáp án đúng là 3!</span>
                     </div>
 
-                    <div className="field" style={{ maxWidth: "200px" }}>
-                      <label>Thứ tự hiển thị</label>
-                      <input
-                        type="number"
-                        value={orderIndex}
-                        onChange={(e) => setOrderIndex(Number(e.target.value))}
-                      />
-                    </div>
                   </div>
 
                   {/* Simulator Screen Drawer */}

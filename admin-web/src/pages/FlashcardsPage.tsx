@@ -20,7 +20,6 @@ interface Flashcard {
   backText: string;
   imageUrl?: string;
   audioUrl?: string;
-  orderIndex: number;
 }
 
 export function FlashcardsPage() {
@@ -44,7 +43,6 @@ export function FlashcardsPage() {
   const [backText, setBackText] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
-  const [orderIndex, setOrderIndex] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function loadData() {
@@ -84,11 +82,10 @@ export function FlashcardsPage() {
     return lessons.find((l) => l.id === id)?.title || "Bài học liên kết";
   };
   const table = useTableControls(filtered, [
-    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
     { value: "front", label: "Mặt trước", getValue: (item) => item.frontText },
     { value: "back", label: "Mặt sau", getValue: (item) => item.backText }
-  ], "order");
+  ], "front");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -97,7 +94,6 @@ export function FlashcardsPage() {
     setBackText("");
     setImageUrl("");
     setAudioUrl("");
-    setOrderIndex(items.length ? Math.max(...items.map(i => i.orderIndex ?? 0)) + 10 : 10);
     setIsPreviewFlipped(false);
     setErrors({});
     setIsModalOpen(true);
@@ -110,7 +106,6 @@ export function FlashcardsPage() {
     setBackText(item.backText || "");
     setImageUrl(item.imageUrl || "");
     setAudioUrl(item.audioUrl || "");
-    setOrderIndex(item.orderIndex ?? 0);
     setIsPreviewFlipped(false);
     setErrors({});
     setIsModalOpen(true);
@@ -140,8 +135,7 @@ export function FlashcardsPage() {
       frontText: frontText.trim(),
       backText: backText.trim(),
       imageUrl: imageUrl.trim() || null,
-      audioUrl: audioUrl.trim() || null,
-      orderIndex: Number(orderIndex)
+      audioUrl: audioUrl.trim() || null
     };
 
     try {
@@ -207,7 +201,6 @@ export function FlashcardsPage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "80px" }}>Thứ tự</th>
                 <th>Bài học</th>
                 <th>Mặt trước</th>
                 <th>Mặt sau</th>
@@ -219,7 +212,6 @@ export function FlashcardsPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
                   <td style={{ fontWeight: "700", fontSize: "15px" }}>{item.frontText}</td>
                   <td style={{ fontSize: "15px" }}>{item.backText}</td>
@@ -326,14 +318,6 @@ export function FlashcardsPage() {
                       </div>
                     </div>
 
-                    <div className="field" style={{ maxWidth: "200px" }}>
-                      <label>Thứ tự hiển thị</label>
-                      <input
-                        type="number"
-                        value={orderIndex}
-                        onChange={(e) => setOrderIndex(Number(e.target.value))}
-                      />
-                    </div>
                   </div>
 
                   {/* Flip Card Preview Panel */}

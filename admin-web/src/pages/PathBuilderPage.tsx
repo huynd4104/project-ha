@@ -12,6 +12,9 @@ export function PathBuilderPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
   const [allPathItems, setAllPathItems] = useState<PathItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
@@ -19,6 +22,13 @@ export function PathBuilderPage() {
   const [selectedProgramId, setSelectedProgramId] = useState("");
   const [selectedPathId, setSelectedPathId] = useState("");
   const [addLessonId, setAddLessonId] = useState("");
+  const [lessonSearch, setLessonSearch] = useState("");
+  const [lessonTypeFilter, setLessonTypeFilter] = useState("");
+  const [accessFilter, setAccessFilter] = useState("");
+  const [detailLesson, setDetailLesson] = useState<Lesson | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+  const [draftPathItems, setDraftPathItems] = useState<PathItem[]>([]);
+  const [draggingPathItemId, setDraggingPathItemId] = useState("");
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editUnlockRule, setEditUnlockRule] = useState<UnlockRule>("ALWAYS_OPEN");
@@ -28,21 +38,29 @@ export function PathBuilderPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [pRes, lpRes, lRes, piRes] = await Promise.all([
+      const [pRes, lpRes, lRes, piRes, cRes, gRes, sRes] = await Promise.all([
         adminApi.list("/programs"), adminApi.list("/learning-paths"),
-        adminApi.list("/lessons"), adminApi.list("/path-items")
+        adminApi.list("/lessons"), adminApi.list("/path-items"),
+        adminApi.list("/development-categories"), adminApi.list("/learning-goals"), adminApi.list("/skills")
       ]);
       setPrograms(pRes.data.data || []);
       setPaths(lpRes.data.data || []);
       const all = (lRes.data.data || []) as Lesson[];
-      all.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      all.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       setLessons(all);
       setAllPathItems(piRes.data.data || []);
+      setCategories(cRes.data.data || []);
+      setGoals(gRes.data.data || []);
+      setSkills(sRes.data.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (!isReordering) setDraftPathItems(pathItems);
+  }, [allPathItems, selectedPathId, isReordering]);
 
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
 
@@ -50,12 +68,26 @@ export function PathBuilderPage() {
   const pathItems = allPathItems
     .filter((pi) => pi.pathId === selectedPathId)
     .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  const visiblePathItems = isReordering ? draftPathItems : pathItems;
 
   const usedLessonIds = new Set(pathItems.map((pi) => pi.lessonId));
-  const availableLessons = lessons.filter((l) => !usedLessonIds.has(l.id));
+  const lessonTypes = Array.from(new Set(lessons.map((l) => l.lessonType || l.type).filter(Boolean))).sort();
+  const availableLessons = lessons.filter((l) => {
+    const query = lessonSearch.trim().toLowerCase();
+    const matchesSearch = !query || [l.title, l.description, ...(l.skillTags || []), ...(l.difficultyCategories || []), ...(l.learningGoals || [])]
+      .some((value) => `${value || ""}`.toLowerCase().includes(query));
+    const matchesType = !lessonTypeFilter || (l.lessonType || l.type) === lessonTypeFilter;
+    const matchesAccess = !accessFilter || (l.accessType || "FREE") === accessFilter;
+    return !usedLessonIds.has(l.id) && matchesSearch && matchesType && matchesAccess;
+  });
 
   const getLesson = (id: string) => lessons.find((l) => l.id === id);
   const selectedPath = paths.find((p) => p.id === selectedPathId);
+  const categoryLabel = (key: string) => categories.find((item) => item.key === key)?.label || key;
+  const goalLabel = (key: string) => goals.find((item) => item.key === key)?.label || key;
+  const skillLabel = (key: string) => skills.find((item) => item.key === key)?.label || key;
+  const labelsFor = (keys: string[] | undefined, lookup: (key: string) => string) =>
+    keys?.length ? keys.map(lookup).join(", ") : "—";
 
   const handleAddLesson = async () => {
     if (!addLessonId || !selectedPathId) return;
@@ -69,6 +101,7 @@ export function PathBuilderPage() {
       requiredCompletion: true
     });
     setAddLessonId("");
+    setLessonSearch("");
     showToast("Đã thêm bài học vào lộ trình!");
     loadData();
   };
@@ -107,6 +140,38 @@ export function PathBuilderPage() {
     });
     setEditingItemId(null);
     showToast("Đã cập nhật!"); loadData();
+  };
+
+  const startReorder = () => {
+    setDraftPathItems(pathItems);
+    setIsReordering(true);
+  };
+
+  const cancelReorder = () => {
+    setDraftPathItems(pathItems);
+    setDraggingPathItemId("");
+    setIsReordering(false);
+  };
+
+  const reorderDraftPathItems = (fromId: string, toId: string) => {
+    if (!fromId || fromId === toId) return;
+    const fromIndex = draftPathItems.findIndex((item) => item.id === fromId);
+    const toIndex = draftPathItems.findIndex((item) => item.id === toId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const next = [...draftPathItems];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    setDraftPathItems(next);
+  };
+
+  const savePathOrder = async () => {
+    await Promise.all(draftPathItems.map((item, index) => (
+      adminApi.update("/path-items", item.id, { sequence: index + 1 })
+    )));
+    setIsReordering(false);
+    setDraggingPathItemId("");
+    showToast("Đã lưu thứ tự bài học.");
+    loadData();
   };
 
   return (
@@ -153,20 +218,66 @@ export function PathBuilderPage() {
                   <strong>{selectedPath.title}</strong>
                   <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>{uiLabel(selectedPath.status || "DRAFT")} • {pathItems.length} bài học</span>
                 </div>
+                {pathItems.length > 1 && (
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {!isReordering ? (
+                      <button className="secondary" onClick={startReorder}>Sắp xếp thứ tự</button>
+                    ) : (
+                      <>
+                        <button className="secondary" onClick={cancelReorder}>Hủy sắp xếp</button>
+                        <button onClick={savePathOrder}>Lưu thứ tự</button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Add lesson */}
-          <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "12px", alignItems: "end" }}>
-            <div className="field" style={{ marginBottom: 0, flex: 1 }}>
-              <label>Thêm bài học vào lộ trình</label>
-              <select value={addLessonId} onChange={(e) => setAddLessonId(e.target.value)}>
-                <option value="">-- Chọn bài học --</option>
-                {availableLessons.map((l) => <option key={l.id} value={l.id}>{l.title} ({uiLabel(l.lessonType || l.type)})</option>)}
-              </select>
+          <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Tìm bài học</label>
+                <input type="text" placeholder="Tìm theo tên, mục tiêu, kỹ năng..." value={lessonSearch} onChange={(e) => setLessonSearch(e.target.value)} />
+              </div>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Loại bài học</label>
+                <select value={lessonTypeFilter} onChange={(e) => setLessonTypeFilter(e.target.value)}>
+                  <option value="">Tất cả</option>
+                  {lessonTypes.map((type) => <option key={type} value={type}>{uiLabel(type)}</option>)}
+                </select>
+              </div>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Loại truy cập</label>
+                <select value={accessFilter} onChange={(e) => setAccessFilter(e.target.value)}>
+                  <option value="">Tất cả</option>
+                  <option value="FREE">Miễn phí</option>
+                  <option value="PREMIUM">Premium</option>
+                </select>
+              </div>
             </div>
-            <button onClick={handleAddLesson} disabled={!addLessonId}>➕ Thêm</button>
+            <div style={{ display: "flex", gap: "12px", alignItems: "end" }}>
+              <div className="field" style={{ marginBottom: 0, flex: 1 }}>
+                <label>Thêm bài học vào lộ trình</label>
+                <select value={addLessonId} onChange={(e) => setAddLessonId(e.target.value)} disabled={isReordering}>
+                  <option value="">-- Chọn bài học ({availableLessons.length}) --</option>
+                  {availableLessons.map((l) => <option key={l.id} value={l.id}>{l.title} ({uiLabel(l.lessonType || l.type)} • {uiLabel(l.accessType || "FREE")})</option>)}
+                </select>
+                {addLessonId && (() => {
+                  const lesson = getLesson(addLessonId);
+                  if (!lesson) return null;
+                  return (
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px", fontSize: "12px", color: "var(--text-muted)" }}>
+                      <span>Nhóm: {labelsFor(lesson.difficultyCategories as any, categoryLabel)}</span>
+                      <span>Mục tiêu: {labelsFor(lesson.learningGoals as any, goalLabel)}</span>
+                      <span>Kỹ năng: {labelsFor(lesson.skillTags, skillLabel)}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+              <button onClick={handleAddLesson} disabled={!addLessonId || isReordering}>➕ Thêm</button>
+            </div>
           </div>
 
           {/* Path items list */}
@@ -180,30 +291,67 @@ export function PathBuilderPage() {
             </div>
           ) : (
             <div>
-              {pathItems.map((pi, idx) => {
+              {visiblePathItems.map((pi, idx) => {
                 const lesson = getLesson(pi.lessonId);
                 const isEditing = editingItemId === pi.id;
                 return (
-                  <div key={pi.id} className="path-item-card" style={{ flexWrap: "wrap" }}>
+                  <div
+                    key={pi.id}
+                    className={`path-item-card ${draggingPathItemId === pi.id ? "dragging" : ""}`}
+                    style={{ flexWrap: "wrap" }}
+                    draggable={isReordering}
+                    onDragStart={(e) => {
+                      setDraggingPathItemId(pi.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", pi.id);
+                    }}
+                    onDragOver={(e) => {
+                      if (isReordering) e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      if (!isReordering) return;
+                      e.preventDefault();
+                      reorderDraftPathItems(e.dataTransfer.getData("text/plain") || draggingPathItemId, pi.id);
+                    }}
+                    onDragEnd={() => setDraggingPathItemId("")}
+                  >
                     <div className="path-item-seq">{idx + 1}</div>
                     <div className="path-item-info" style={{ flex: 1 }}>
-                      <strong>{lesson?.title || pi.lessonId}</strong>
+                      <strong
+                        onClick={() => lesson && setDetailLesson(lesson)}
+                        style={{ cursor: lesson ? "pointer" : "default" }}
+                      >
+                        {lesson?.title || pi.lessonId}
+                      </strong>
                       <small>
                         <span className="badge info" style={{ marginRight: "4px" }}>{uiLabel(lesson?.lessonType || lesson?.type)}</span>
+                        <span className={`badge ${lesson?.accessType === "PREMIUM" ? "premium" : "free"}`} style={{ marginRight: "4px" }}>{uiLabel(lesson?.accessType || "FREE")}</span>
                         <span className="badge yellow" style={{ marginRight: "4px" }}>{UNLOCK_LABELS[pi.unlockRule] || pi.unlockRule}</span>
                         {pi.requiredCompletion && <span className="badge green">Bắt buộc</span>}
                       </small>
+                      {lesson && (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px", fontSize: "11px", color: "var(--text-muted)" }}>
+                          <span>Nhóm: {labelsFor(lesson.difficultyCategories as any, categoryLabel)}</span>
+                          <span>Mục tiêu: {labelsFor(lesson.learningGoals as any, goalLabel)}</span>
+                          <span>Kỹ năng: {labelsFor(lesson.skillTags, skillLabel)}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="path-item-actions">
-                      <button className="secondary" disabled={idx === 0} onClick={() => moveItem(pi, "up")}>↑</button>
-                      <button className="secondary" disabled={idx === pathItems.length - 1} onClick={() => moveItem(pi, "down")}>↓</button>
-                      <button className="secondary" onClick={() => isEditing ? saveEditItem() : startEditItem(pi)}>
-                        {isEditing ? "💾 Lưu" : "⚙ Cấu hình"}
-                      </button>
-                      <button className="danger" onClick={() => handleRemoveItem(pi.id)}>Gỡ</button>
+                      {isReordering ? (
+                        <span className="badge info">Kéo thả</span>
+                      ) : (
+                        <>
+                          <button className="secondary" onClick={() => lesson && setDetailLesson(lesson)}>Chi tiết</button>
+                          <button className="secondary" onClick={() => isEditing ? saveEditItem() : startEditItem(pi)}>
+                            {isEditing ? "💾 Lưu" : "⚙ Cấu hình"}
+                          </button>
+                          <button className="danger" onClick={() => handleRemoveItem(pi.id)}>Gỡ</button>
+                        </>
+                      )}
                     </div>
 
-                    {isEditing && (
+                    {isEditing && !isReordering && (
                       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
                         <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
                           <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: "200px" }}>
@@ -253,6 +401,37 @@ export function PathBuilderPage() {
             </div>
           )}
         </>
+      )}
+
+      {detailLesson && (
+        <div className="modal-overlay" onClick={() => setDetailLesson(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(620px, 95vw)" }}>
+            <div className="modal-header">
+              <h2>Chi tiết bài học</h2>
+              <button className="modal-close" onClick={() => setDetailLesson(null)}>&times;</button>
+            </div>
+            <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <strong style={{ fontSize: "18px" }}>{detailLesson.title}</strong>
+                <p style={{ color: "var(--text-muted)", margin: "6px 0 0" }}>{detailLesson.description || "Không có mô tả."}</p>
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <span className="badge info">{uiLabel(detailLesson.lessonType || detailLesson.type)}</span>
+                <span className={`badge ${detailLesson.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(detailLesson.accessType || "FREE")}</span>
+                <span className="badge yellow">{uiLabel(detailLesson.publishStatus || "DRAFT")}</span>
+                <span className="badge green">{detailLesson.estimatedMinutes || 0} phút</span>
+              </div>
+              <div className="panel" style={{ padding: "12px", margin: 0 }}>
+                <div style={{ marginBottom: "8px" }}><strong>Nhóm khó khăn:</strong> {labelsFor(detailLesson.difficultyCategories as any, categoryLabel)}</div>
+                <div style={{ marginBottom: "8px" }}><strong>Mục tiêu học tập:</strong> {labelsFor(detailLesson.learningGoals as any, goalLabel)}</div>
+                <div><strong>Kỹ năng:</strong> {labelsFor(detailLesson.skillTags, skillLabel)}</div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="secondary" onClick={() => setDetailLesson(null)}>Đóng</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {toastMsg && <div className="toast"><span>✨</span> {toastMsg}</div>}

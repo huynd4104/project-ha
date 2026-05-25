@@ -126,7 +126,7 @@ function resolveCollection(path: string) {
 async function listCollection(collectionName: string) {
   const snap = await getDocs(collection(db, collectionName));
   const rows = snap.docs.map((item) => ({ id: item.id, ...item.data() } as any));
-  if (collectionName === "lessons") return rows.sort((a: any, b: any) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+  if (collectionName === "lessons") return rows.sort((a: any, b: any) => `${a.title ?? ""}`.localeCompare(`${b.title ?? ""}`));
   return rows.sort((a: any, b: any) => toMillis(b.createdAt) - toMillis(a.createdAt));
 }
 

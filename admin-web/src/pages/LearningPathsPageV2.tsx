@@ -17,8 +17,8 @@ const accessBadge = (s?: string) => s === "PREMIUM" ? "premium" : "free";
 export function LearningPathsPageV2() {
   const [items, setItems] = useState<LearningPath[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<LearningPath[]>([]);
   const [search, setSearch] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
@@ -32,33 +32,30 @@ export function LearningPathsPageV2() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [level, setLevel] = useState<LearningLevel>("BEGINNER");
-  const [orderIndex, setOrderIndex] = useState(0);
   const [accessType, setAccessType] = useState<AccessType>("FREE");
   const [status, setStatus] = useState<PublishStatus>("DRAFT");
 
-  const [ruleDiffCategories, setRuleDiffCategories] = useState<string[]>([]);
   const [ruleLearningGoals, setRuleLearningGoals] = useState<string[]>([]);
+  const [ruleSkillTags, setRuleSkillTags] = useState<string[]>([]);
   const [ruleSupportLevel, setRuleSupportLevel] = useState<string[]>([]);
-  const [ruleAgeMin, setRuleAgeMin] = useState(0);
-  const [ruleAgeMax, setRuleAgeMax] = useState(10);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function loadData() {
     setLoading(true);
     try {
-      const [lpRes, pRes, cRes, gRes] = await Promise.all([
+      const [lpRes, pRes, gRes, sRes] = await Promise.all([
         adminApi.list("/learning-paths"),
         adminApi.list("/programs"),
-        adminApi.list("/development-categories"),
-        adminApi.list("/learning-goals")
+        adminApi.list("/learning-goals"),
+        adminApi.list("/skills")
       ]);
       const paths = (lpRes.data.data || []) as LearningPath[];
-      paths.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      paths.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
       setItems(paths);
       setPrograms(pRes.data.data || []);
-      setCategories(cRes.data.data || []);
       setGoals(gRes.data.data || []);
+      setSkills(sRes.data.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -78,38 +75,35 @@ export function LearningPathsPageV2() {
   const showToast = (msg: string) => { setToastMsg(msg); setTimeout(() => setToastMsg(""), 3000); };
   const getProgramTitle = (id: string) => programs.find((p) => p.id === id)?.title || "—";
   const table = useTableControls(filtered, [
-    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
     { value: "program", label: "Chương trình", getValue: (item) => getProgramTitle(item.programId) },
     { value: "level", label: "Cấp độ", getValue: (item) => item.level },
     { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
     { value: "status", label: "Trạng thái", getValue: (item) => item.status }
-  ], "order");
+  ], "title");
 
-  const categoryOptions = categories.filter((c: any) => c.isActive).map((c: any) => ({ value: c.key, label: c.label }));
   const goalOptions = goals.filter((g: any) => g.isActive).map((g: any) => ({ value: g.key, label: g.label }));
+  const skillOptions = skills.filter((s: any) => s.isActive).map((s: any) => ({ value: s.key, label: s.label }));
   const supportOptions = SUPPORT_LEVELS.map((s) => ({ value: s, label: uiLabel(s) }));
 
   const openAddModal = () => {
     setEditingItem(null);
     setProgramId(programs[0]?.id || ""); setTitle(""); setDescription("");
-    setLevel("BEGINNER"); setOrderIndex(items.length ? Math.max(...items.map((i) => i.orderIndex ?? 0)) + 1 : 1);
+    setLevel("BEGINNER");
     setAccessType("FREE"); setStatus("DRAFT");
-    setRuleDiffCategories([]); setRuleLearningGoals([]); setRuleSupportLevel([]);
-    setRuleAgeMin(0); setRuleAgeMax(10);
+    setRuleLearningGoals([]); setRuleSkillTags([]); setRuleSupportLevel([]);
     setErrors({}); setIsModalOpen(true);
   };
 
   const openEditModal = (item: LearningPath) => {
     setEditingItem(item);
     setProgramId(item.programId || ""); setTitle(item.title || ""); setDescription(item.description || "");
-    setLevel(item.level || "BEGINNER"); setOrderIndex(item.orderIndex ?? 0);
+    setLevel(item.level || "BEGINNER");
     setAccessType(item.accessType || "FREE"); setStatus(item.status || "DRAFT");
     const rules = (item.targetProfileRules || {}) as Record<string, any>;
-    setRuleDiffCategories((rules.difficultyCategories as string[]) || []);
     setRuleLearningGoals((rules.learningGoals as string[]) || []);
+    setRuleSkillTags((rules.skillTags as string[]) || []);
     setRuleSupportLevel((rules.supportLevel as string[]) || []);
-    setRuleAgeMin((rules.ageMin as number) ?? 0); setRuleAgeMax((rules.ageMax as number) ?? 10);
     setErrors({}); setIsModalOpen(true);
   };
 
@@ -127,14 +121,13 @@ export function LearningPathsPageV2() {
     e.preventDefault();
     if (!validate()) return;
     const targetProfileRules = {
-      difficultyCategories: ruleDiffCategories,
       learningGoals: ruleLearningGoals,
-      supportLevel: ruleSupportLevel,
-      ageMin: ruleAgeMin, ageMax: ruleAgeMax
+      skillTags: ruleSkillTags,
+      supportLevel: ruleSupportLevel
     };
     const payload = {
       programId, title: title.trim(), description: description.trim(),
-      targetProfileRules, level, orderIndex: Number(orderIndex),
+      targetProfileRules, level,
       accessType, status
     };
     try {
@@ -186,7 +179,6 @@ export function LearningPathsPageV2() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "60px" }}>#</th>
                 <th>Tiêu đề</th>
                 <th>Chương trình</th>
                 <th>Cấp độ</th>
@@ -198,7 +190,6 @@ export function LearningPathsPageV2() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ fontSize: "13px" }}>{getProgramTitle(item.programId)}</td>
                   <td><span className="badge info">{uiLabel(item.level)}</span></td>
@@ -252,10 +243,6 @@ export function LearningPathsPageV2() {
                     <label>Cấp độ</label>
                     <select value={level} onChange={(e) => setLevel(e.target.value as LearningLevel)}>{LEVELS.map((l) => <option key={l} value={l}>{uiLabel(l)}</option>)}</select>
                   </div>
-                  <div className="field">
-                    <label>Thứ tự</label>
-                    <input type="number" value={orderIndex} onChange={(e) => setOrderIndex(Number(e.target.value))} />
-                  </div>
                 </div>
 
                 <div className="form-grid">
@@ -272,20 +259,9 @@ export function LearningPathsPageV2() {
                 <div style={{ borderTop: "1px solid var(--border)", marginTop: "8px", paddingTop: "16px" }}>
                   <h3 style={{ fontSize: "14px", marginBottom: "12px", color: "var(--text-muted)" }}>Quy tắc đề xuất cho hồ sơ trẻ</h3>
 
-                  <MultiSelect label="Nhóm khó khăn" options={categoryOptions} selected={ruleDiffCategories} onChange={setRuleDiffCategories} />
                   <MultiSelect label="Mục tiêu học" options={goalOptions} selected={ruleLearningGoals} onChange={setRuleLearningGoals} />
+                  <MultiSelect label="Kỹ năng" options={skillOptions} selected={ruleSkillTags} onChange={setRuleSkillTags} />
                   <MultiSelect label="Mức hỗ trợ" options={supportOptions} selected={ruleSupportLevel} onChange={setRuleSupportLevel} />
-
-                  <div className="form-grid">
-                    <div className="field">
-                      <label>Tuổi tối thiểu</label>
-                      <input type="number" value={ruleAgeMin} onChange={(e) => setRuleAgeMin(Number(e.target.value))} />
-                    </div>
-                    <div className="field">
-                      <label>Tuổi tối đa</label>
-                      <input type="number" value={ruleAgeMax} onChange={(e) => setRuleAgeMax(Number(e.target.value))} />
-                    </div>
-                  </div>
                 </div>
               </div>
               <div className="modal-footer">

@@ -234,6 +234,7 @@ class LearningGoal {
     required this.key,
     required this.label,
     this.parentDescription = '',
+    this.skillTags = const [],
     this.isActive = true,
     this.orderIndex = 0,
   });
@@ -242,6 +243,7 @@ class LearningGoal {
   final LearningGoalKey key;
   final String label;
   final String parentDescription;
+  final List<String> skillTags;
   final bool isActive;
   final int orderIndex;
 
@@ -251,6 +253,7 @@ class LearningGoal {
         key: learningGoalFromString(map['key'] ?? id),
         label: '${map['label'] ?? ''}',
         parentDescription: '${map['parentDescription'] ?? ''}',
+        skillTags: readStringList(map['skillTags']),
         isActive: map['isActive'] != false,
         orderIndex: readInt(map['orderIndex']),
       );
@@ -679,7 +682,9 @@ class ActivationCode {
         maxUses: map['maxUses'] == null ? null : readInt(map['maxUses']),
         usedCount: readInt(map['usedCount']),
         label: '${map['label'] ?? ''}',
-        perUserLimit: map['perUserLimit'] == null ? null : readInt(map['perUserLimit']),
+        perUserLimit: map['perUserLimit'] == null
+            ? null
+            : readInt(map['perUserLimit']),
         expiresAt: readDate(map['expiresAt']),
         source: '${map['source'] ?? 'QR'}',
       );
@@ -712,8 +717,6 @@ class ActivationRedemption {
         targetId: '${map['targetId'] ?? map['npcId'] ?? ''}',
       );
 }
-
-
 
 class VoiceUsageLog {
   const VoiceUsageLog({

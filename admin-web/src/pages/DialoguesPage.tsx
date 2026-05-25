@@ -26,7 +26,6 @@ interface Dialogue {
   optionC: string;
   optionD: string;
   correctOption: "A" | "B" | "C" | "D";
-  orderIndex: number;
 }
 
 export function DialoguesPage() {
@@ -55,7 +54,6 @@ export function DialoguesPage() {
   const [optionC, setOptionC] = useState("");
   const [optionD, setOptionD] = useState("");
   const [correctOption, setCorrectOption] = useState<"A" | "B" | "C" | "D">("A");
-  const [orderIndex, setOrderIndex] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function loadData() {
@@ -97,12 +95,11 @@ export function DialoguesPage() {
     return lessons.find((l) => l.id === id)?.title || "Bài học hội thoại";
   };
   const table = useTableControls(filtered, [
-    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
     { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
     { value: "question", label: "Câu hỏi", getValue: (item) => item.questionText },
     { value: "correct", label: "Đáp án đúng", getValue: (item) => item.correctOption }
-  ], "order");
+  ], "title");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -116,7 +113,6 @@ export function DialoguesPage() {
     setOptionC("");
     setOptionD("");
     setCorrectOption("A");
-    setOrderIndex(items.length ? Math.max(...items.map(i => i.orderIndex ?? 0)) + 10 : 10);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -133,7 +129,6 @@ export function DialoguesPage() {
     setOptionC(item.optionC || "");
     setOptionD(item.optionD || "");
     setCorrectOption(item.correctOption || "A");
-    setOrderIndex(item.orderIndex ?? 0);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -172,8 +167,7 @@ export function DialoguesPage() {
       optionB: optionB.trim(),
       optionC: optionC.trim(),
       optionD: optionD.trim(),
-      correctOption,
-      orderIndex: Number(orderIndex)
+      correctOption
     };
 
     try {
@@ -239,7 +233,6 @@ export function DialoguesPage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "80px" }}>Thứ tự</th>
                 <th>Bài học</th>
                 <th>Tiêu đề hội thoại</th>
                 <th>Bối cảnh</th>
@@ -251,7 +244,6 @@ export function DialoguesPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.sceneText}</td>
@@ -399,14 +391,6 @@ export function DialoguesPage() {
                       </div>
                     </div>
 
-                    <div className="field" style={{ maxWidth: "200px" }}>
-                      <label>Thứ tự hiển thị</label>
-                      <input
-                        type="number"
-                        value={orderIndex}
-                        onChange={(e) => setOrderIndex(Number(e.target.value))}
-                      />
-                    </div>
                   </div>
 
                   {/* Simulator Screen Drawer */}

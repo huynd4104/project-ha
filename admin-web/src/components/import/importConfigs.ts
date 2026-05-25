@@ -180,8 +180,8 @@ export function lessonsImportConfig(npcs: NamedRecord[], existingLessons: NamedR
   return {
     title: "Import CSV Lessons",
     templateFilename: "lessons-template.csv",
-    templateHeaders: ["title", "description", "type", "relatedNpc", "orderIndex", "isActive"],
-    templateExampleRows: [{ title: "Bài toán đầu tiên", description: "Làm quen số đếm", type: "MATH", relatedNpc: "Mèo Mimi", orderIndex: "10", isActive: "true" }],
+    templateHeaders: ["title", "description", "type", "relatedNpc", "isActive"],
+    templateExampleRows: [{ title: "Bài toán đầu tiên", description: "Làm quen số đếm", type: "MATH", relatedNpc: "Mèo Mimi", isActive: "true" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
@@ -199,7 +199,6 @@ export function lessonsImportConfig(npcs: NamedRecord[], existingLessons: NamedR
         description: normalizeString(row.description),
         type,
         npcId: npc?.id ?? null,
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors),
         isActive: boolField(row.isActive, "isActive", true, errors)
       }, errors);
     }
@@ -216,8 +215,8 @@ export function dialoguesImportConfig(lessons: NamedRecord[]): ImportConfig {
   return {
     title: "Import CSV Dialogues",
     templateFilename: "dialogues-template.csv",
-    templateHeaders: ["lessonTitle", "title", "sceneText", "audioUrl", "questionText", "optionA", "optionB", "optionC", "optionD", "correctOption", "orderIndex"],
-    templateExampleRows: [{ lessonTitle: "Chào hỏi", title: "Gặp bạn mới", sceneText: "Mimi gặp một người bạn mới.", audioUrl: "", questionText: "Mimi nên nói gì?", optionA: "Xin chào", optionB: "Tạm biệt", optionC: "Không nói gì", optionD: "Khóc", correctOption: "A", orderIndex: "10" }],
+    templateHeaders: ["lessonTitle", "title", "sceneText", "audioUrl", "questionText", "optionA", "optionB", "optionC", "optionD", "correctOption"],
+    templateExampleRows: [{ lessonTitle: "Chào hỏi", title: "Gặp bạn mới", sceneText: "Mimi gặp một người bạn mới.", audioUrl: "", questionText: "Mimi nên nói gì?", optionA: "Xin chào", optionB: "Tạm biệt", optionC: "Không nói gì", optionD: "Khóc", correctOption: "A" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
@@ -235,8 +234,7 @@ export function dialoguesImportConfig(lessons: NamedRecord[]): ImportConfig {
         title: normalizeString(row.title),
         sceneText: normalizeString(row.sceneText),
         audioUrl: normalizeOptionalString(row.audioUrl),
-        ...normalizedQuestion(row),
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+        ...normalizedQuestion(row)
       }, errors);
     }
   };
@@ -247,8 +245,8 @@ export function flashcardsImportConfig(lessons: NamedRecord[]): ImportConfig {
   return {
     title: "Import CSV Flashcards",
     templateFilename: "flashcards-template.csv",
-    templateHeaders: ["lessonTitle", "frontText", "backText", "imageUrl", "audioUrl", "orderIndex"],
-    templateExampleRows: [{ lessonTitle: "Từ vựng trái cây", frontText: "Apple", backText: "Quả táo", imageUrl: "", audioUrl: "", orderIndex: "10" }],
+    templateHeaders: ["lessonTitle", "frontText", "backText", "imageUrl", "audioUrl"],
+    templateExampleRows: [{ lessonTitle: "Từ vựng trái cây", frontText: "Apple", backText: "Quả táo", imageUrl: "", audioUrl: "" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
@@ -265,8 +263,7 @@ export function flashcardsImportConfig(lessons: NamedRecord[]): ImportConfig {
         frontText: normalizeString(row.frontText),
         backText: normalizeString(row.backText),
         imageUrl: normalizeOptionalString(row.imageUrl),
-        audioUrl: normalizeOptionalString(row.audioUrl),
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+        audioUrl: normalizeOptionalString(row.audioUrl)
       }, errors);
     }
   };
@@ -334,8 +331,8 @@ function questionConfig(title: string, filename: string, expectedTypes: readonly
   return {
     title,
     templateFilename: filename,
-    templateHeaders: ["lessonTitle", "questionText", "imageUrl", "optionA", "optionB", "optionC", "optionD", "correctOption", "explanation", "orderIndex"],
-    templateExampleRows: [{ lessonTitle: "Bài toán đầu tiên", questionText: "1 + 1 bằng mấy?", imageUrl: "", optionA: "1", optionB: "2", optionC: "3", optionD: "4", correctOption: "B", explanation: "1 + 1 = 2", orderIndex: "10" }],
+    templateHeaders: ["lessonTitle", "questionText", "imageUrl", "optionA", "optionB", "optionC", "optionD", "correctOption", "explanation"],
+    templateExampleRows: [{ lessonTitle: "Bài toán đầu tiên", questionText: "1 + 1 bằng mấy?", imageUrl: "", optionA: "1", optionB: "2", optionC: "3", optionD: "4", correctOption: "B", explanation: "1 + 1 = 2" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
@@ -350,8 +347,7 @@ function questionConfig(title: string, filename: string, expectedTypes: readonly
         lessonId: lesson?.id ?? "",
         imageUrl: normalizeOptionalString(row.imageUrl),
         ...normalizedQuestion(row),
-        explanation: normalizeOptionalString(row.explanation),
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+        explanation: normalizeOptionalString(row.explanation)
       }, errors);
     }
   };
