@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/mascot_reaction.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/mascot_image.dart';
 import '../../../core/widgets/progress_bar.dart';
 import '../../gamification/widgets/reward_badge.dart';
 import '../../learning_path/data/lesson_repository.dart';
@@ -28,12 +30,13 @@ class ResultScreen extends StatelessWidget {
             borderColor: unlockMode ? AppColors.pink : AppColors.yellow,
             child: Column(
               children: [
-                Icon(
-                  unlockMode
-                      ? Icons.auto_awesome_rounded
-                      : Icons.emoji_events_rounded,
-                  size: 72,
-                  color: unlockMode ? Colors.white : AppColors.orange,
+                // ── Mascot reaction ────────────────────────────────────────
+                MascotImage(
+                  reaction: unlockMode
+                      ? MascotReaction.rewardUnlocked
+                      : MascotReaction.lessonComplete,
+                  width: 150,
+                  height: 150,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -67,6 +70,7 @@ class ResultScreen extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(height: 16),
           AppCard(
             child: Column(

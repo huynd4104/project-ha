@@ -301,7 +301,7 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF10B981),
+                            color: Color(0xFF10B981),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -366,7 +366,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               );
                             } else {
-                              context.push('/lesson/${nextLesson!.id}/activity');
+                              context.push('/lesson/${nextLesson.id}/activity');
                             }
                           },
                         ),
@@ -434,10 +434,12 @@ class HomeScreen extends StatelessWidget {
               ),
             const SizedBox(height: 14),
             FutureBuilder(
-              future: GamificationRepository().dailyMissions(
-                state.appUser!.id,
-                state.activeChild!.id,
-              ),
+              future: (state.appUser == null || state.activeChild == null)
+                  ? null
+                  : GamificationRepository().dailyMissions(
+                      state.appUser!.id,
+                      state.activeChild!.id,
+                    ),
               builder: (_, snap) {
                 if (!snap.hasData || snap.data!.isEmpty) {
                   return const SizedBox.shrink();

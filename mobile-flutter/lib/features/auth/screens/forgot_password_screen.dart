@@ -69,18 +69,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 }),
               ),
               const SizedBox(height: 28),
-
-              // ── Header icon ───────────────────────────────
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.lock_reset_rounded, color: AppColors.sky, size: 28),
-              ),
-              const SizedBox(height: 16),
+              
               const Text(
                 'Quên mật khẩu?',
                 style: TextStyle(

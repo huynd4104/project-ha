@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/mascot_assets.dart';
+import '../../../core/constants/mascot_reaction.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_image.dart';
+import '../../../core/widgets/mascot_image.dart';
 import '../../../models/npc.dart';
 
 class MascotMessageBubble extends StatelessWidget {
@@ -11,11 +14,17 @@ class MascotMessageBubble extends StatelessWidget {
     super.key,
     required this.message,
     this.npc,
+    this.mascotReaction,
     this.icon = Icons.auto_awesome_rounded,
   });
 
   final String message;
   final NPC? npc;
+
+  /// Reaction shown when no NPC image is available.
+  /// Defaults to [MascotReaction.welcome] when null and npc has no image.
+  final MascotReaction? mascotReaction;
+
   final IconData icon;
 
   @override
@@ -23,7 +32,11 @@ class MascotMessageBubble extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _MascotAvatar(npc: npc, icon: icon),
+        _MascotAvatar(
+          npc: npc,
+          mascotReaction: mascotReaction,
+          icon: icon,
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Container(
@@ -44,26 +57,49 @@ class MascotMessageBubble extends StatelessWidget {
 }
 
 class _MascotAvatar extends StatelessWidget {
-  const _MascotAvatar({required this.npc, required this.icon});
+  const _MascotAvatar({
+    required this.npc,
+    required this.mascotReaction,
+    required this.icon,
+  });
   final NPC? npc;
+  final MascotReaction? mascotReaction;
   final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final imageUrl = npc?.imageUrl ?? '';
-    return CircleAvatar(
-      radius: 31,
-      backgroundColor: AppColors.yellow,
-      child: ClipOval(
-        child: imageUrl.isEmpty
-            ? Icon(icon, size: 34, color: AppColors.text)
-            : AppImage(
-                imageUrl: imageUrl,
-                width: 62,
-                height: 62,
-                fit: BoxFit.cover,
-                placeholderIcon: icon,
-              ),
+
+    // 1. NPC has a network image — show it (original behavior)
+    if (imageUrl.isNotEmpty) {
+      return CircleAvatar(
+        radius: 31,
+        backgroundColor: AppColors.yellow,
+        child: ClipOval(
+          child: AppImage(
+            imageUrl: imageUrl,
+            width: 62,
+            height: 62,
+            fit: BoxFit.cover,
+            placeholderIcon: icon,
+          ),
+        ),
+      );
+    }
+
+    // 2. No NPC image — use local mascot asset
+    final reaction = mascotReaction ?? MascotReaction.welcome;
+    return SizedBox(
+      width: 62,
+      height: 62,
+      child: MascotImage(
+        assetPath: reaction == MascotReaction.welcome
+            ? MascotAssets.appIconAvatar
+            : reaction.assetPath,
+        width: 62,
+        height: 62,
+        fit: BoxFit.contain,
+        semanticLabel: '',
       ),
     );
   }
