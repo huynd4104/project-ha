@@ -10,9 +10,7 @@ import { batchImport } from "../services/batchImportService";
 import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
 import { uiLabel } from "../utils/adminLabels";
 import { useTableControls } from "../utils/tableControls";
-import type { DialogueTemplates, AccessType } from "../types/firebaseModels";
-
-const ACCESS_TYPES: AccessType[] = ["FREE", "PREMIUM"];
+import type { DialogueTemplates } from "../types/firebaseModels";
 const DIALOGUE_FIELDS: { key: keyof DialogueTemplates; label: string; placeholder: string }[] = [
   { key: "welcome", label: "Chào mừng", placeholder: "Xin chào bé! Hôm nay mình học gì nhỉ?" },
   { key: "beforeActivity", label: "Trước hoạt động", placeholder: "Mình cùng bắt đầu nào!" },
@@ -27,7 +25,7 @@ interface NPCItem {
   animationUrl?: string; defaultDialogue?: string; isActive: boolean;
   role?: string; personality?: string; skillTags?: string[];
   programIds?: string[]; pathIds?: string[];
-  dialogueTemplates?: DialogueTemplates; unlockBenefit?: string; accessType?: AccessType;
+  dialogueTemplates?: DialogueTemplates;
 }
 
 export function NPCsPageV2() {
@@ -62,8 +60,6 @@ export function NPCsPageV2() {
   const [npcProgramIds, setNpcProgramIds] = useState<string[]>([]);
   const [npcPathIds, setNpcPathIds] = useState<string[]>([]);
   const [dialogueTemplates, setDialogueTemplates] = useState<DialogueTemplates>({});
-  const [unlockBenefit, setUnlockBenefit] = useState("");
-  const [accessType, setAccessType] = useState<AccessType>("FREE");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   async function loadData() {
@@ -92,7 +88,6 @@ export function NPCsPageV2() {
   const table = useTableControls(filtered, [
     { value: "name", label: "Tên", getValue: (item) => item.name },
     { value: "role", label: "Vai trò", getValue: (item) => item.role },
-    { value: "access", label: "Truy cập", getValue: (item) => item.accessType },
     { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
   ], "name");
 
@@ -105,7 +100,7 @@ export function NPCsPageV2() {
     setAnimationUrl(""); setDefaultDialogue(""); setIsActive(true);
     setRole(""); setPersonality(""); setNpcSkillTags([]);
     setNpcProgramIds([]); setNpcPathIds([]);
-    setDialogueTemplates({}); setUnlockBenefit(""); setAccessType("FREE");
+    setDialogueTemplates({});
     setErrors({}); setShowAdvanced(false); setIsModalOpen(true);
   };
 
@@ -117,7 +112,6 @@ export function NPCsPageV2() {
     setNpcSkillTags(item.skillTags || []); setNpcProgramIds(item.programIds || []);
     setNpcPathIds(item.pathIds || []);
     setDialogueTemplates(item.dialogueTemplates || {});
-    setUnlockBenefit(item.unlockBenefit || ""); setAccessType(item.accessType || "FREE");
     setErrors({}); setShowAdvanced(!!(item.role || item.personality || item.skillTags?.length));
     setIsModalOpen(true);
   };
@@ -140,8 +134,7 @@ export function NPCsPageV2() {
       defaultDialogue: defaultDialogue.trim() || null, isActive,
       role: role.trim() || null, personality: personality.trim() || null,
       skillTags: npcSkillTags, programIds: npcProgramIds, pathIds: npcPathIds,
-      dialogueTemplates: Object.keys(dialogueTemplates).length ? dialogueTemplates : null,
-      unlockBenefit: unlockBenefit.trim() || null, accessType
+      dialogueTemplates: Object.keys(dialogueTemplates).length ? dialogueTemplates : null
     };
 
     try {
@@ -212,103 +205,197 @@ export function NPCsPageV2() {
         </div>
       ) : (
         <>
-        <TableControls {...table} />
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: "60px" }}>Ảnh</th>
-                <th>Tên</th>
-                <th>Mô tả</th>
-                <th>Vai trò</th>
-                <th>Truy cập</th>
-                <th style={{ width: "110px" }}>Trạng thái</th>
-                <th style={{ width: "150px" }}>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {table.pagedItems.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    {item.imageUrl ? <img src={item.imageUrl} alt={item.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "8px" }} />
-                    : <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#e2e8f0", display: "grid", placeItems: "center", fontSize: "18px" }}>🐾</div>}
-                  </td>
-                  <td style={{ fontWeight: "600" }}>{item.name}</td>
-                  <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description?.slice(0, 60)}{(item.description?.length || 0) > 60 ? "..." : ""}</td>
-                  <td style={{ fontSize: "12px" }}>{item.role || "—"}</td>
-                  <td><span className={`badge ${item.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(item.accessType || "FREE")}</span></td>
-                  <td><span className={`badge ${item.isActive ? "active" : "inactive"}`}>{item.isActive ? "Đang bật" : "Đang tắt"}</span></td>
-                  <td>
-                    <div className="actions">
-                      <button className="secondary" onClick={() => openPreviewModal(item)}>Xem trước</button>
-                      <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
-                      <button className="danger" onClick={() => handleDelete(item.id)}>Xóa</button>
-                    </div>
-                  </td>
+          <TableControls {...table} />
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: "60px" }}>Ảnh</th>
+                  <th>Tên</th>
+                  <th>Mô tả</th>
+                  <th>Vai trò</th>
+                  <th style={{ width: "110px" }}>Trạng thái</th>
+                  <th style={{ width: "150px" }}>Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {table.pagedItems.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      {item.imageUrl ? <img src={item.imageUrl} alt={item.name} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "8px" }} />
+                        : <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#e2e8f0", display: "grid", placeItems: "center", fontSize: "18px" }}>🐾</div>}
+                    </td>
+                    <td style={{ fontWeight: "600" }}>{item.name}</td>
+                    <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description?.slice(0, 60)}{(item.description?.length || 0) > 60 ? "..." : ""}</td>
+                    <td style={{ fontSize: "12px" }}>{item.role || "—"}</td>
+                    <td><span className={`badge ${item.isActive ? "active" : "inactive"}`}>{item.isActive ? "Đang bật" : "Đang tắt"}</span></td>
+                    <td>
+                      <div className="actions">
+                        <button className="secondary" onClick={() => openPreviewModal(item)}>Xem trước</button>
+                        <button className="secondary" onClick={() => openEditModal(item)}>Sửa</button>
+                        <button className="danger" onClick={() => handleDelete(item.id)}>Xóa</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
       {previewItem && (
         <div className="modal-overlay" onClick={() => setPreviewItem(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(620px, 95vw)" }}>
-            <div className="modal-header">
-              <h2>Xem trước nhân vật</h2>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "min(680px, 95vw)", borderRadius: "20px", border: "1px solid rgba(255, 255, 255, 0.2)", overflow: "hidden", boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}>
+            <div className="modal-header" style={{ borderBottom: "1px solid var(--border)", background: "linear-gradient(135deg, #f8fafc, #ffffff)", padding: "20px 24px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "700", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>✨</span> Thông tin nhân vật
+              </h2>
               <button className="modal-close" onClick={() => setPreviewItem(null)}>&times;</button>
             </div>
-            <div className="modal-body">
-              <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "20px", alignItems: "start" }}>
-                <div style={{ border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden", background: "white", textAlign: "center", padding: "16px" }}>
-                  <div style={{ width: "96px", height: "96px", margin: "0 auto 12px", borderRadius: "48px", background: "#f8fafc", display: "grid", placeItems: "center", overflow: "hidden" }}>
-                    {previewItem.imageUrl ? <img src={previewItem.imageUrl} alt={previewItem.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <span style={{ fontSize: "40px" }}>🐾</span>}
+            <div className="modal-body" style={{ padding: "24px", background: "#ffffff" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: "24px", alignItems: "start" }}>
+                {/* Left Card */}
+                <div style={{
+                  background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "16px",
+                  padding: "20px 16px",
+                  textAlign: "center",
+                  boxShadow: "var(--shadow-sm)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center"
+                }}>
+                  <div style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    background: "#ffffff",
+                    display: "grid",
+                    placeItems: "center",
+                    overflow: "hidden",
+                    boxShadow: "0 8px 16px rgba(0,0,0,0.06)",
+                    border: "3px solid #ffffff",
+                    marginBottom: "12px"
+                  }}>
+                    {previewItem.imageUrl ? (
+                      <img src={previewItem.imageUrl} alt={previewItem.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontSize: "44px" }}>🐾</span>
+                    )}
                   </div>
-                  <strong style={{ display: "block", fontSize: "16px" }}>{previewItem.name}</strong>
-                  {previewItem.role && <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>{previewItem.role}</span>}
-                  <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
-                    <span className={`badge ${previewItem.accessType === "PREMIUM" ? "premium" : "free"}`}>{uiLabel(previewItem.accessType || "FREE")}</span>
-                    <span className={`badge ${previewItem.isActive !== false ? "active" : "inactive"}`}>{previewItem.isActive !== false ? "Đang bật" : "Đang tắt"}</span>
-                  </div>
+                  <strong style={{ display: "block", fontSize: "18px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>{previewItem.name}</strong>
+                  {previewItem.role && (
+                    <span style={{
+                      color: "var(--primary)",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      background: "rgba(37, 99, 235, 0.08)",
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      marginBottom: "16px"
+                    }}>{previewItem.role}</span>
+                  )}
+
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <div>
-                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Mô tả</label>
-                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.description || "Chưa có mô tả"}</p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Lời thoại mặc định</label>
-                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.defaultDialogue || "Chưa có lời thoại"}</p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Tính cách</label>
-                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.personality || "Chưa khai báo"}</p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Kỹ năng liên quan</label>
-                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{getSkillNames(previewItem.skillTags)}</p>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: "600", fontSize: "13px" }}>Chương trình / lộ trình</label>
-                    <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>
-                      {getProgramNames(previewItem.programIds)} / {getPathNames(previewItem.pathIds)}
-                    </p>
-                  </div>
-                  {previewItem.unlockBenefit && (
-                    <div>
-                      <label style={{ fontWeight: "600", fontSize: "13px" }}>Lợi ích khi mở khóa</label>
-                      <p style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>{previewItem.unlockBenefit}</p>
+                {/* Right Details */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Speech Bubble for Default Dialogue */}
+                  <div style={{ position: "relative", marginBottom: "8px" }}>
+                    <div style={{
+                      background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+                      border: "1px solid rgba(37, 99, 235, 0.15)",
+                      borderRadius: "16px",
+                      padding: "14px 18px",
+                      fontSize: "14px",
+                      color: "#1e3a8a",
+                      fontWeight: "500",
+                      lineHeight: "1.5",
+                      boxShadow: "0 4px 12px rgba(37, 99, 235, 0.04)"
+                    }}>
+                      <span style={{ marginRight: "6px", fontSize: "16px" }}>💬</span>
+                      {previewItem.defaultDialogue || "Chưa thiết lập lời thoại mặc định cho bé."}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Description */}
+                  <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 16px", border: "1px solid var(--border)" }}>
+                    <label style={{ fontWeight: "700", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>📝 Mô tả</label>
+                    <p style={{ margin: 0, color: "var(--text-main)", fontSize: "14px", lineHeight: "1.6" }}>{previewItem.description || "Chưa có mô tả"}</p>
+                  </div>
+
+                  {/* Personality */}
+                  <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 16px", border: "1px solid var(--border)" }}>
+                    <label style={{ fontWeight: "700", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>🧠 Tính cách</label>
+                    <p style={{ margin: 0, color: "var(--text-main)", fontSize: "14px", lineHeight: "1.6" }}>{previewItem.personality || "Chưa khai báo tính cách"}</p>
+                  </div>
+
+                  {/* Skill tags */}
+                  <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 16px", border: "1px solid var(--border)" }}>
+                    <label style={{ fontWeight: "700", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", display: "block", marginBottom: "8px" }}>🧩 Kỹ năng liên quan</label>
+                    {previewItem.skillTags && previewItem.skillTags.length > 0 ? (
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        {previewItem.skillTags.map((tag: string) => {
+                          const skillLabel = skills.find((s: any) => s.key === tag)?.label || tag;
+                          return (
+                            <span key={tag} style={{ background: "#ffffff", border: "1px solid var(--border)", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", color: "var(--text-main)", fontWeight: "500" }}>
+                              {skillLabel}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "13px" }}>Chưa gắn kỹ năng</p>
+                    )}
+                  </div>
+
+                  {/* Programs / Paths */}
+                  <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 16px", border: "1px solid var(--border)" }}>
+                    <label style={{ fontWeight: "700", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", display: "block", marginBottom: "8px" }}>🎓 Chương trình & Lộ trình</label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "6px" }}>
+                      <div>
+                        <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>Chương trình:</span>
+                        {previewItem.programIds && previewItem.programIds.length > 0 ? (
+                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                            {previewItem.programIds.map((id: string) => {
+                              const title = programs.find((p: any) => p.id === id)?.title || id;
+                              return (
+                                <span key={id} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", color: "#1e40af", fontWeight: "500" }}>
+                                  {title}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>Chưa gắn chương trình</span>
+                        )}
+                      </div>
+                      <div>
+                        <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>Lộ trình học:</span>
+                        {previewItem.pathIds && previewItem.pathIds.length > 0 ? (
+                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                            {previewItem.pathIds.map((id: string) => {
+                              const title = paths.find((p: any) => p.id === id)?.title || id;
+                              return (
+                                <span key={id} style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", color: "#065f46", fontWeight: "500" }}>
+                                  {title}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>Chưa gắn lộ trình</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
-              <button type="button" className="secondary" onClick={() => setPreviewItem(null)}>Đóng</button>
+            <div className="modal-footer" style={{ background: "#f8fafc", padding: "16px 24px", borderTop: "1px solid var(--border)" }}>
+              <button type="button" className="secondary" onClick={() => setPreviewItem(null)} style={{ padding: "8px 20px" }}>Đóng</button>
             </div>
           </div>
         </div>
@@ -356,16 +443,8 @@ export function NPCsPageV2() {
                       <input type="text" placeholder="Xin chào bé!" value={defaultDialogue} onChange={(e) => setDefaultDialogue(e.target.value)} />
                     </div>
 
-                    <div className="form-grid">
-                      <div className="field">
-                        <label>Loại truy cập</label>
-                        <select value={accessType} onChange={(e) => setAccessType(e.target.value as AccessType)}>
-                          {ACCESS_TYPES.map((a) => <option key={a} value={a}>{uiLabel(a)}</option>)}
-                        </select>
-                      </div>
-                      <div className="field" style={{ justifyContent: "end" }}>
-                        <ToggleSwitch id="npcIsActive" label="Đang bật" checked={isActive} onChange={setIsActive} />
-                      </div>
+                    <div className="field">
+                      <ToggleSwitch id="npcIsActive" label="Đang bật" checked={isActive} onChange={setIsActive} />
                     </div>
 
                     {/* Advanced section */}
@@ -388,10 +467,6 @@ export function NPCsPageV2() {
                         <MultiSelect label="Chương trình" options={programOptions} selected={npcProgramIds} onChange={setNpcProgramIds} />
                         <MultiSelect label="Lộ trình" options={pathOptions} selected={npcPathIds} onChange={setNpcPathIds} />
 
-                        <div className="field">
-                          <label>Lợi ích khi mở khóa</label>
-                          <input type="text" placeholder="VD: Bé sẽ có bạn đồng hành cho mọi bài nghe hiểu" value={unlockBenefit} onChange={(e) => setUnlockBenefit(e.target.value)} />
-                        </div>
 
                         <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", marginTop: "8px" }}>
                           <label style={{ fontWeight: "600", fontSize: "14px", marginBottom: "8px", display: "block" }}>Mẫu câu thoại</label>
@@ -412,7 +487,7 @@ export function NPCsPageV2() {
                     <div style={{ border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden", marginTop: "12px", background: "white", textAlign: "center", padding: "16px" }}>
                       <div style={{ width: "80px", height: "80px", margin: "0 auto 12px", borderRadius: "40px", background: "#f8fafc", display: "grid", placeItems: "center", overflow: "hidden" }}>
                         {imageUrl ? <img src={imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <span style={{ fontSize: "36px" }}>🐾</span>}
+                          : <span style={{ fontSize: "36px" }}>🐾</span>}
                       </div>
                       <strong style={{ fontSize: "14px" }}>{name || "Tên nhân vật"}</strong>
                       {role && <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{role}</p>}

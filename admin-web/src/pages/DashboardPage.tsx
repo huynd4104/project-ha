@@ -61,7 +61,6 @@ export function DashboardPage() {
       const premiumPaths = paths.filter((p: any) => p.accessType === "PREMIUM").length;
       const premiumLessons = lessons.filter((l: any) => l.accessType === "PREMIUM").length;
       const premiumActivities = activities.filter((a: any) => a.accessType === "PREMIUM").length;
-      const premiumNpcs = npcs.filter((n: any) => n.accessType === "PREMIUM").length;
 
       setExtra({
         totalPrograms: programs.length,
@@ -81,8 +80,7 @@ export function DashboardPage() {
         premiumPrograms,
         premiumPaths,
         premiumLessons,
-        premiumActivities,
-        premiumNpcs
+        premiumActivities
       });
     });
   }, []);
@@ -118,8 +116,7 @@ export function DashboardPage() {
     ["Chương trình Premium", extra.premiumPrograms, "💎"],
     ["Premium Lộ trình", extra.premiumPaths, "💎"],
     ["Premium Bài học", extra.premiumLessons, "💎"],
-    ["Premium Hoạt động", extra.premiumActivities, "💎"],
-    ["Nhân vật Premium", extra.premiumNpcs, "👑"]
+    ["Premium Hoạt động", extra.premiumActivities, "💎"]
   ] : [];
 
   return (
