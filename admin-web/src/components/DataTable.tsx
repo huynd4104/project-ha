@@ -40,18 +40,66 @@ export function DataTable({ rows, columns, onEdit, onDelete }: { rows: any[]; co
   );
 }
 
-function formatCell(value: unknown) {
-  if (Array.isArray(value)) return value.join(", ");
-  if (typeof value === "boolean") return value ? "Có" : "Không";
+const valueLabels: Record<string, string> = {
+  // Roles
+  PARENT: "Phụ huynh",
+  ADMIN: "Quản trị",
+
+  // Progress/Status
+  COMPLETED: "Đã hoàn thành",
+  IN_PROGRESS: "Đang học",
+  NOT_STARTED: "Chưa bắt đầu",
+  DRAFT: "Bản nháp",
+  PUBLISHED: "Đã xuất bản",
+  ARCHIVED: "Đã lưu trữ",
+
+  // Subjects / Type
+  MATH: "Toán",
+  DIALOGUE: "Hội thoại",
+
+  // Support Level
+  LOW: "Cần hỗ trợ ít",
+  MEDIUM: "Cần hỗ trợ vừa",
+  HIGH: "Cần hỗ trợ nhiều",
+
+  // Co-Learning Mode
+  CHILD_WITH_GUIDANCE: "Bé học với hướng dẫn",
+  PARENT_CHILD_TOGETHER: "Phụ huynh và bé cùng học",
+  SPECIALIST_SUPPORT: "Có chuyên gia hỗ trợ thêm",
+
+  // Development Category / Primary Difficulty
+  SPEECH_DELAY: "Chậm nói / khó khăn lời nói",
+  ATTENTION_DIFFICULTY: "Khó tập trung",
+  COGNITIVE_DELAY: "Chậm phát triển nhận thức",
+  SOCIAL_COMMUNICATION: "Giao tiếp xã hội",
+  EMOTION_RECOGNITION: "Nhận biết cảm xúc",
+  DAILY_LIFE_SKILL: "Kỹ năng sinh hoạt",
+  OTHER: "Khác / chưa xác định",
+
+  // Learning Goal
+  LISTENING: "Lắng nghe",
+  SPEAKING: "Nói",
+  OBJECT_RECOGNITION: "Nhận biết đồ vật",
+  DAILY_COMMUNICATION: "Giao tiếp hằng ngày",
+  MATCHING: "Ghép đôi",
+  COUNTING: "Đếm số",
+  FOLLOW_INSTRUCTION: "Làm theo hướng dẫn",
+  PARENT_CHILD_ACTIVITY: "Hoạt động cùng phụ huynh",
+};
+
+function formatSingleValue(value: unknown): string {
   if (value === null || value === undefined) return "";
-  if (value === "PARENT") return "Phụ huynh";
-  if (value === "ADMIN") return "Quản trị";
-  if (value === "COMPLETED") return "Đã hoàn thành";
-  if (value === "IN_PROGRESS") return "Đang học";
-  if (value === "MATH") return "Toán";
-  if (value === "DIALOGUE") return "Hội thoại";
+  if (typeof value === "boolean") return value ? "Có" : "Không";
   if (typeof value === "object") return "";
-  return String(value);
+  const strVal = String(value);
+  return valueLabels[strVal] ?? strVal;
+}
+
+function formatCell(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((v) => formatSingleValue(v)).join(", ");
+  }
+  return formatSingleValue(value);
 }
 
 const columnLabels: Record<string, string> = {
