@@ -83,8 +83,11 @@ export function MathQuestionsPage() {
 
   useEffect(() => {
     const moduleQuestions = items.filter((item) => {
-      const lesson = allLessons.find((l) => l.id === item.lessonId);
-      return lesson && lesson.type === moduleKey;
+      if (item.lessonId) {
+        const lesson = allLessons.find((l) => l.id === item.lessonId);
+        if (lesson) return lesson.type === moduleKey;
+      }
+      return (item as any).category === moduleKey;
     });
 
     if (search.trim()) {
@@ -99,13 +102,7 @@ export function MathQuestionsPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
-  const getLessonTitle = (id: string) => {
-    const lesson = lessons.find((l) => l.id === id);
-    if (!lesson) return "Bài học tương tác";
-    return `${lesson.title} (${getLessonTypeLabel(lesson.type)})`;
-  };
   const table = useTableControls(filtered, [
-    { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
     { value: "question", label: "Câu hỏi", getValue: (item) => item.questionText },
     { value: "correct", label: "Đáp án đúng", getValue: (item) => item.correctOption }
   ], "question");
@@ -148,7 +145,6 @@ export function MathQuestionsPage() {
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!lessonId) errs.lessonId = "Vui lòng chọn một bài học tương tác.";
     if (!questionText.trim()) errs.questionText = "Nội dung câu hỏi không được để trống.";
     if (!optionA.trim()) errs.optionA = "Đáp án A không được để trống.";
     if (!optionB.trim()) errs.optionB = "Đáp án B không được để trống.";
@@ -164,7 +160,8 @@ export function MathQuestionsPage() {
     if (!validate()) return;
 
     const payload = {
-      lessonId,
+      lessonId: null,
+      category: moduleKey,
       questionText: questionText.trim(),
       imageUrl: imageUrl.trim() || null,
       optionA: optionA.trim(),
@@ -188,7 +185,7 @@ export function MathQuestionsPage() {
     }
   };
 
-  const importConfig = mathQuestionsImportConfig(lessons);
+  const importConfig = mathQuestionsImportConfig(lessons, moduleKey);
   const libraryTitle = moduleKey === "MATH" ? "Thư viện câu hỏi toán" : `Thư viện ${moduleConfig.title.toLowerCase()}`;
 
   const handleImport = async (rows: any[]) => {
@@ -208,15 +205,9 @@ export function MathQuestionsPage() {
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
-          <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Câu Hỏi</button>
+          <button onClick={openAddModal}>➕ Thêm Câu Hỏi</button>
         </div>
       </div>
-
-      {lessons.length === 0 && (
-        <div className="panel" style={{ background: "#fffbeb", border: "1px solid #fef3c7", color: "#b45309" }}>
-          ⚠️ <strong>Lưu ý:</strong> Cần tạo ít nhất một bài học thuộc nhóm <strong>{moduleConfig.prefix.toUpperCase()}</strong> trước khi thêm câu hỏi.
-        </div>
-      )}
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input
@@ -241,7 +232,6 @@ export function MathQuestionsPage() {
           <table>
             <thead>
               <tr>
-                <th>Bài học</th>
                 <th>Câu hỏi</th>
                 <th>Đáp án đúng</th>
                 <th>Giải thích</th>
@@ -251,7 +241,6 @@ export function MathQuestionsPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
                   <td style={{ fontSize: "13px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       {item.imageUrl && <img src={item.imageUrl} alt="" style={{ width: "28px", height: "28px", objectFit: "cover", borderRadius: "4px", background: "#f1f5f9" }} />}
@@ -290,18 +279,7 @@ export function MathQuestionsPage() {
               <div className="modal-body">
                 <div className="drawer-container">
                   <div className="drawer-main" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div className="field">
-                      <label>Bài học tương tác *</label>
-                      <select value={lessonId} onChange={(e) => setLessonId(e.target.value)}>
-                        <option value="">-- Chọn bài học --</option>
-                        {lessons.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.title}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.lessonId && <span className="error-msg">{errors.lessonId}</span>}
-                    </div>
+                    {/* Removed lesson selection field */}
 
                     <div className="field">
                       <label>Nội dung câu hỏi *</label>

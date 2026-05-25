@@ -60,12 +60,12 @@ public class ActivationService {
         UUID codeId = UUID.fromString(String.valueOf(match.get("id")));
         jdbc.update("""
             INSERT INTO activation_redemptions(code_id, code_collection, user_id, child_id, target_type, target_id, source)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (CAST(? AS uuid), ?, CAST(? AS uuid), CAST(? AS uuid), ?, CAST(? AS uuid), ?)
             ON CONFLICT DO NOTHING
             """, codeId, table, userId, childId, targetType, npcId, source);
         jdbc.update("""
             INSERT INTO user_unlocked_npcs(user_id, child_id, npc_id, qr_code_id, activation_code_id)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (CAST(? AS uuid), CAST(? AS uuid), CAST(? AS uuid), CAST(? AS uuid), CAST(? AS uuid))
             ON CONFLICT DO NOTHING
             """, userId, childId, npcId, "qr_codes".equals(table) ? codeId : null, "activation_codes".equals(table) ? codeId : null);
         jdbc.update("UPDATE " + table + " SET used_count = used_count + 1 WHERE id = ?", codeId);

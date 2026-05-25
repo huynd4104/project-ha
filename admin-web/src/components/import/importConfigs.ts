@@ -205,9 +205,9 @@ export function lessonsImportConfig(npcs: NamedRecord[], existingLessons: NamedR
   };
 }
 
-export function mathQuestionsImportConfig(lessons: NamedRecord[]): ImportConfig {
+export function mathQuestionsImportConfig(lessons: NamedRecord[], defaultCategory: string): ImportConfig {
   const { map: lessonMap, warnings } = makeNameMap(lessons, "title", "Lesson");
-  return questionConfig("Import CSV Câu hỏi học tập", "math-questions-template.csv", QUIZ_LESSON_TYPES, lessonMap, warnings);
+  return questionConfig("Import CSV Câu hỏi học tập", "math-questions-template.csv", QUIZ_LESSON_TYPES, lessonMap, warnings, defaultCategory);
 }
 
 export function dialoguesImportConfig(lessons: NamedRecord[]): ImportConfig {
@@ -216,13 +216,12 @@ export function dialoguesImportConfig(lessons: NamedRecord[]): ImportConfig {
     title: "Import CSV Dialogues",
     templateFilename: "dialogues-template.csv",
     templateHeaders: ["lessonTitle", "title", "sceneText", "audioUrl", "questionText", "optionA", "optionB", "optionC", "optionD", "correctOption"],
-    templateExampleRows: [{ lessonTitle: "Chào hỏi", title: "Gặp bạn mới", sceneText: "Mimi gặp một người bạn mới.", audioUrl: "", questionText: "Mimi nên nói gì?", optionA: "Xin chào", optionB: "Tạm biệt", optionC: "Không nói gì", optionD: "Khóc", correctOption: "A" }],
+    templateExampleRows: [{ lessonTitle: "", title: "Gặp bạn mới", sceneText: "Mimi gặp một người bạn mới.", audioUrl: "", questionText: "Mimi nên nói gì?", optionA: "Xin chào", optionB: "Tạm biệt", optionC: "Không nói gì", optionD: "Khóc", correctOption: "A" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
       const lessonTitle = normalizeString(row.lessonTitle);
-      const lesson = lessonMap.get(lessonTitle.toLowerCase());
-      if (!lessonTitle) errors.push("lessonTitle bắt buộc.");
+      const lesson = lessonTitle ? lessonMap.get(lessonTitle.toLowerCase()) : null;
       if (lessonTitle && !lesson) errors.push(`Không tìm thấy lesson: ${lessonTitle}`);
       if (lesson && lesson.type !== "DIALOGUE") errors.push("Lesson sai type, cần DIALOGUE.");
       if (!validateRequired(row.title)) errors.push("title bắt buộc.");
@@ -230,7 +229,7 @@ export function dialoguesImportConfig(lessons: NamedRecord[]): ImportConfig {
       if (row.audioUrl && !validateUrl(row.audioUrl)) errors.push("audioUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
       addQuestionErrors(row, errors);
       return ok({
-        lessonId: lesson?.id ?? "",
+        lessonId: lesson?.id ?? null,
         title: normalizeString(row.title),
         sceneText: normalizeString(row.sceneText),
         audioUrl: normalizeOptionalString(row.audioUrl),
@@ -246,20 +245,19 @@ export function flashcardsImportConfig(lessons: NamedRecord[]): ImportConfig {
     title: "Import CSV Flashcards",
     templateFilename: "flashcards-template.csv",
     templateHeaders: ["lessonTitle", "frontText", "backText", "imageUrl", "audioUrl"],
-    templateExampleRows: [{ lessonTitle: "Từ vựng trái cây", frontText: "Apple", backText: "Quả táo", imageUrl: "", audioUrl: "" }],
+    templateExampleRows: [{ lessonTitle: "", frontText: "Apple", backText: "Quả táo", imageUrl: "", audioUrl: "" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
       const lessonTitle = normalizeString(row.lessonTitle);
-      const lesson = lessonMap.get(lessonTitle.toLowerCase());
-      if (!lessonTitle) errors.push("lessonTitle bắt buộc.");
+      const lesson = lessonTitle ? lessonMap.get(lessonTitle.toLowerCase()) : null;
       if (lessonTitle && !lesson) errors.push(`Không tìm thấy lesson: ${lessonTitle}`);
       if (!validateRequired(row.frontText)) errors.push("frontText bắt buộc.");
       if (!validateRequired(row.backText)) errors.push("backText bắt buộc.");
-      if (row.imageUrl && !validateUrl(row.imageUrl)) errors.push("imageUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
-      if (row.audioUrl && !validateUrl(row.audioUrl)) errors.push("audioUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
+      if (row.imageUrl && !validateUrl(row.imageUrl)) errors.push("imageUrl phải là URL http(s) || đường dẫn bắt đầu bằng /.");
+      if (row.audioUrl && !validateUrl(row.audioUrl)) errors.push("audioUrl phải là URL http(s) || đường dẫn bắt đầu bằng /.");
       return ok({
-        lessonId: lesson?.id ?? "",
+        lessonId: lesson?.id ?? null,
         frontText: normalizeString(row.frontText),
         backText: normalizeString(row.backText),
         imageUrl: normalizeOptionalString(row.imageUrl),
@@ -327,24 +325,24 @@ export function dailyMissionsImportConfig(existingMissions: NamedRecord[]): Impo
   };
 }
 
-function questionConfig(title: string, filename: string, expectedTypes: readonly string[], lessonMap: Map<string, NamedRecord>, warnings: string[]): ImportConfig {
+function questionConfig(title: string, filename: string, expectedTypes: readonly string[], lessonMap: Map<string, NamedRecord>, warnings: string[], defaultCategory: string): ImportConfig {
   return {
     title,
     templateFilename: filename,
-    templateHeaders: ["lessonTitle", "questionText", "imageUrl", "optionA", "optionB", "optionC", "optionD", "correctOption", "explanation"],
-    templateExampleRows: [{ lessonTitle: "Bài toán đầu tiên", questionText: "1 + 1 bằng mấy?", imageUrl: "", optionA: "1", optionB: "2", optionC: "3", optionD: "4", correctOption: "B", explanation: "1 + 1 = 2" }],
+    templateHeaders: ["lessonTitle", "category", "questionText", "imageUrl", "optionA", "optionB", "optionC", "optionD", "correctOption", "explanation"],
+    templateExampleRows: [{ lessonTitle: "", category: defaultCategory, questionText: "1 + 1 bằng mấy?", imageUrl: "", optionA: "1", optionB: "2", optionC: "3", optionD: "4", correctOption: "B", explanation: "1 + 1 = 2" }],
     warnings,
     validateRow(row) {
       const errors: string[] = [];
       const lessonTitle = normalizeString(row.lessonTitle);
-      const lesson = lessonMap.get(lessonTitle.toLowerCase());
-      if (!lessonTitle) errors.push("lessonTitle bắt buộc.");
+      const lesson = lessonTitle ? lessonMap.get(lessonTitle.toLowerCase()) : null;
       if (lessonTitle && !lesson) errors.push(`Không tìm thấy lesson: ${lessonTitle}`);
       if (lesson && (!lesson.type || !expectedTypes.includes(lesson.type))) errors.push(`Lesson sai type, cần một trong: ${expectedTypes.join(", ")}.`);
       if (row.imageUrl && !validateUrl(row.imageUrl)) errors.push("imageUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
       addQuestionErrors(row, errors);
       return ok({
-        lessonId: lesson?.id ?? "",
+        lessonId: lesson?.id ?? null,
+        category: normalizeString(row.category) || defaultCategory,
         imageUrl: normalizeOptionalString(row.imageUrl),
         ...normalizedQuestion(row),
         explanation: normalizeOptionalString(row.explanation)

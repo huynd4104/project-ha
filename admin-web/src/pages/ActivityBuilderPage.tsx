@@ -190,7 +190,13 @@ export function ActivityBuilderPage() {
 
       const lessonById = new Map(all.map((lesson) => [lesson.id, lesson]));
       const questionsByLessonType = (type: Lesson["type"]) =>
-        questions.filter((item) => lessonById.get(item.lessonId || "")?.type === type);
+        questions.filter((item) => {
+          if (item.lessonId) {
+            const lesson = lessonById.get(item.lessonId);
+            if (lesson) return lesson.type === type;
+          }
+          return (item as any).category === type;
+        });
       const nextLibraryItems: ContentLibraryItems = {
         flashcards,
         dialogues,

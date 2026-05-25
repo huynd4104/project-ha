@@ -91,11 +91,7 @@ export function DialoguesPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
-  const getLessonTitle = (id: string) => {
-    return lessons.find((l) => l.id === id)?.title || "Bài học hội thoại";
-  };
   const table = useTableControls(filtered, [
-    { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
     { value: "title", label: "Tiêu đề", getValue: (item) => item.title },
     { value: "question", label: "Câu hỏi", getValue: (item) => item.questionText },
     { value: "correct", label: "Đáp án đúng", getValue: (item) => item.correctOption }
@@ -141,7 +137,6 @@ export function DialoguesPage() {
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!lessonId) errs.lessonId = "Vui lòng chọn bài học hội thoại.";
     if (!title.trim()) errs.title = "Tiêu đề hội thoại không được để trống.";
     if (!sceneText.trim()) errs.sceneText = "Bối cảnh hội thoại không được để trống.";
     if (!questionText.trim()) errs.questionText = "Nội dung câu hỏi không được để trống.";
@@ -158,7 +153,7 @@ export function DialoguesPage() {
     if (!validate()) return;
 
     const payload = {
-      lessonId,
+      lessonId: null,
       title: title.trim(),
       sceneText: sceneText.trim(),
       audioUrl: audioUrl.trim() || null,
@@ -200,15 +195,9 @@ export function DialoguesPage() {
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
-          <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Hội Thoại</button>
+          <button onClick={openAddModal}>➕ Thêm Hội Thoại</button>
         </div>
       </div>
-
-      {lessons.length === 0 && (
-        <div className="panel" style={{ background: "#fffbeb", border: "1px solid #fef3c7", color: "#b45309" }}>
-          ⚠️ <strong>Lưu ý:</strong> Cần tạo ít nhất một bài học có loại là <strong>DIALOGUE</strong> trước khi thêm chi tiết hội thoại.
-        </div>
-      )}
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input
@@ -233,7 +222,6 @@ export function DialoguesPage() {
           <table>
             <thead>
               <tr>
-                <th>Bài học</th>
                 <th>Tiêu đề hội thoại</th>
                 <th>Bối cảnh</th>
                 <th>Âm thanh</th>
@@ -244,7 +232,6 @@ export function DialoguesPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
                   <td style={{ fontWeight: "600" }}>{item.title}</td>
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.sceneText}</td>
                   <td>
@@ -288,18 +275,7 @@ export function DialoguesPage() {
               <div className="modal-body">
                 <div className="drawer-container">
                   <div className="drawer-main" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div className="field">
-                      <label>Bài học hội thoại *</label>
-                      <select value={lessonId} onChange={(e) => setLessonId(e.target.value)}>
-                        <option value="">-- Chọn bài học --</option>
-                        {lessons.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.title}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.lessonId && <span className="error-msg">{errors.lessonId}</span>}
-                    </div>
+                    {/* Removed lesson selection field */}
 
                     <div className="field">
                       <label>Tiêu đề hội thoại (Bối cảnh chính) *</label>

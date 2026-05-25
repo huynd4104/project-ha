@@ -20,6 +20,22 @@ interface Badge {
   isActive: boolean;
 }
 
+const BADGE_TYPE_LABELS: Record<string, string> = {
+  LESSON: "Bài học",
+  STREAK: "streak",
+  XP: "XP",
+  NPC: "Nhân vật đồng hành",
+  MISSION: "Nhiệm vụ"
+};
+
+const CONDITION_TYPE_LABELS: Record<string, string> = {
+  COMPLETE_LESSONS: "Hoàn thành bài học",
+  STREAK_DAYS: "Số ngày streak",
+  TOTAL_XP: "Tổng số điểm XP",
+  UNLOCK_NPCS: "Mở khóa nhân vật đồng hành",
+  COMPLETE_DAILY_MISSIONS: "Hoàn thành nhiệm vụ ngày"
+};
+
 export function BadgesPage() {
   const [items, setItems] = useState<Badge[]>([]);
   const [filtered, setFiltered] = useState<Badge[]>([]);
@@ -215,8 +231,8 @@ export function BadgesPage() {
                   </td>
                   <td style={{ fontWeight: "600" }}>{item.name}</td>
                   <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description}</td>
-                  <td><span className="badge info">{item.type}</span></td>
-                  <td style={{ fontSize: "12px", fontFamily: "monospace" }}>{item.conditionType}</td>
+                  <td><span className="badge info">{BADGE_TYPE_LABELS[item.type] || item.type}</span></td>
+                  <td>{CONDITION_TYPE_LABELS[item.conditionType] || item.conditionType}</td>
                   <td style={{ fontWeight: "bold" }}>{item.conditionValue}</td>
                   <td>
                     <span className={`badge ${item.isActive ? "active" : "inactive"}`}>
@@ -287,22 +303,22 @@ export function BadgesPage() {
                     <div className="field">
                       <label>Phân loại huy hiệu</label>
                       <select value={type} onChange={(e) => setType(e.target.value as any)}>
-                        <option value="LESSON">LESSON (Bài học)</option>
-                        <option value="STREAK">STREAK (Liên tiếp)</option>
-                        <option value="XP">XP (Kinh nghiệm)</option>
+                        <option value="LESSON">Bài học</option>
+                        <option value="STREAK">streak</option>
+                        <option value="XP">XP</option>
                         <option value="NPC">Nhân vật đồng hành</option>
-                        <option value="MISSION">MISSION (Nhiệm vụ)</option>
+                        <option value="MISSION">Nhiệm vụ</option>
                       </select>
                     </div>
 
                     <div className="field">
                       <label>Kiểu điều kiện kích hoạt</label>
                       <select value={conditionType} onChange={(e) => setConditionType(e.target.value as any)}>
-                        <option value="COMPLETE_LESSONS">COMPLETE_LESSONS (Số lượng bài hoàn thành)</option>
-                        <option value="STREAK_DAYS">STREAK_DAYS (Số ngày streak liên tục)</option>
-                        <option value="TOTAL_XP">TOTAL_XP (Tổng số điểm XP đạt được)</option>
-                        <option value="UNLOCK_NPCS">Số nhân vật được mở khóa</option>
-                        <option value="COMPLETE_DAILY_MISSIONS">COMPLETE_DAILY_MISSIONS (Số nhiệm vụ ngày xong)</option>
+                        <option value="COMPLETE_LESSONS">Hoàn thành bài học</option>
+                        <option value="STREAK_DAYS">Số ngày streak</option>
+                        <option value="TOTAL_XP">Tổng số điểm XP</option>
+                        <option value="UNLOCK_NPCS">Mở khóa nhân vật đồng hành</option>
+                        <option value="COMPLETE_DAILY_MISSIONS">Hoàn thành nhiệm vụ ngày</option>
                       </select>
                     </div>
 

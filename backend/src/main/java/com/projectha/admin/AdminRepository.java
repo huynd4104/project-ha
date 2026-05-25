@@ -153,7 +153,15 @@ public class AdminRepository {
             if (value instanceof Map<?, ?> || value instanceof List<?>) {
                 values.put(column, new Param(Db.json(value), true));
             } else {
-                values.put(column, new Param(value, false));
+                Object finalValue = value;
+                if (value instanceof String str && str.length() == 36) {
+                    try {
+                        finalValue = java.util.UUID.fromString(str);
+                    } catch (IllegalArgumentException e) {
+                        // Not a valid UUID
+                    }
+                }
+                values.put(column, new Param(finalValue, false));
             }
         });
         return values;

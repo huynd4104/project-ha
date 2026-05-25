@@ -50,6 +50,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<Map<String, Object>> fallback(Exception ex, HttpServletRequest request) {
+        ex.printStackTrace();
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "Server error: " + ex.getMessage(), request);
     }
 

@@ -8,8 +8,8 @@ import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
   const { refreshUserProfile } = useAuth();
-  const [email, setEmail] = useState("admin@demo.com");
-  const [password, setPassword] = useState("123456");
+  const [email, setEmail] = useState("admin@projectha.local");
+  const [password, setPassword] = useState("Admin@123456");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   

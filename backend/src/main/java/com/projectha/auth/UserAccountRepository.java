@@ -45,30 +45,30 @@ public class UserAccountRepository {
     public void assignRole(UUID userId, String role) {
         jdbc.update("""
             INSERT INTO user_roles(user_id, role_id)
-            SELECT ?, id FROM roles WHERE name = ?
+            SELECT CAST(? AS uuid), id FROM roles WHERE name = ?
             ON CONFLICT DO NOTHING
-            """, userId, role);
+            """, userId.toString(), role);
     }
 
     public void updatePassword(UUID userId, String passwordHash) {
-        jdbc.update("UPDATE users SET password_hash = ?, updated_at = now() WHERE id = ?", passwordHash, userId);
+        jdbc.update("UPDATE users SET password_hash = ?, updated_at = now() WHERE id = CAST(? AS uuid)", passwordHash, userId.toString());
     }
 
     public Map<String, Object> updateFullName(UUID userId, String fullName) {
         return Db.row(jdbc.queryForMap(
-            "UPDATE users SET full_name = ?, updated_at = now() WHERE id = ? RETURNING *",
-            fullName.trim(), userId
+            "UPDATE users SET full_name = ?, updated_at = now() WHERE id = CAST(? AS uuid) RETURNING *",
+            fullName.trim(), userId.toString()
         ));
     }
 
     public void markEmailVerified(UUID userId) {
-        jdbc.update("UPDATE users SET email_verified = true, updated_at = now() WHERE id = ?", userId);
+        jdbc.update("UPDATE users SET email_verified = true, updated_at = now() WHERE id = CAST(? AS uuid)", userId.toString());
     }
 
     public void storeRefreshToken(UUID userId, String tokenHash, Instant expiresAt) {
         jdbc.update(
             "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES (?, ?, ?)",
-            userId, tokenHash, expiresAt
+            userId, tokenHash, java.sql.Timestamp.from(expiresAt)
         );
     }
 
@@ -90,7 +90,7 @@ public class UserAccountRepository {
         jdbc.update("UPDATE email_verification_tokens SET used_at = now() WHERE user_id = ? AND used_at IS NULL", userId);
         jdbc.update(
             "INSERT INTO email_verification_tokens(user_id, code, expires_at) VALUES (?, ?, ?)",
-            userId, code, expiresAt
+            userId, code, java.sql.Timestamp.from(expiresAt)
         );
     }
 
@@ -107,7 +107,7 @@ public class UserAccountRepository {
         jdbc.update("UPDATE password_reset_tokens SET used_at = now() WHERE user_id = ? AND used_at IS NULL", userId);
         jdbc.update(
             "INSERT INTO password_reset_tokens(user_id, code, expires_at) VALUES (?, ?, ?)",
-            userId, code, expiresAt
+            userId, code, java.sql.Timestamp.from(expiresAt)
         );
     }
 

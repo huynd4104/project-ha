@@ -78,11 +78,7 @@ export function FlashcardsPage() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
-  const getLessonTitle = (id: string) => {
-    return lessons.find((l) => l.id === id)?.title || "Bài học liên kết";
-  };
   const table = useTableControls(filtered, [
-    { value: "lesson", label: "Bài học", getValue: (item) => getLessonTitle(item.lessonId) },
     { value: "front", label: "Mặt trước", getValue: (item) => item.frontText },
     { value: "back", label: "Mặt sau", getValue: (item) => item.backText }
   ], "front");
@@ -119,7 +115,6 @@ export function FlashcardsPage() {
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!lessonId) errs.lessonId = "Vui lòng chọn bài học liên kết.";
     if (!frontText.trim()) errs.frontText = "Mặt trước thẻ học không được để trống.";
     if (!backText.trim()) errs.backText = "Mặt sau thẻ học không được để trống.";
     setErrors(errs);
@@ -131,7 +126,7 @@ export function FlashcardsPage() {
     if (!validate()) return;
 
     const payload = {
-      lessonId,
+      lessonId: null,
       frontText: frontText.trim(),
       backText: backText.trim(),
       imageUrl: imageUrl.trim() || null,
@@ -168,15 +163,9 @@ export function FlashcardsPage() {
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="secondary" onClick={() => setIsImportOpen(true)}>Import</button>
-          <button onClick={openAddModal} disabled={lessons.length === 0}>➕ Thêm Thẻ Học</button>
+          <button onClick={openAddModal}>➕ Thêm Thẻ Học</button>
         </div>
       </div>
-
-      {lessons.length === 0 && (
-        <div className="panel" style={{ background: "#fffbeb", border: "1px solid #fef3c7", color: "#b45309" }}>
-          ⚠️ <strong>Lưu ý:</strong> Cần tạo ít nhất một bài học trước khi thêm thẻ học.
-        </div>
-      )}
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
         <input
@@ -201,7 +190,6 @@ export function FlashcardsPage() {
           <table>
             <thead>
               <tr>
-                <th>Bài học</th>
                 <th>Mặt trước</th>
                 <th>Mặt sau</th>
                 <th>Minh họa</th>
@@ -212,7 +200,6 @@ export function FlashcardsPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "600", fontSize: "13px" }}>{getLessonTitle(item.lessonId)}</td>
                   <td style={{ fontWeight: "700", fontSize: "15px" }}>{item.frontText}</td>
                   <td style={{ fontSize: "15px" }}>{item.backText}</td>
                   <td>
@@ -255,18 +242,7 @@ export function FlashcardsPage() {
               <div className="modal-body">
                 <div className="drawer-container">
                   <div className="drawer-main" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div className="field">
-                      <label>Bài học liên kết *</label>
-                      <select value={lessonId} onChange={(e) => setLessonId(e.target.value)}>
-                        <option value="">-- Chọn bài học --</option>
-                        {lessons.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.title}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.lessonId && <span className="error-msg">{errors.lessonId}</span>}
-                    </div>
+                    {/* Removed lesson selection field */}
 
                     <div className="field">
                       <label>Mặt trước thẻ (Ví dụ: Từ Tiếng Anh / Câu hỏi) *</label>
