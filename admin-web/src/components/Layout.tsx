@@ -1,29 +1,16 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { resources } from "../api/adminApi";
-import { useAuth } from "../context/AuthContext";
+import { Outlet } from "react-router-dom";
+import { Navbar } from "./Navbar";
+import { Sidebar } from "./Sidebar";
 
 export function Layout() {
-  const { user, logout } = useAuth();
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">Project HA</div>
-        <nav>
-          <NavLink to="/" end>Dashboard</NavLink>
-          {resources.map((item) => (
-            <NavLink key={item.key} to={`/admin/${item.key}`}>{item.label}</NavLink>
-          ))}
-        </nav>
-      </aside>
+      <Sidebar />
       <main className="main">
-        <header className="topbar">
-          <div>
-            <strong>{String(user?.fullName ?? "Admin")}</strong>
-            <span>{String(user?.role ?? "")}</span>
-          </div>
-          <button onClick={logout}>Logout</button>
-        </header>
-        <Outlet />
+        <Navbar />
+        <section className="content">
+          <Outlet />
+        </section>
       </main>
     </div>
   );
