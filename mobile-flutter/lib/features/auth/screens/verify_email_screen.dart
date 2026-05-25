@@ -364,25 +364,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       : 'Gửi lại mã xác thực',
                 ),
               ),
-              if (kDebugMode)
-                Container(
-                  margin: const EdgeInsets.only(top: 32),
-                  padding: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    border: Border.all(color: Colors.amber.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    '[DEBUG] Mã OTP được gửi qua SMTP backend; mobile không đọc trực tiếp dữ liệu xác thực.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFB45309),
-                    ),
-                  ),
-                ),
+
             ],
           ),
         ),

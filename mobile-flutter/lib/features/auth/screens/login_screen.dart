@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/api_error_mapper.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/auth_shared_widgets.dart';
 import '../../../core/widgets/password_field.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -39,30 +41,46 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đăng nhập'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-      ),
+      backgroundColor: const Color(0xFFF7FAF5),
       body: SafeArea(
         child: Form(
           key: formKey,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
             children: [
-              const Text(
-                'Chào mừng quay lại',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+              const SizedBox(height: 32),
+
+              // ── Back button row ───────────────────────────
+              Align(
+                alignment: Alignment.centerLeft,
+                child: AuthBackChip(onTap: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.of(context).pop();
+                  } else {
+                    context.go('/');
+                  }
+                }),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 28),
+
+              // ── Header ────────────────────────────────────
+              const Text(
+                'Chào mừng\nquay lại! 👋',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.text,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Đăng nhập để tiếp tục hành trình học của bé.',
+                style: TextStyle(fontSize: 14, color: AppColors.muted, height: 1.5),
+              ),
+              const SizedBox(height: 32),
+
+              // ── Fields ────────────────────────────────────
               AppTextField(
                 controller: email,
                 label: 'Email',
@@ -70,38 +88,49 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 validator: Validators.email,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               PasswordField(
                 controller: password,
                 label: 'Mật khẩu',
                 validator: Validators.password,
               ),
+              const SizedBox(height: 12),
+
+              // ── Forgot password ──────────────────────────
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => context.go('/forgot'),
-                  child: const Text('Quên mật khẩu?'),
+                child: AuthTextLink(
+                  label: 'Quên mật khẩu?',
+                  onTap: () => context.go('/forgot'),
                 ),
               ),
-              if (error != null)
-                Text(
-                  error!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              const SizedBox(height: 12),
+
+              // ── Error ────────────────────────────────────
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                AuthBanner(message: error!),
+              ],
+
+              const SizedBox(height: 20),
+
+              // ── Submit ────────────────────────────────────
               AppButton(
                 label: 'Đăng nhập',
                 icon: Icons.login_rounded,
                 loading: loading,
                 onPressed: submit,
               ),
-              TextButton(
-                onPressed: () => context.go('/register'),
-                child: const Text('Chưa có tài khoản? Đăng ký'),
+              const SizedBox(height: 20),
+
+              // ── Switch to register ─────────────────────────
+              Center(
+                child: AuthTextLink(
+                  label: 'Chưa có tài khoản? ',
+                  highlight: 'Đăng ký',
+                  onTap: () => context.go('/register'),
+                ),
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),

@@ -109,7 +109,7 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
     String feedbackMsg = '';
     String npcMsg = '';
 
-    if (result == 'correct') {
+    if (result == 'correct' || result == 'done') {
       _feedbackType = FeedbackType.correct;
       feedbackMsg = activity.feedback.correct.isNotEmpty 
           ? activity.feedback.correct 

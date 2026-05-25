@@ -710,67 +710,110 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
           child: Center(
             child: GestureDetector(
               onTap: _flipCard,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 260,
-                height: 360,
-                decoration: BoxDecoration(
-                  color: _showBack ? const Color(0xFFF0FDF4) : Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: _showBack ? const Color(0xFF86EFAC) : AppColors.sky.withOpacity(0.5),
-                    width: 3,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    )
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (!_showBack) ...[
-                        if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty) ...[
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: AppImage(imageUrl: activity.imageUrl!, fit: BoxFit.contain),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: _showBack ? pi : 0.0),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+                builder: (context, val, child) {
+                  final isFront = val < pi / 2;
+                  
+                  return Transform(
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001) // perspective
+                      ..rotateY(val),
+                    alignment: Alignment.center,
+                    child: isFront
+                        ? Container(
+                            width: 260,
+                            height: 360,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: AppColors.sky.withOpacity(0.5),
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                )
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty) ...[
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: AppImage(imageUrl: activity.imageUrl!, fit: BoxFit.contain),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                  Text(
+                                    frontText,
+                                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.text),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Icon(Icons.touch_app_rounded, color: Colors.grey[400], size: 24),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()..rotateY(pi),
+                            child: Container(
+                              width: 260,
+                              height: 360,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: const Color(0xFF86EFAC),
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 8),
+                                  )
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      backText,
+                                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (activity.parentInstruction.isNotEmpty) ...[
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        activity.parentInstruction,
+                                        style: TextStyle(fontSize: 13, color: Colors.grey[600], fontStyle: FontStyle.italic),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                        ],
-                        Text(
-                          frontText,
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.text),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Icon(Icons.touch_app_rounded, color: Colors.grey[400], size: 24),
-                      ] else ...[
-                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
-                        const SizedBox(height: 20),
-                        Text(
-                          backText,
-                          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
-                          textAlign: TextAlign.center,
-                        ),
-                        if (activity.parentInstruction.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            activity.parentInstruction,
-                            style: TextStyle(fontSize: 13, color: Colors.grey[600], fontStyle: FontStyle.italic),
-                            textAlign: TextAlign.center,
-                          ),
-                        ]
-                      ],
-                    ],
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ),
