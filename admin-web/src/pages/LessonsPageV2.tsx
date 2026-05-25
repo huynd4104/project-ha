@@ -312,7 +312,7 @@ export function LessonsPageV2() {
 
                     <div className="form-grid">
                       <div className="field">
-                        <label>Nhân vật đồng hành</label>
+                        <label>Mascot</label>
                         <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
                           <option value="">-- Không --</option>
                           {npcs.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}

@@ -24,7 +24,7 @@ const BADGE_TYPE_LABELS: Record<string, string> = {
   LESSON: "Bài học",
   STREAK: "streak",
   XP: "XP",
-  NPC: "Nhân vật đồng hành",
+  NPC: "Mascot",
   MISSION: "Nhiệm vụ"
 };
 
@@ -32,7 +32,7 @@ const CONDITION_TYPE_LABELS: Record<string, string> = {
   COMPLETE_LESSONS: "Hoàn thành bài học",
   STREAK_DAYS: "Số ngày streak",
   TOTAL_XP: "Tổng số điểm XP",
-  UNLOCK_NPCS: "Mở khóa nhân vật đồng hành",
+  UNLOCK_NPCS: "Mở khóa Mascot",
   COMPLETE_DAILY_MISSIONS: "Hoàn thành nhiệm vụ ngày"
 };
 
@@ -306,7 +306,7 @@ export function BadgesPage() {
                         <option value="LESSON">Bài học</option>
                         <option value="STREAK">streak</option>
                         <option value="XP">XP</option>
-                        <option value="NPC">Nhân vật đồng hành</option>
+                        <option value="NPC">Mascot</option>
                         <option value="MISSION">Nhiệm vụ</option>
                       </select>
                     </div>
@@ -317,7 +317,7 @@ export function BadgesPage() {
                         <option value="COMPLETE_LESSONS">Hoàn thành bài học</option>
                         <option value="STREAK_DAYS">Số ngày streak</option>
                         <option value="TOTAL_XP">Tổng số điểm XP</option>
-                        <option value="UNLOCK_NPCS">Mở khóa nhân vật đồng hành</option>
+                        <option value="UNLOCK_NPCS">Mở khóa Mascot</option>
                         <option value="COMPLETE_DAILY_MISSIONS">Hoàn thành nhiệm vụ ngày</option>
                       </select>
                     </div>

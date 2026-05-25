@@ -226,7 +226,7 @@ export function ActivationCodesPage() {
       </div>
 
       <div className="panel" style={{ background: "#fffbeb", border: "1px solid #fef3c7", color: "#92400e", padding: "14px 16px", marginBottom: "16px" }}>
-        <strong>Lưu ý:</strong> Hiện tại app chỉ mở khóa thật Nhân vật đồng hành. Bài học/Lộ trình/Đồ chơi đang ở trạng thái chuẩn bị.
+        <strong>Lưu ý:</strong> Hiện tại app chỉ mở khóa thật Mascot. Bài học/Lộ trình/Đồ chơi đang ở trạng thái chuẩn bị.
       </div>
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
@@ -238,7 +238,7 @@ export function ActivationCodesPage() {
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🎫</div>
           <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có mã QR mở khóa nào</h3>
           <p style={{ color: "var(--text-muted)", margin: "0 0 16px 0", fontSize: "14px" }}>
-            Mã QR giúp mở khóa nhân vật đồng hành hoặc nội dung khi trẻ quét mã.
+            Mã QR giúp mở khóa mascot hoặc nội dung khi trẻ quét mã.
           </p>
           <button onClick={openAddModal}>➕ Tạo mã QR mới</button>
         </div>

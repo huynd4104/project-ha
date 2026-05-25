@@ -110,7 +110,7 @@ export function mediaAssetsImportConfig(): ImportConfig {
 export function npcsImportConfig(existingNpcs: NamedRecord[]): ImportConfig {
   const existingNames = duplicateSet(existingNpcs, "name");
   return {
-    title: "Import CSV nhân vật đồng hành",
+    title: "Import CSV Mascot",
     templateFilename: "npcs-template.csv",
     templateHeaders: ["name", "description", "imageUrl", "animationUrl", "defaultDialogue", "isActive"],
     templateExampleRows: [

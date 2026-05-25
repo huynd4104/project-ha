@@ -40,7 +40,7 @@ export const UNLOCK_RULE_LABELS: Record<string, string> = {
 };
 
 export const ACTIVATION_TYPE_LABELS: Record<string, string> = {
-  NPC: "Nhân vật đồng hành",
+  NPC: "Mascot",
   LESSON: "Bài học",
   PATH: "Lộ trình",
   REWARD: "Phần thưởng",

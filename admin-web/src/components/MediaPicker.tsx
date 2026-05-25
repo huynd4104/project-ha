@@ -102,7 +102,7 @@ export function MediaPicker({ category, type, currentValue = "", onSelect, onClo
                 style={{ width: "auto" }}
               >
                 <option value="GENERAL">Tất cả danh mục</option>
-                <option value="NPC">Nhân vật đồng hành</option>
+                <option value="NPC">Mascot</option>
                 <option value="FLASHCARD">Thẻ học</option>
                 <option value="DIALOGUE">Hội thoại</option>
               </select>

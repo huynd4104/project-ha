@@ -6,7 +6,7 @@ import { AnyRecord } from "../api/client";
 const resources = [
   { key: "users", label: "Người dùng" },
   { key: "children", label: "Trẻ em" },
-  { key: "npcs", label: "Nhân vật đồng hành" },
+  { key: "npcs", label: "Mascot" },
   { key: "qr-codes", label: "Mã QR" },
   { key: "development-categories", label: "Nhóm trẻ" },
   { key: "learning-goals", label: "Mục tiêu học tập" },

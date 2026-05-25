@@ -54,7 +54,7 @@ const groups: NavGroup[] = [
   {
     title: "Nhân vật & mã mở khóa", icon: "character",
     items: [
-      { to: "/npcs-v2", label: "Nhân vật đồng hành", icon: "character" },
+      { to: "/npcs-v2", label: "Mascot", icon: "character" },
       { to: "/activation-codes", label: "Mã QR mở khóa", icon: "qr" }
     ]
   },

@@ -92,7 +92,7 @@ export function DashboardPage() {
     ["Hồ sơ trẻ", data.totalChildren, "👶"],
     ["Bài học", data.totalLessons, "📖"],
     ["Bài hoàn thành", data.totalCompletedLessons, "✅"],
-    ["Nhân vật đồng hành", data.totalNPCs, "🐾"],
+    ["Mascot", data.totalNPCs, "🐾"],
     ["Mã QR", data.totalQRCodes, "📱"],
     ["Huy hiệu", data.totalBadges, "🏅"],
     ["Nhiệm vụ hôm nay", data.missionCompletionsToday, "⭐"],

@@ -181,7 +181,7 @@ export function NPCsPageV2() {
     <div>
       <div className="toolbar">
         <div>
-          <h1>Nhân vật đồng hành</h1>
+          <h1>Mascot</h1>
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>Quản lý nhân vật hướng dẫn, động viên và phản hồi trong quá trình học.</p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
@@ -197,9 +197,9 @@ export function NPCsPageV2() {
       {loading ? <p>Đang tải dữ liệu...</p> : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: "40px", marginBottom: "12px" }}>🐾</div>
-          <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có nhân vật đồng hành nào</h3>
+          <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontWeight: "700" }}>Chưa có Mascot nào</h3>
           <p style={{ color: "var(--text-muted)", margin: "0 0 16px 0", fontSize: "14px" }}>
-            Nhân vật đồng hành sẽ hướng dẫn, động viên và phản hồi trong quá trình trẻ học.
+            Mascot sẽ hướng dẫn, động viên và phản hồi trong quá trình trẻ học.
           </p>
           <button onClick={openAddModal}>➕ Thêm nhân vật mới</button>
         </div>

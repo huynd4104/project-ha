@@ -223,7 +223,7 @@ export function LessonsPage() {
                 <th>Tiêu đề bài học</th>
                 <th>Mô tả</th>
                 <th>Loại bài</th>
-                <th>Nhân vật đồng hành</th>
+                <th>Mascot</th>
                 <th style={{ width: "120px" }}>Trạng thái</th>
                 <th style={{ width: "150px" }}>Thao tác</th>
               </tr>
@@ -314,7 +314,7 @@ export function LessonsPage() {
                   </div>
 
                   <div className="field">
-                    <label>Nhân vật đồng hành (tùy chọn)</label>
+                     <label>Mascot (tùy chọn)</label>
                     <select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
                       <option value="">-- Không có nhân vật --</option>
                       {npcs.map((n) => (
@@ -323,7 +323,7 @@ export function LessonsPage() {
                         </option>
                       ))}
                     </select>
-                    <span className="helper">Nhân vật đồng hành, trợ giúp giảng giải.</span>
+                    <span className="helper">Mascot, trợ giúp giảng giải.</span>
                   </div>
                 </div>
 

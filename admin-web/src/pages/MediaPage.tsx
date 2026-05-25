@@ -336,7 +336,7 @@ export function MediaPage() {
         />
         <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: "auto" }}>
           <option value="ALL">Tất cả danh mục</option>
-          <option value="NPC">Nhân vật đồng hành</option>
+          <option value="NPC">Mascot</option>
           <option value="FLASHCARD">Flashcard</option>
           <option value="DIALOGUE">Dialogue</option>
           <option value="BADGE">Badge</option>
@@ -427,7 +427,7 @@ export function MediaPage() {
                   <div className="field">
                     <label>Danh mục *</label>
                     <select value={assetCategory} onChange={(e) => setAssetCategory(e.target.value as any)}>
-                      <option value="NPC">Nhân vật đồng hành</option>
+                      <option value="NPC">Mascot</option>
                       <option value="FLASHCARD">Flashcard</option>
                       <option value="DIALOGUE">Dialogue</option>
                       <option value="BADGE">Badge</option>
