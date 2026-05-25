@@ -132,6 +132,7 @@ class ResultScreen extends StatelessWidget {
             icon: const Icon(Icons.emoji_events_rounded),
             label: const Text('Xem phần thưởng'),
           ),
+          const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () => context.go('/home'),
             icon: const Icon(Icons.home_rounded),
