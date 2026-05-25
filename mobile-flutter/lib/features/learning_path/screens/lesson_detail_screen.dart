@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +25,7 @@ class LessonDetailScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     return FutureBuilder(
       future: LessonRepository().lessonForChild(
-        state.firebaseUser!.uid,
+        state.appUser!.id,
         state.activeChild!,
         lessonId,
       ),
@@ -196,15 +195,11 @@ class LessonDetailScreen extends StatelessWidget {
                     return;
                   }
 
-                  final snap = await FirebaseFirestore.instance
-                      .collection('activities')
-                      .where('lessonId', isEqualTo: lessonId)
-                      .where('isActive', isEqualTo: true)
-                      .limit(1)
-                      .get();
+                  final activities =
+                      await LessonRepository().activitiesForLesson(lesson);
 
                   if (context.mounted) {
-                    if (snap.docs.isNotEmpty) {
+                    if (activities.isNotEmpty) {
                       context.push('/lesson/$lessonId/activity');
                     } else {
                       context.push('/lesson/$lessonId/$path');

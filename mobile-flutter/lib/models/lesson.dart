@@ -101,16 +101,16 @@ class Lesson {
     'orderIndex': orderIndex,
     'programId': programId,
     'pathId': pathId,
-    'level': level.firestoreValue,
+    'level': level.apiValue,
     'skillTags': skillTags,
     'difficultyCategories': difficultyCategories
-        .map((item) => item.firestoreValue)
+        .map((item) => item.apiValue)
         .toList(),
-    'learningGoals': learningGoals.map((item) => item.firestoreValue).toList(),
+    'learningGoals': learningGoals.map((item) => item.apiValue).toList(),
     'estimatedMinutes': estimatedMinutes,
     'npcId': npcId,
-    'accessType': accessType.firestoreValue,
-    'publishStatus': publishStatus.firestoreValue,
+    'accessType': accessType.apiValue,
+    'publishStatus': publishStatus.apiValue,
     'isActive': isActive,
   };
 }

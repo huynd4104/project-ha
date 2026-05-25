@@ -90,7 +90,7 @@ class PathRecommendationService {
     final skillMatches = childSkills.where(ruleSkills.contains).length;
     score += skillMatches * 3;
 
-    if (ruleSupportLevels.contains(child.supportLevel.firestoreValue)) {
+    if (ruleSupportLevels.contains(child.supportLevel.apiValue)) {
       score += 2;
     }
     return score;
@@ -104,7 +104,7 @@ class PathRecommendationService {
       value,
     ).map((item) => item.toUpperCase()).toSet();
     return LearningGoalKey.values
-        .where((item) => names.contains(item.firestoreValue))
+        .where((item) => names.contains(item.apiValue))
         .toList();
   }
 

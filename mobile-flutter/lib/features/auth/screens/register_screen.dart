@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/firebase_error_mapper.dart';
+import '../../../core/utils/api_error_mapper.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -46,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // after register and triggers refresh(). Calling it twice
       // causes a race condition that can lead to "screen not found".
     } catch (e) {
-      if (mounted) setState(() => error = friendlyFirebaseError(e));
+      if (mounted) setState(() => error = friendlyApiError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }

@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-
+import '../../../core/api/api_client.dart';
 import '../../../features/gamification/data/gamification_repository.dart';
 import '../../../models/models.dart';
 import 'path_recommendation_service.dart';
@@ -48,155 +46,67 @@ class LearningPlan {
 }
 
 class LessonRepository {
-  LessonRepository({FirebaseFirestore? db, FirebaseFunctions? functions})
-    : _db = db ?? FirebaseFirestore.instance,
-      _functions =
-          functions ?? FirebaseFunctions.instanceFor(region: 'asia-southeast1');
-  final FirebaseFirestore _db;
-  final FirebaseFunctions _functions;
+  LessonRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  final ApiClient _api;
 
   Future<List<Lesson>> listLessons(String userId, String childId) async {
     final plan = await currentLearningPlan(userId, childId);
     return plan.lessons;
   }
 
+  Future<List<Program>> programs() async {
+    final data = await _api.get('/api/programs') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return Program.fromMap('${map['id']}', map);
+    }).toList();
+  }
+
+  Future<List<LearningPath>> learningPaths() async {
+    final data = await _api.get('/api/learning-paths') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return LearningPath.fromMap('${map['id']}', map);
+    }).toList();
+  }
+
+  Future<Map<LearningGoalKey, List<String>>> goalSkillTags() async {
+    final data = await _api.get('/api/learning-goals/skill-tags');
+    if (data is! Map) return const {};
+    return data.map((key, value) {
+      final goal = learningGoalFromString(key);
+      return MapEntry(goal, readStringList(value));
+    });
+  }
+
   Future<LearningPlan> currentLearningPlan(
     String userId,
     String childId,
   ) async {
-    final childDoc = await _db.collection('children').doc(childId).get();
-    final child = childDoc.exists
-        ? ChildProfile.fromMap(childDoc.id, childDoc.data()!)
-        : ChildProfile(id: childId, userId: userId, name: '', age: 0);
-    return currentLearningPlanForChild(child);
+    final data =
+        await _api.get('/api/children/$childId/learning-plan')
+            as Map<String, dynamic>;
+    return _planFromMap(data);
   }
 
-  Future<LearningPlan> currentLearningPlanForChild(ChildProfile child) async {
-    final programs = await _publishedPrograms();
-    final paths = await _publishedPaths();
-    final goalSkillTags = await _goalSkillTags();
-
-    // 1. Check if the child has selected a specific path
-    if (child.currentPathId != null && child.currentPathId!.isNotEmpty) {
-      LearningPath? selectedPath;
-      for (final p in paths) {
-        if (p.id == child.currentPathId) {
-          selectedPath = p;
-          break;
-        }
-      }
-      if (selectedPath != null) {
-        final program = _programForPath(programs, selectedPath);
-        final data = await _lessonsAndItemsForPath(selectedPath);
-        if (data.lessons.isNotEmpty) {
-          return LearningPlan(
-            lessons: data.lessons,
-            path: selectedPath,
-            program: program,
-            pathItems: data.pathItems,
-          );
-        }
-      }
-    }
-
-    // 2. Fallback to recommendation service
-    if (paths.isNotEmpty) {
-      final recommendations = const PathRecommendationService().recommend(
-        child: child,
-        programs: programs,
-        paths: paths,
-        goalSkillTags: goalSkillTags,
-      );
-      final candidates = recommendations.isNotEmpty
-          ? recommendations
-          : paths.map(
-              (path) => LearningPathRecommendation(
-                path: path,
-                program: _programForPath(programs, path),
-                score: 0,
-              ),
-            );
-      for (final recommendation in candidates) {
-        final data = await _lessonsAndItemsForPath(recommendation.path);
-        if (data.lessons.isNotEmpty) {
-          return LearningPlan(
-            lessons: data.lessons,
-            path: recommendation.path,
-            program: recommendation.program,
-            recommendations: recommendations.toList(),
-            pathItems: data.pathItems,
-          );
-        }
-      }
-    }
-
-    return LearningPlan(
-      lessons: await _legacyActiveLessons(),
-      usesLegacyFallback: true,
-    );
-  }
-
-  Future<({List<Lesson> lessons, List<PathItem> pathItems})>
-  _lessonsAndItemsForPath(LearningPath path) async {
-    final itemSnap = await _db
-        .collection('pathItems')
-        .where('pathId', isEqualTo: path.id)
-        .get();
-    final items =
-        itemSnap.docs
-            .map((doc) => PathItem.fromMap(doc.id, doc.data()))
-            .toList()
-          ..sort((a, b) => a.sequence.compareTo(b.sequence));
-    if (items.isEmpty) {
-      return (lessons: const <Lesson>[], pathItems: const <PathItem>[]);
-    }
-
-    final npcSnap = await _db.collection('npcs').get();
-    final npcs = {
-      for (final doc in npcSnap.docs) doc.id: NPC.fromMap(doc.id, doc.data()),
-    };
-    final lessonDocs = await Future.wait(
-      items.map((item) => _db.collection('lessons').doc(item.lessonId).get()),
-    );
-    final lessonsById = {
-      for (final doc in lessonDocs)
-        if (doc.exists) doc.id: _lessonFromDoc(doc, npcs),
-    };
-    final lessons = items
-        .map((item) => lessonsById[item.lessonId])
-        .whereType<Lesson>()
-        .where((lesson) => lesson.isActive)
-        .toList();
-    return (lessons: lessons, pathItems: items);
-  }
+  Future<LearningPlan> currentLearningPlanForChild(ChildProfile child) =>
+      currentLearningPlan(child.userId, child.id);
 
   Future<Lesson> lessonForChild(
     String userId,
     ChildProfile child,
     String lessonId,
   ) async {
-    final plan = await currentLearningPlanForChild(child);
-    for (final lesson in plan.lessons) {
-      if (lesson.id == lessonId) return lesson;
-    }
-    final npcSnap = await _db.collection('npcs').get();
-    final npcs = {
-      for (final doc in npcSnap.docs) doc.id: NPC.fromMap(doc.id, doc.data()),
-    };
-    final doc = await _db.collection('lessons').doc(lessonId).get();
-    if (!doc.exists) throw Exception('Bài học không tồn tại.');
-    return _lessonFromDoc(doc, npcs);
+    final data = await _api.get('/api/lessons/$lessonId') as Map<String, dynamic>;
+    return _lessonFromMap(data);
   }
 
   Future<List<Activity>> activitiesForLesson(Lesson lesson) async {
-    final snap = await _db
-        .collection('activities')
-        .where('lessonId', isEqualTo: lesson.id)
-        .where('isActive', isEqualTo: true)
-        .get();
-    final activities =
-        snap.docs.map((doc) => Activity.fromMap(doc.id, doc.data())).toList()
-          ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    final data = await _api.get('/api/lessons/${lesson.id}/activities') as List;
+    final activities = data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return Activity.fromMap('${map['id']}', map);
+    }).toList();
     if (activities.isNotEmpty) return activities;
 
     switch (lesson.type) {
@@ -233,116 +143,88 @@ class LessonRepository {
     }
   }
 
-  Future<List<Program>> _publishedPrograms() async {
-    final snap = await _db
-        .collection('programs')
-        .where('status', isEqualTo: PublishStatus.published.firestoreValue)
-        .get();
-    return snap.docs.map((doc) => Program.fromMap(doc.id, doc.data())).toList();
-  }
-
-  Future<List<LearningPath>> _publishedPaths() async {
-    final snap = await _db
-        .collection('learningPaths')
-        .where('status', isEqualTo: PublishStatus.published.firestoreValue)
-        .get();
-    final paths = snap.docs
-        .map((doc) => LearningPath.fromMap(doc.id, doc.data()))
-        .toList();
-    paths.sort((a, b) => a.title.compareTo(b.title));
-    return paths;
-  }
-
-  Future<Map<LearningGoalKey, List<String>>> _goalSkillTags() async {
-    final snap = await _db.collection('learningGoals').get();
-    return {
-      for (final goal in snap.docs.map(
-        (doc) => LearningGoal.fromMap(doc.id, doc.data()),
-      ))
-        goal.key: goal.skillTags,
-    };
-  }
-
-  Program? _programForPath(List<Program> programs, LearningPath path) {
-    for (final program in programs) {
-      if (program.id == path.programId) return program;
-    }
-    return null;
-  }
-
-  Future<List<Lesson>> _legacyActiveLessons() async {
-    final lessonsSnap = await _db
-        .collection('lessons')
-        .where('isActive', isEqualTo: true)
-        .get();
-    final npcSnap = await _db.collection('npcs').get();
-    final npcs = {
-      for (final doc in npcSnap.docs) doc.id: NPC.fromMap(doc.id, doc.data()),
-    };
-    final lessons = lessonsSnap.docs
-        .map((doc) => _lessonFromDoc(doc, npcs))
-        .toList();
-    lessons.sort((a, b) => a.title.compareTo(b.title));
-    return lessons;
-  }
-
-  Lesson _lessonFromDoc(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-    Map<String, NPC> npcs,
-  ) {
-    final data = doc.data() ?? const {};
-    return Lesson.fromMap(
-      doc.id,
-      data,
-      npc: data['npcId'] == null ? null : npcs[data['npcId']],
-    );
-  }
-
   Future<List<UserProgress>> progress(String userId, String childId) async {
-    final snap = await _db
-        .collection('progress')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .get();
-    return snap.docs
-        .map((doc) => UserProgress.fromMap(doc.id, doc.data()))
-        .toList();
+    final data = await _api.get('/api/children/$childId/progress') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return UserProgress.fromMap('${map['id']}', map);
+    }).toList();
+  }
+
+  Future<Map<String, dynamic>> childSummary(String childId) async {
+    final data = await _api.get('/api/children/$childId/summary');
+    return Map<String, dynamic>.from(data as Map);
   }
 
   Future<List<MathQuestion>> mathQuestions(String lessonId) async {
-    final snap = await _db
-        .collection('mathQuestions')
-        .where('lessonId', isEqualTo: lessonId)
-        .get();
-    final items = snap.docs
-        .map((doc) => MathQuestion.fromMap(doc.id, doc.data()))
-        .toList();
+    final data = await _api.get('/api/lessons/$lessonId/math-questions') as List;
+    final items = data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return MathQuestion.fromMap('${map['id']}', map);
+    }).toList();
     items.sort((a, b) => a.questionText.compareTo(b.questionText));
     return items;
   }
 
   Future<List<Dialogue>> dialogues(String lessonId) async {
-    final snap = await _db
-        .collection('dialogues')
-        .where('lessonId', isEqualTo: lessonId)
-        .get();
-    final items = snap.docs
-        .map((doc) => Dialogue.fromMap(doc.id, doc.data()))
-        .toList();
+    final data = await _api.get('/api/lessons/$lessonId/dialogues') as List;
+    final items = data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return Dialogue.fromMap('${map['id']}', map);
+    }).toList();
     items.sort((a, b) => a.title.compareTo(b.title));
     return items;
   }
 
   Future<List<Flashcard>> flashcards(String lessonId) async {
-    final snap = await _db
-        .collection('flashcards')
-        .where('lessonId', isEqualTo: lessonId)
-        .get();
-    final items = snap.docs
-        .map((doc) => Flashcard.fromMap(doc.id, doc.data()))
-        .toList();
+    final data = await _api.get('/api/lessons/$lessonId/flashcards') as List;
+    final items = data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return Flashcard.fromMap('${map['id']}', map);
+    }).toList();
     items.sort((a, b) => a.frontText.compareTo(b.frontText));
     return items;
+  }
+
+  Future<void> submitActivityAttempt({
+    required String childId,
+    required String lessonId,
+    required String activityId,
+    required String activityType,
+    required String result,
+    required double score,
+    required Map<String, dynamic> answerPayload,
+    required List<String> skillTags,
+    required int durationSec,
+  }) async {
+    await _api.post('/api/children/$childId/lessons/$lessonId/attempts', {
+      'activityId': activityId,
+      'activityType': activityType,
+      'result': result,
+      'score': score,
+      'answerPayload': answerPayload,
+      'skillTags': skillTags,
+      'durationSec': durationSec,
+    });
+  }
+
+  Future<Map<String, dynamic>> submitVoiceAnswer({
+    required String childId,
+    required String lessonId,
+    required String activityId,
+    String? audioBase64,
+    required int durationSec,
+    String? mockTranscript,
+  }) async {
+    final data = await _api.post('/api/voice/answer', {
+      'childId': childId,
+      'lessonId': lessonId,
+      'activityId': activityId,
+      'audioBase64': audioBase64,
+      'durationSec': durationSec,
+      if (mockTranscript != null) 'mockTranscript': mockTranscript,
+    });
+    return Map<String, dynamic>.from(data as Map);
   }
 
   Future<LessonResult> submitChoiceLesson({
@@ -352,15 +234,14 @@ class LessonRepository {
     required List<MathQuestion> items,
     required Map<String, String> answers,
   }) async {
-    final response = await _functions
-        .httpsCallable('submitLessonCompletion')
-        .call({
-          'childId': childId,
-          'lessonId': lesson.id,
-          'answers': answers,
-          'completionType': lessonTypeToString(lesson.type),
-        });
-    return _lessonResultFromCallable(response.data);
+    final data = await _api.post(
+      '/api/children/$childId/lessons/${lesson.id}/complete',
+      {
+        'answers': answers,
+        'completionType': lessonTypeToString(lesson.type),
+      },
+    );
+    return _lessonResultFromMap(Map<String, dynamic>.from(data as Map));
   }
 
   Future<LessonResult> submitFlashcardComplete(
@@ -368,18 +249,65 @@ class LessonRepository {
     String childId,
     Lesson lesson,
   ) async {
-    final response = await _functions
-        .httpsCallable('submitLessonCompletion')
-        .call({
-          'childId': childId,
-          'lessonId': lesson.id,
-          'completionType': 'FLASHCARD',
-        });
-    return _lessonResultFromCallable(response.data);
+    final data = await _api.post(
+      '/api/children/$childId/lessons/${lesson.id}/complete',
+      {'completionType': 'FLASHCARD'},
+    );
+    return _lessonResultFromMap(Map<String, dynamic>.from(data as Map));
   }
 
-  LessonResult _lessonResultFromCallable(Object? raw) {
-    final data = Map<String, dynamic>.from(raw as Map);
+  Future<LessonResult> submitActivityLessonComplete({
+    required String childId,
+    required String lessonId,
+    required int correctAnswers,
+    required int score,
+    required Map<String, String> answers,
+  }) async {
+    final data = await _api.post('/api/children/$childId/lessons/$lessonId/complete', {
+      'completionType': 'ACTIVITY',
+      'correctAnswers': correctAnswers,
+      'score': score,
+      'answers': answers,
+    });
+    return _lessonResultFromMap(Map<String, dynamic>.from(data as Map));
+  }
+
+  LearningPlan _planFromMap(Map<String, dynamic> data) {
+    final lessons = (data['lessons'] as List? ?? const []).map((item) {
+      return _lessonFromMap(Map<String, dynamic>.from(item as Map));
+    }).toList();
+    final pathMap = data['path'] == null
+        ? null
+        : Map<String, dynamic>.from(data['path'] as Map);
+    final programMap = data['program'] == null
+        ? null
+        : Map<String, dynamic>.from(data['program'] as Map);
+    final pathItems = (data['pathItems'] as List? ?? const []).map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return PathItem.fromMap('${map['id']}', map);
+    }).toList();
+    return LearningPlan(
+      lessons: lessons,
+      path: pathMap == null ? null : LearningPath.fromMap('${pathMap['id']}', pathMap),
+      program: programMap == null ? null : Program.fromMap('${programMap['id']}', programMap),
+      recommendations: const [],
+      usesLegacyFallback: data['usesLegacyFallback'] == true,
+      pathItems: pathItems,
+    );
+  }
+
+  Lesson _lessonFromMap(Map<String, dynamic> data) {
+    final npcMap = data['npc'] == null
+        ? null
+        : Map<String, dynamic>.from(data['npc'] as Map);
+    return Lesson.fromMap(
+      '${data['id']}',
+      data,
+      npc: npcMap == null ? null : NPC.fromMap('${npcMap['id']}', npcMap),
+    );
+  }
+
+  LessonResult _lessonResultFromMap(Map<String, dynamic> data) {
     final levelMap = Map<String, dynamic>.from(data['levelStats'] as Map);
     final streakMap = Map<String, dynamic>.from(data['streak'] as Map);
     final badges = (data['newBadges'] as List? ?? const []).map((item) {

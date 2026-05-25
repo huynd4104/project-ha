@@ -38,7 +38,7 @@ class _DialogueLessonScreenState extends State<DialogueLessonScreen> {
   Future<({Lesson lesson, List<Dialogue> items})> load() async {
     final state = context.read<AppState>();
     final lesson = await repo.lessonForChild(
-      state.firebaseUser!.uid,
+      state.appUser!.id,
       state.activeChild!,
       widget.lessonId,
     );
@@ -195,7 +195,7 @@ class _DialogueLessonScreenState extends State<DialogueLessonScreen> {
                               }
                               final state = context.read<AppState>();
                               final result = await repo.submitChoiceLesson(
-                                userId: state.firebaseUser!.uid,
+                                userId: state.appUser!.id,
                                 childId: state.activeChild!.id,
                                 lesson: value.lesson,
                                 items: value.items.cast<MathQuestion>(),

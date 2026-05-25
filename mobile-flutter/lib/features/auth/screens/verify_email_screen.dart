@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -127,7 +126,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final email = state.firebaseUser?.email ?? 'phụ huynh';
+    final email = state.appUser?.email ?? 'phụ huynh';
 
     return Scaffold(
       appBar: AppBar(
@@ -366,71 +365,23 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 ),
               ),
               if (kDebugMode)
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('otps')
-                      .doc(state.firebaseUser?.uid)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData && snapshot.data!.exists) {
-                      final data = snapshot.data!.data();
-                      final code = data?['code'] ?? 'Chưa có';
-                      final expiresAt = (data?['expiresAt'] as Timestamp?)
-                          ?.toDate();
-                      return Container(
-                        margin: const EdgeInsets.only(top: 32),
-                        padding: const EdgeInsets.all(16),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          border: Border.all(color: Colors.amber.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: [
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.bug_report_rounded,
-                                  color: Colors.amber,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  '[DEBUG] MÃ XÁC THỰC HIỆN TẠI',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFB45309),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            SelectableText(
-                              code,
-                              style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 6,
-                                color: Color(0xFF92400E),
-                              ),
-                            ),
-                            if (expiresAt != null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Hết hạn lúc: ${expiresAt.hour.toString().padLeft(2, '0')}:${expiresAt.minute.toString().padLeft(2, '0')}:${expiresAt.second.toString().padLeft(2, '0')}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.amber.shade900,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
+                Container(
+                  margin: const EdgeInsets.only(top: 32),
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    border: Border.all(color: Colors.amber.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    '[DEBUG] Mã OTP được gửi qua SMTP backend; mobile không đọc trực tiếp dữ liệu xác thực.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
                 ),
             ],
           ),

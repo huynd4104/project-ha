@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
-import '../../../core/utils/firebase_error_mapper.dart';
+import '../../../core/utils/api_error_mapper.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/password_field.dart';
@@ -32,7 +32,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       );
       if (mounted) setState(() => message = 'Đã đổi mật khẩu.');
     } catch (e) {
-      if (mounted) setState(() => message = friendlyFirebaseError(e));
+      if (mounted) setState(() => message = friendlyApiError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }

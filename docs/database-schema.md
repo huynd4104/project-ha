@@ -1,63 +1,17 @@
-# Firestore Database Schema
+# Database Schema
 
-Collections used by the MVP:
+The schema is managed by Flyway in `backend/src/main/resources/db/migration/V1__initial_schema.sql`.
 
-- `users`
-- `children`
-- `npcs`
-- `qrCodes`
-- `userUnlockedNpcs`
-- `lessons`
-- `mathQuestions`
-- `dialogues`
-- `flashcards`
-- `progress`
-- `xpLogs`
-- `streaks`
+Core tables:
 
-## Models
+- Identity: `users`, `roles`, `user_roles`, `refresh_tokens`, `email_verification_tokens`, `password_reset_tokens`.
+- Children and content: `children`, `programs`, `learning_paths`, `path_items`, `lessons`, `activities`, `math_questions`, `dialogues`, `flashcards`.
+- Engagement: `npcs`, `user_unlocked_npcs`, `progress`, `lesson_progress`, `activity_attempts`, `xp_logs`, `streaks`, `daily_missions`, `user_mission_progress`, `badges`, `user_badges`.
+- Media and ops: `media_files`, `subscriptions`, `transactions`, `audit_logs`, `activation_codes`, `qr_codes`, `activation_redemptions`, `voice_usage_logs`.
 
-`users/{uid}`:
+Conventions:
 
-```ts
-{
-  uid: string;
-  email: string;
-  fullName: string;
-  role: "PARENT" | "ADMIN";
-  isActive: boolean;
-  createdAt: any;
-  updatedAt: any;
-}
-```
-
-`children/{id}`:
-
-```ts
-{
-  id: string;
-  userId: string;
-  name: string;
-  age: number;
-  gender: string;
-  note: string;
-  createdAt: any;
-  updatedAt: any;
-}
-```
-
-Content collections:
-
-- `npcs`: name, description, imageUrl, optional animationUrl, defaultDialogue, isActive.
-- `qrCodes`: code, npcId, label, isActive, optional maxUses, usedCount.
-- `lessons`: title, description, type `MATH`, `DIALOGUE`, `FLASHCARD`, `THINKING`, `SPELLING`, or `RHYME`, orderIndex, optional npcId, isActive.
-- `mathQuestions`: lessonId, questionText, options A-D, correctOption, explanation, orderIndex.
-- `dialogues`: lessonId, title, sceneText, audioUrl, questionText, options A-D, correctOption, orderIndex.
-- `flashcards`: lessonId, frontText, backText, imageUrl, audioUrl, orderIndex.
-
-Activity collections:
-
-- `userUnlockedNpcs`: userId, childId, npcId, optional qrCodeId, unlockedAt.
-- `progress`: userId, childId, lessonId, optional activityType, status, score, totalQuestions, correctAnswers, completedAt.
-- `xpLogs`: userId, childId, amount, reason, createdAt.
-- `streaks`: userId, childId, currentStreak, longestStreak, lastActiveDate, updatedAt.
+- UUID primary keys use `gen_random_uuid()`.
+- `created_at` and `updated_at` are present on mutable content tables.
+- Content tables use `status` and/or `is_active`.
+- Media binary data is not stored in PostgreSQL; only R2 object metadata is stored in `media_files`.

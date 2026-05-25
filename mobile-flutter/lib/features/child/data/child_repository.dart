@@ -1,20 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../../../core/api/api_client.dart';
 import '../../../models/child_profile.dart';
 import '../../../models/domain.dart';
 
 class ChildRepository {
-  ChildRepository({FirebaseFirestore? db})
-    : _db = db ?? FirebaseFirestore.instance;
-  final FirebaseFirestore _db;
+  ChildRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  final ApiClient _api;
 
-  Future<List<ChildProfile>> list(String userId) async {
-    final snap = await _db
-        .collection('children')
-        .where('userId', isEqualTo: userId)
-        .get();
-    return snap.docs
-        .map((doc) => ChildProfile.fromMap(doc.id, doc.data()))
+  Future<List<ChildProfile>> list([String? userId]) async {
+    final data = await _api.get('/api/children') as List;
+    return data
+        .map((item) {
+          final map = Map<String, dynamic>.from(item as Map);
+          return ChildProfile.fromMap('${map['id']}', map);
+        })
         .toList();
   }
 
@@ -30,43 +28,36 @@ class ChildRepository {
     int dailyDurationMinutes = 5,
     CoLearningMode coLearningMode = CoLearningMode.parentChildTogether,
   }) async {
-    final payload = {
-      'userId': userId,
+    final data = await _api.post('/api/children', {
       'displayName': name.trim(),
       'name': name.trim(),
       'age': age,
       'gender': gender,
       'note': note.trim(),
-      'primaryDifficulty': primaryDifficulty.firestoreValue,
+      'primaryDifficulty': primaryDifficulty.apiValue,
       'secondaryDifficulties': <String>[],
-      'learningGoals': learningGoals
-          .map((item) => item.firestoreValue)
-          .toList(),
-      'supportLevel': supportLevel.firestoreValue,
+      'learningGoals': learningGoals.map((item) => item.apiValue).toList(),
+      'supportLevel': supportLevel.apiValue,
       'dailyDurationMinutes': dailyDurationMinutes,
-      'coLearningMode': coLearningMode.firestoreValue,
+      'coLearningMode': coLearningMode.apiValue,
       'interests': <String>[],
       'accessibilityPreferences': <String, dynamic>{},
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-    final ref = await _db.collection('children').add(payload);
-    return ChildProfile.fromMap(ref.id, payload);
+    }) as Map<String, dynamic>;
+    return ChildProfile.fromMap('${data['id']}', data);
   }
 
   Future<void> update(ChildProfile child) async {
-    await _db.collection('children').doc(child.id).set({
-      ...child.toMap(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await _api.put('/api/children/${child.id}', child.toMap());
   }
 
-  Future<void> saveCurrentPath(String childId, String programId, String pathId) async {
-    await _db.collection('children').doc(childId).update({
-      'currentProgramId': programId,
-      'currentPathId': pathId,
-      'selectedAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
+  Future<void> saveCurrentPath(
+    String childId,
+    String programId,
+    String pathId,
+  ) async {
+    await _api.put('/api/children/$childId/current-path', {
+      'programId': programId,
+      'pathId': pathId,
     });
   }
 }

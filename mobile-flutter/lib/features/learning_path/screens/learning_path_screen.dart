@@ -32,11 +32,11 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
   Future<({LearningPlan plan, List<UserProgress> progress})> load() async {
     final state = context.read<AppState>();
     final plan = await repo.currentLearningPlan(
-      state.firebaseUser!.uid,
+      state.appUser!.id,
       state.activeChild!.id,
     );
     final progress = await repo.progress(
-      state.firebaseUser!.uid,
+      state.appUser!.id,
       state.activeChild!.id,
     );
     return (plan: plan, progress: progress);

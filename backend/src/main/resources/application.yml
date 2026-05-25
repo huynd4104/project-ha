@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: project-ha-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/project_ha}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: ${PORT:8080}
+
+project-ha:
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:8080}
+  jwt:
+    secret: ${JWT_SECRET:change-this-dev-only-secret-with-at-least-32-characters}
+    access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:30}
+    refresh-token-days: ${JWT_REFRESH_TOKEN_DAYS:30}
+  smtp:
+    from: ${SMTP_FROM:no-reply@project-ha.local}
+  r2:
+    endpoint: ${R2_ENDPOINT:}
+    access-key-id: ${R2_ACCESS_KEY_ID:}
+    secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+    bucket: ${R2_BUCKET:}
+    public-base-url: ${R2_PUBLIC_BASE_URL:}
+    region: ${R2_REGION:auto}
+  features:
+    demo-premium-upgrade: ${ENABLE_DEMO_PREMIUM_UPGRADE:true}
+    mock-voice-provider: ${ENABLE_MOCK_VOICE_PROVIDER:true}
+    voice-provider: ${VOICE_PROVIDER:mock}

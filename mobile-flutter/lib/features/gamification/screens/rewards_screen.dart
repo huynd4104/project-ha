@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,28 +30,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
   Future<({List<MissionWithProgress> missions, List<model.Badge> badges})>
   load() async {
     final state = context.read<AppState>();
-    final uid = state.firebaseUser!.uid;
+    final uid = state.appUser!.id;
     final childId = state.activeChild!.id;
     final missions = await repo.dailyMissions(uid, childId);
-    final badgesSnap = await FirebaseFirestore.instance
-        .collection('badges')
-        .where('isActive', isEqualTo: true)
-        .get();
-    final earnedSnap = await FirebaseFirestore.instance
-        .collection('userBadges')
-        .where('userId', isEqualTo: uid)
-        .where('childId', isEqualTo: childId)
-        .get();
-    final earned = earnedSnap.docs.map((e) => e.data()['badgeId']).toSet();
-    final badges = badgesSnap.docs
-        .map(
-          (doc) => model.Badge.fromMap(
-            doc.id,
-            doc.data(),
-            isEarned: earned.contains(doc.id),
-          ),
-        )
-        .toList();
+    final badges = await repo.badges(uid, childId);
     return (missions: missions, badges: badges);
   }
 
@@ -86,7 +67,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   item: mission,
                   onClaim: () async {
                     await repo.claimMissionReward(
-                      state.firebaseUser!.uid,
+                      state.appUser!.id,
                       state.activeChild!.id,
                       mission,
                     );

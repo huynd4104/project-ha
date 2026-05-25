@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'model_helpers.dart';
 import 'domain.dart';
 
@@ -75,19 +74,19 @@ class ChildProfile {
     'age': age,
     'gender': gender,
     'note': note,
-    'primaryDifficulty': primaryDifficulty.firestoreValue,
+    'primaryDifficulty': primaryDifficulty.apiValue,
     'secondaryDifficulties': secondaryDifficulties
-        .map((item) => item.firestoreValue)
+        .map((item) => item.apiValue)
         .toList(),
-    'learningGoals': learningGoals.map((item) => item.firestoreValue).toList(),
-    'supportLevel': supportLevel.firestoreValue,
+    'learningGoals': learningGoals.map((item) => item.apiValue).toList(),
+    'supportLevel': supportLevel.apiValue,
     'dailyDurationMinutes': dailyDurationMinutes,
-    'coLearningMode': coLearningMode.firestoreValue,
+    'coLearningMode': coLearningMode.apiValue,
     'interests': interests,
     'accessibilityPreferences': accessibilityPreferences,
     'currentPathId': currentPathId,
     'currentProgramId': currentProgramId,
-    'selectedAt': selectedAt != null ? Timestamp.fromDate(selectedAt!) : null,
+    'selectedAt': selectedAt?.toIso8601String(),
   };
 
   ChildProfile copyWith({

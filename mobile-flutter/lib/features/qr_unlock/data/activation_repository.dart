@@ -1,5 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
-
+import '../../../core/api/api_client.dart';
 import '../../../features/gamification/data/gamification_repository.dart';
 import '../../../models/models.dart';
 
@@ -21,10 +20,8 @@ class UnlockResult {
 }
 
 class ActivationRepository {
-  ActivationRepository({FirebaseFunctions? functions})
-    : _functions =
-          functions ?? FirebaseFunctions.instanceFor(region: 'asia-southeast1');
-  final FirebaseFunctions _functions;
+  ActivationRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  final ApiClient _api;
 
   Future<UnlockResult> unlockByCode(
     String code,
@@ -32,10 +29,11 @@ class ActivationRepository {
     String childId, {
     String source = 'MANUAL',
   }) async {
-    final response = await _functions
-        .httpsCallable('redeemActivationCode')
-        .call({'code': code.trim(), 'childId': childId, 'source': source});
-    final data = Map<String, dynamic>.from(response.data as Map);
+    final data = await _api.post('/api/activation/redeem', {
+      'code': code.trim(),
+      'childId': childId,
+      'source': source,
+    }) as Map<String, dynamic>;
     final npcMap = Map<String, dynamic>.from(data['npc'] as Map);
     final npc = NPC.fromMap('${npcMap['id']}', npcMap);
     final levelMap = data['levelStats'] == null

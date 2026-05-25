@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/firebase_error_mapper.dart';
+import '../../../core/utils/api_error_mapper.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -78,7 +78,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     try {
       final result = await repo.unlockByCode(
         value,
-        state.firebaseUser!.uid,
+        state.appUser!.id,
         state.activeChild!.id,
         source: tab.index == 0 ? 'QR' : 'MANUAL',
       );
@@ -86,7 +86,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       if (mounted) context.go('/unlock-success', extra: result);
     } catch (e) {
       if (mounted) {
-        String msg = friendlyFirebaseError(e);
+        String msg = friendlyApiError(e);
         if (msg.contains('kích hoạt Mascot/NPC') ||
             msg.contains('Phase 1 chỉ hỗ trợ') ||
             e.toString().contains('kích hoạt Mascot/NPC')) {

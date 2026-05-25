@@ -1,23 +1,15 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../gamification/data/gamification_repository.dart';
-
 import '../../../core/services/app_state.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
 import '../../../core/utils/access_check.dart';
 import '../../learning_path/data/lesson_repository.dart';
 import '../activity/activity_renderer_registry.dart';
-import '../activity/activity_renderers.dart';
 import '../widgets/feedback_panel.dart';
-import '../widgets/lesson_header.dart';
 import '../widgets/lesson_progress_bar.dart';
 import '../widgets/mascot_message_bubble.dart';
 
@@ -58,7 +50,7 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
   Future<({Lesson lesson, List<Activity> activities})> _loadData() async {
     final state = context.read<AppState>();
     final lesson = await _lessonRepo.lessonForChild(
-      state.firebaseUser!.uid,
+      state.appUser!.id,
       state.activeChild!,
       widget.lessonId,
     );
@@ -95,21 +87,19 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
       'answer': selectedAnswer,
     });
 
-    // 2. Call Cloud Function in the background
+    // 2. Persist attempt through backend in the background.
     try {
-      await FirebaseFunctions.instanceFor(region: 'asia-southeast1')
-          .httpsCallable('submitActivityAttempt')
-          .call({
-            'childId': state.activeChild!.id,
-            'lessonId': widget.lessonId,
-            'activityId': activity.id,
-            'activityType': enumKey(activity.activityType),
-            'result': result.toUpperCase(),
-            'score': score.toInt(),
-            'answerPayload': {'selectedAnswer': selectedAnswer},
-            'skillTags': activity.skillTags,
-            'durationSec': durationSec,
-          });
+      await _lessonRepo.submitActivityAttempt(
+        childId: state.activeChild!.id,
+        lessonId: widget.lessonId,
+        activityId: activity.id,
+        activityType: enumKey(activity.activityType),
+        result: result.toUpperCase(),
+        score: score,
+        answerPayload: {'selectedAnswer': selectedAnswer},
+        skillTags: activity.skillTags,
+        durationSec: durationSec,
+      );
     } catch (e) {
       debugPrint('Error submitting activity attempt: $e');
     }
@@ -181,39 +171,12 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
         for (final att in _attempts) att['activityId'] as String: att['result'] as String
       };
 
-      final response = await FirebaseFunctions.instanceFor(region: 'asia-southeast1')
-          .httpsCallable('submitLessonCompletion')
-          .call({
-            'childId': state.activeChild!.id,
-            'lessonId': widget.lessonId,
-            'completionType': 'ACTIVITY',
-            'correctAnswers': correctCount,
-            'score': finalScore,
-            'answers': answersMap,
-          });
-
-      // Parse result
-      final data = Map<String, dynamic>.from(response.data as Map);
-      final levelMap = Map<String, dynamic>.from(data['levelStats'] as Map);
-      final streakMap = Map<String, dynamic>.from(data['streak'] as Map);
-      final List<Badge> badges = (data['newBadges'] as List? ?? const []).map<Badge>((item) {
-        final map = Map<String, dynamic>.from(item as Map);
-        return Badge.fromMap('${map['id']}', map, isEarned: true);
-      }).toList();
-
-      final result = LessonResult(
-        score: finalScore,
-        totalQuestions: activities.length,
+      final result = await _lessonRepo.submitActivityLessonComplete(
+        childId: state.activeChild!.id,
+        lessonId: widget.lessonId,
         correctAnswers: correctCount,
-        xpGained: (data['xpGained'] as num?)?.toInt() ?? 0,
-        levelStats: LevelStats(
-          (levelMap['totalXp'] as num?)?.toInt() ?? 0,
-          (levelMap['level'] as num?)?.toInt() ?? 1,
-          (levelMap['xpInLevel'] as num?)?.toInt() ?? 0,
-          (levelMap['xpToNextLevel'] as num?)?.toInt() ?? 100,
-        ),
-        newBadges: badges,
-        streak: Streak.fromMap('${streakMap['id']}', streakMap),
+        score: finalScore,
+        answers: answersMap,
       );
 
       await state.refreshStats();
@@ -248,8 +211,6 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
-
     return FutureBuilder(
       future: _dataFuture,
       builder: (context, snapshot) {

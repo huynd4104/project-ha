@@ -174,8 +174,8 @@ class HomeScreen extends StatelessWidget {
               future: child == null
                   ? null
                   : Future.wait([
-                      LessonRepository().currentLearningPlan(state.firebaseUser!.uid, child.id),
-                      LessonRepository().progress(state.firebaseUser!.uid, child.id),
+                      LessonRepository().currentLearningPlan(state.appUser!.id, child.id),
+                      LessonRepository().progress(state.appUser!.id, child.id),
                     ]).then((res) => (
                       plan: res[0] as LearningPlan,
                       progress: res[1] as List<UserProgress>
@@ -435,7 +435,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 14),
             FutureBuilder(
               future: GamificationRepository().dailyMissions(
-                state.firebaseUser!.uid,
+                state.appUser!.id,
                 state.activeChild!.id,
               ),
               builder: (_, snap) {

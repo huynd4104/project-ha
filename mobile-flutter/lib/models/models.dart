@@ -1,4 +1,5 @@
 export 'activity_adapters.dart';
+export 'auth/auth_session.dart';
 export 'app_user.dart';
 export 'badge.dart';
 export 'child_profile.dart';
@@ -10,6 +11,7 @@ export 'lesson.dart';
 export 'math_question.dart';
 export 'media_asset.dart';
 export 'npc.dart';
+export 'model_helpers.dart';
 export 'progress.dart';
 export 'qr_code.dart';
 export 'streak.dart';

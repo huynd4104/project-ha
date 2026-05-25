@@ -1,50 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
-import 'package:firebase_auth/firebase_auth.dart' as fb;
-
+import '../../../core/api/api_client.dart';
 import '../../../models/app_user.dart';
+import '../../../models/auth/auth_session.dart';
 
 class AuthRepository {
-  AuthRepository({
-    FirebaseAuth? auth,
-    FirebaseFirestore? db,
-    FirebaseFunctions? functions,
-  }) : _auth = auth ?? FirebaseAuth.instance,
-       _db = db ?? FirebaseFirestore.instance,
-       _functions =
-           functions ??
-           FirebaseFunctions.instanceFor(region: 'asia-southeast1');
+  AuthRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
 
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _db;
-  final FirebaseFunctions _functions;
+  final ApiClient _api;
 
-  User? get currentFirebaseUser => _auth.currentUser;
-  Stream<User?> authStateChanges() => _auth.authStateChanges();
+  AuthSession? get currentSession => _api.session;
 
-  Future<AppUser?> readUser(String uid) async {
-    final snap = await _db.collection('users').doc(uid).get();
-    return snap.exists ? AppUser.fromMap(snap.id, snap.data()!) : null;
+  Future<AuthSession?> loadSession() => _api.loadSession();
+
+  Future<AppUser> me() async {
+    final data = await _api.get('/api/me') as Map<String, dynamic>;
+    return AppUser.fromMap('${data['id']}', data);
   }
 
-  Future<AppUser> repairParentDoc(User user, {String? fullName}) async {
-    final now = FieldValue.serverTimestamp();
-    final data = {
-      'uid': user.uid,
-      'email': user.email ?? '',
-      'fullName': fullName ?? user.displayName ?? user.email ?? 'Phụ huynh',
-      'role': 'PARENT',
-      'isActive': true,
-      'emailVerified': false,
-      'createdAt': now,
-      'updatedAt': now,
-    };
-    await _db
-        .collection('users')
-        .doc(user.uid)
-        .set(data, SetOptions(merge: true));
-    return AppUser.fromMap(user.uid, data);
+  Future<AppUser?> tryMe() async {
+    final session = await _api.loadSession();
+    if (session == null || !session.isValid) return null;
+    return me();
   }
 
   Future<AppUser> register(
@@ -52,81 +27,81 @@ class AuthRepository {
     String email,
     String password,
   ) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    await credential.user!.updateDisplayName(fullName.trim());
-    final appUser = await repairParentDoc(
-      credential.user!,
-      fullName: fullName.trim(),
-    );
-    await sendOtpVerificationCode();
-    return appUser;
+    final data = await _api.post('/api/auth/register', {
+      'fullName': fullName.trim(),
+      'email': email.trim(),
+      'password': password,
+    }) as Map<String, dynamic>;
+    await _saveSession(data);
+    final user = Map<String, dynamic>.from(data['user'] as Map);
+    return AppUser.fromMap('${user['id']}', user);
   }
 
   Future<AppUser> login(String email, String password) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    var user = await readUser(credential.user!.uid);
-    user ??= await repairParentDoc(credential.user!);
-    if (user.role != 'PARENT' || !user.isActive) {
-      await logout();
-      throw Exception('Tài khoản phụ huynh không hợp lệ.');
-    }
-    return user;
+    final data = await _api.post('/api/auth/login', {
+      'email': email.trim(),
+      'password': password,
+    }) as Map<String, dynamic>;
+    await _saveSession(data);
+    final user = Map<String, dynamic>.from(data['user'] as Map);
+    return AppUser.fromMap('${user['id']}', user);
   }
 
-  Future<void> sendPasswordReset(String email) =>
-      _auth.sendPasswordResetEmail(email: email.trim());
+  Future<void> sendPasswordReset(String email) => _api.post(
+    '/api/auth/forgot-password',
+    {'email': email.trim()},
+  );
 
-  Future<void> sendOtpVerificationCode() async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('Bạn cần đăng nhập.');
-    await _functions.httpsCallable('sendOtpVerificationCode').call();
-  }
+  Future<void> resetPassword(
+    String email,
+    String code,
+    String newPassword,
+  ) => _api.post('/api/auth/reset-password', {
+    'email': email.trim(),
+    'code': code.trim(),
+    'newPassword': newPassword,
+  });
+
+  Future<void> sendOtpVerificationCode() =>
+      _api.post('/api/auth/send-verification-code');
 
   Future<bool> verifyOtpCode(String enteredCode) async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('Bạn cần đăng nhập.');
-
-    await _functions.httpsCallable('verifyOtpCode').call({
-      'code': enteredCode.trim(),
-    });
+    await _api.post('/api/auth/verify-email', {'code': enteredCode.trim()});
     return true;
   }
 
-  Future<void> resendVerification() async => sendOtpVerificationCode();
+  Future<void> resendVerification() => sendOtpVerificationCode();
 
   Future<void> reloadUser() async {
-    await _auth.currentUser?.reload();
+    await me();
   }
 
   Future<void> updateFullName(String value) async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception('Bạn cần đăng nhập.');
-    await user.updateDisplayName(value.trim());
-    await _db.collection('users').doc(user.uid).set({
-      'fullName': value.trim(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await _api.put('/api/me', {'fullName': value.trim()});
   }
 
   Future<void> changePassword(
     String currentPassword,
     String newPassword,
   ) async {
-    final user = _auth.currentUser;
-    if (user?.email == null) throw Exception('Bạn cần đăng nhập.');
-    final credential = fb.EmailAuthProvider.credential(
-      email: user!.email!,
-      password: currentPassword,
-    );
-    await user.reauthenticateWithCredential(credential);
-    await user.updatePassword(newPassword);
+    await _api.post('/api/auth/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
   }
 
-  Future<void> logout() => _auth.signOut();
+  Future<void> logout() async {
+    final refreshToken = _api.session?.refreshToken;
+    try {
+      await _api.post('/api/auth/logout', {'refreshToken': refreshToken});
+    } finally {
+      await _api.clearSession();
+    }
+  }
+
+  Future<void> _saveSession(Map<String, dynamic> data) async {
+    final session = AuthSession.fromMap(data);
+    if (!session.isValid) throw const ApiException('Server không trả về token.');
+    await _api.saveSession(session);
+  }
 }

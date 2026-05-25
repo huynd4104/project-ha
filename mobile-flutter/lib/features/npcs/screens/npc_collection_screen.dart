@@ -42,7 +42,7 @@ class NPCCollectionScreen extends StatelessWidget {
         future: Future.wait([
           NpcRepository().allActive(),
           NpcRepository().collection(
-            state.firebaseUser!.uid,
+            state.appUser!.id,
             state.activeChild!.id,
           ),
         ]),

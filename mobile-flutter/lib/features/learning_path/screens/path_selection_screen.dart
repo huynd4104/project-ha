@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/services/app_state.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
+import '../data/lesson_repository.dart';
 import '../data/path_recommendation_service.dart';
 
 class PathSelectionScreen extends StatefulWidget {
@@ -43,44 +43,11 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
     })
   >
   _loadData() async {
-    // Proactively fetch lists directly using underlying helper methods or listing
-    // We can fetch paths and programs via a custom fetch or using our repo
-    // Let's call them. Since LessonRepository doesn't expose listAll directly,
-    // we can use the private helpers if we modify them, but since we cannot modify easily,
-    // let's look at lesson_repository.dart again.
-    // It has:
-    // Future<List<Program>> _publishedPrograms()
-    // Future<List<LearningPath>> _publishedPaths()
-    // Wait, are they private? Yes, prefixed with '_'.
-    // Let's check if there are public equivalents or if we should fetch directly from Firestore here.
-    // Yes, fetching directly from Firestore in this screen is very clean and simple,
-    // or we can add public getters in LessonRepository.
-    // Let's just query Firestore directly in this screen using FirebaseFirestore.instance.
-    final firestore = FirebaseFirestore.instance;
-    final programSnap = await firestore
-        .collection('programs')
-        .where('status', isEqualTo: 'PUBLISHED')
-        .get();
-    final pathSnap = await firestore
-        .collection('learningPaths')
-        .where('status', isEqualTo: 'PUBLISHED')
-        .get();
-    final learningGoalSnap = await firestore.collection('learningGoals').get();
-
-    final programs = programSnap.docs
-        .map((doc) => Program.fromMap(doc.id, doc.data()))
-        .toList();
-    final paths =
-        pathSnap.docs
-            .map((doc) => LearningPath.fromMap(doc.id, doc.data()))
-            .toList()
-          ..sort((a, b) => a.title.compareTo(b.title));
-    final goalSkillTags = {
-      for (final goal in learningGoalSnap.docs.map(
-        (doc) => LearningGoal.fromMap(doc.id, doc.data()),
-      ))
-        goal.key: goal.skillTags,
-    };
+    final repo = LessonRepository();
+    final programs = await repo.programs();
+    final paths = await repo.learningPaths()
+      ..sort((a, b) => a.title.compareTo(b.title));
+    final goalSkillTags = await repo.goalSkillTags();
 
     return (paths: paths, programs: programs, goalSkillTags: goalSkillTags);
   }

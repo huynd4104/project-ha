@@ -38,7 +38,7 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
   Future<({Lesson lesson, List<MathQuestion> items})> load() async {
     final state = context.read<AppState>();
     final lesson = await repo.lessonForChild(
-      state.firebaseUser!.uid,
+      state.appUser!.id,
       state.activeChild!,
       widget.lessonId,
     );
@@ -51,7 +51,7 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
   Future<void> finish(Lesson lesson, List<MathQuestion> items) async {
     final state = context.read<AppState>();
     final result = await repo.submitChoiceLesson(
-      userId: state.firebaseUser!.uid,
+      userId: state.appUser!.id,
       childId: state.activeChild!.id,
       lesson: lesson,
       items: items,

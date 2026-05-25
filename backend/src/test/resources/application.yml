@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:projectha_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+  mail:
+    host: localhost
+    port: 2525
+
+project-ha:
+  jwt:
+    secret: test-secret-with-at-least-32-characters-long
+    access-token-minutes: 30
+    refresh-token-days: 30
+  cors-origins: http://localhost:5173
+  smtp:
+    from: test@example.com
+  r2:
+    endpoint:
+    access-key-id:
+    secret-access-key:
+    bucket:
+    public-base-url:
+    region: auto
+  features:
+    demo-premium-upgrade: true
+    mock-voice-provider: true
+    voice-provider: mock

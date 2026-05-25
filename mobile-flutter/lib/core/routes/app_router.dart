@@ -40,12 +40,10 @@ GoRouter buildRouter(AppState state) {
           path == '/login' ||
           path == '/register' ||
           path == '/forgot';
-      if (state.loading &&
-          (state.firebaseUser == null || state.activeChild == null)) {
+      if (state.loading && (!state.isAuthed || state.activeChild == null)) {
         return '/loading';
       }
       if (state.loading) return null;
-      if (state.firebaseError != null) return '/config-error';
       if (!state.isAuthed) return authPath ? null : '/';
       if (authPath || path == '/loading') return '/home';
       if (AppConfig.requireEmailVerification &&
@@ -67,7 +65,7 @@ GoRouter buildRouter(AppState state) {
         path: '/config-error',
         builder: (_, __) => Scaffold(
           body: ErrorView(
-            message: state.error ?? 'Firebase chưa được cấu hình.',
+            message: state.error ?? 'Không tải được cấu hình API.',
           ),
         ),
       ),

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
@@ -15,6 +14,7 @@ import '../../../core/utils/access_check.dart';
 import '../../../core/utils/parent_gate.dart';
 import '../../../core/config/app_config.dart';
 import '../../parent_dashboard/screens/paywall_screen.dart';
+import '../../learning_path/data/lesson_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -1093,81 +1093,70 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
         audioBase64 = await _getAudioBase64(audioPath);
       }
 
-      // Call Cloud Function
-      final submitFn = FirebaseFunctions.instanceFor(region: 'asia-southeast1')
-          .httpsCallable('submitVoiceAnswer');
+      final state = context.read<AppState>();
+      final resData = await LessonRepository().submitVoiceAnswer(
+        childId: state.activeChild?.id ?? '',
+        lessonId: widget.activity.lessonId,
+        activityId: widget.activity.id,
+        audioBase64: audioBase64,
+        durationSec: durationSec,
+        mockTranscript: manualMockText,
+      );
 
-      final payload = {
-        'childId': context.read<AppState>().activeChild?.id ?? '',
-        'lessonId': widget.activity.lessonId,
-        'activityId': widget.activity.id,
-        'audioBase64': audioBase64,
-        'durationSec': durationSec,
-        if (manualMockText != null) 'mockTranscript': manualMockText,
-      };
+      final transcript = resData['transcript'] ?? '';
+      final resStatus = resData['result'] ?? 'WRONG';
+      final feedbackText = resData['feedbackText'] ?? '';
 
-      final result = await submitFn.call(payload);
-      final resData = result.data;
-
-      if (resData != null) {
-        final transcript = resData['transcript'] ?? '';
-        final resStatus = resData['result'] ?? 'WRONG';
-        final feedbackText = resData['feedbackText'] ?? '';
-
-        if (resStatus == 'NO_SPEECH_DETECTED') {
-          setState(() {
-            _transcript = '';
-            _feedback = feedbackText;
-            _state = VoiceState.noSpeech;
-          });
-          return;
-        }
-
+      if (resStatus == 'NO_SPEECH_DETECTED') {
         setState(() {
-          _transcript = transcript;
+          _transcript = '';
           _feedback = feedbackText;
-          if (resStatus == 'CORRECT') {
-            _state = VoiceState.correct;
-          } else if (resStatus == 'ALMOST') {
-            _state = VoiceState.almost;
-          } else {
-            _state = VoiceState.wrong;
+          _state = VoiceState.noSpeech;
+        });
+        return;
+      }
+
+      setState(() {
+        _transcript = transcript;
+        _feedback = feedbackText;
+        if (resStatus == 'CORRECT') {
+          _state = VoiceState.correct;
+        } else if (resStatus == 'ALMOST') {
+          _state = VoiceState.almost;
+        } else {
+          _state = VoiceState.wrong;
+        }
+      });
+
+      final isCorrect = resStatus == 'CORRECT';
+      final isAlmost = resStatus == 'ALMOST';
+
+      if (isCorrect) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            widget.onAnswerSubmitted(transcript, 'correct', 10.0);
           }
         });
-
-        // Submit results back to activity flow
-        final isCorrect = resStatus == 'CORRECT';
-        final isAlmost = resStatus == 'ALMOST';
-
-        if (isCorrect) {
-          Future.delayed(const Duration(seconds: 2), () {
+      } else if (isAlmost) {
+        _retriesUsed++;
+        final maxRetries = widget.activity.retryLimit;
+        if (_retriesUsed > maxRetries) {
+          Future.delayed(const Duration(seconds: 3), () {
             if (mounted) {
-              widget.onAnswerSubmitted(transcript, 'correct', 10.0);
+              widget.onAnswerSubmitted(transcript, 'almost', 5.0);
             }
           });
-        } else if (isAlmost) {
-          _retriesUsed++;
-          final maxRetries = widget.activity.retryLimit;
-          if (_retriesUsed > maxRetries) {
-            Future.delayed(const Duration(seconds: 3), () {
-              if (mounted) {
-                widget.onAnswerSubmitted(transcript, 'almost', 5.0);
-              }
-            });
-          }
-        } else {
-          _retriesUsed++;
-          final maxRetries = widget.activity.retryLimit;
-          if (_retriesUsed > maxRetries) {
-            Future.delayed(const Duration(seconds: 3), () {
-              if (mounted) {
-                widget.onAnswerSubmitted(transcript, 'wrong', 0.0);
-              }
-            });
-          }
         }
       } else {
-        throw Exception('Phản hồi rỗng từ máy chủ.');
+        _retriesUsed++;
+        final maxRetries = widget.activity.retryLimit;
+        if (_retriesUsed > maxRetries) {
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted) {
+              widget.onAnswerSubmitted(transcript, 'wrong', 0.0);
+            }
+          });
+        }
       }
     } catch (e) {
       setState(() {

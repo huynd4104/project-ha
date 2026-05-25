@@ -1,7 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-
-import '../../../core/utils/date_utils.dart';
+import '../../../core/api/api_client.dart';
 import '../../../models/models.dart';
 
 class LevelStats {
@@ -24,75 +21,55 @@ class MissionWithProgress {
 }
 
 class GamificationRepository {
-  GamificationRepository({FirebaseFirestore? db, FirebaseFunctions? functions})
-    : _db = db ?? FirebaseFirestore.instance,
-      _functions =
-          functions ?? FirebaseFunctions.instanceFor(region: 'asia-southeast1');
-  final FirebaseFirestore _db;
-  final FirebaseFunctions _functions;
+  GamificationRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  final ApiClient _api;
 
   LevelStats calculateLevel(int totalXp) =>
       LevelStats(totalXp, (totalXp / 100).floor() + 1, totalXp % 100, 100);
 
   Future<int> totalXp(String userId, String childId) async {
-    final snap = await _db
-        .collection('xpLogs')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .get();
-    return snap.docs.fold<int>(
-      0,
-      (total, item) => total + ((item.data()['amount'] as num?)?.toInt() ?? 0),
+    final data = await _api.get('/api/children/$childId/xp') as Map<String, dynamic>;
+    return (data['totalXp'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<LevelStats> levelStats(String childId) async {
+    final data = await _api.get('/api/children/$childId/xp') as Map<String, dynamic>;
+    return LevelStats(
+      (data['totalXp'] as num?)?.toInt() ?? 0,
+      (data['level'] as num?)?.toInt() ?? 1,
+      (data['xpInLevel'] as num?)?.toInt() ?? 0,
+      (data['xpToNextLevel'] as num?)?.toInt() ?? 100,
     );
   }
 
   Future<Streak?> getStreak(String userId, String childId) async {
-    final snap = await _db
-        .collection('streaks')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .limit(1)
-        .get();
-    return snap.docs.isEmpty
-        ? null
-        : Streak.fromMap(snap.docs.first.id, snap.docs.first.data());
+    final data = await _api.get('/api/children/$childId/streak');
+    if (data == null) return null;
+    final map = Map<String, dynamic>.from(data as Map);
+    return Streak.fromMap('${map['id']}', map);
   }
 
   Future<List<MissionWithProgress>> dailyMissions(
     String userId,
     String childId,
   ) async {
-    final missionsSnap = await _db
-        .collection('dailyMissions')
-        .where('isActive', isEqualTo: true)
-        .get();
-    final progressSnap = await _db
-        .collection('userMissionProgress')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .where('date', isEqualTo: todayKey())
-        .get();
-    final progressByMission = {
-      for (final doc in progressSnap.docs)
-        doc.data()['missionId']: UserMissionProgress.fromMap(
-          doc.id,
-          doc.data(),
-        ),
-    };
-    return missionsSnap.docs.map((doc) {
-      final mission = DailyMission.fromMap(doc.id, doc.data());
+    final data = await _api.get('/api/children/$childId/daily-missions') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      final missionMap = Map<String, dynamic>.from(map['mission'] as Map);
+      final progressMap = Map<String, dynamic>.from(map['progress'] as Map);
       return MissionWithProgress(
-        mission,
-        progressByMission[mission.id] ??
-            UserMissionProgress(
-              id: '',
-              userId: userId,
-              childId: childId,
-              missionId: mission.id,
-              date: todayKey(),
-              targetValue: mission.targetValue,
-            ),
+        DailyMission.fromMap('${missionMap['id']}', missionMap),
+        UserMissionProgress.fromMap('${progressMap['id']}', progressMap),
       );
+    }).toList();
+  }
+
+  Future<List<Badge>> badges(String userId, String childId) async {
+    final data = await _api.get('/api/children/$childId/badges') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return Badge.fromMap('${map['id']}', map, isEarned: map['isEarned'] == true);
     }).toList();
   }
 
@@ -101,14 +78,15 @@ class GamificationRepository {
     String childId,
     MissionWithProgress item,
   ) async {
-    if (!item.progress.isCompleted)
+    if (!item.progress.isCompleted) {
       throw Exception('Nhiệm vụ chưa hoàn thành.');
-    if (item.progress.rewardClaimed)
+    }
+    if (item.progress.rewardClaimed) {
       throw Exception('Phần thưởng đã được nhận.');
-    final response = await _functions
-        .httpsCallable('claimDailyMissionReward')
-        .call({'childId': childId, 'missionId': item.mission.id});
-    final data = Map<String, dynamic>.from(response.data as Map);
+    }
+    final data = await _api.post(
+      '/api/children/$childId/daily-missions/${item.mission.id}/claim',
+    ) as Map<String, dynamic>;
     return (data['xpGained'] as num?)?.toInt() ?? item.mission.rewardXp;
   }
 }

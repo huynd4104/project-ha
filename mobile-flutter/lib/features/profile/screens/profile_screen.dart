@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final user = state.firebaseUser;
+    final user = state.appUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tài khoản', style: TextStyle(fontWeight: FontWeight.w900)),

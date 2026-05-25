@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,24 +6,20 @@ import '../../features/auth/data/auth_repository.dart';
 import '../../features/child/data/child_repository.dart';
 import '../../features/gamification/data/gamification_repository.dart';
 import '../../features/npcs/data/npc_repository.dart';
+import '../../features/parent/data/subscription_service.dart';
 import '../../models/models.dart';
 import 'sound_service.dart';
-import '../../features/parent/data/subscription_service.dart';
 
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
-  AppState({this.firebaseError});
-
-  final Object? firebaseError;
   late final AuthRepository authRepository = AuthRepository();
   late final ChildRepository childRepository = ChildRepository();
   late final GamificationRepository gamificationRepository =
       GamificationRepository();
   late final SubscriptionService subscriptionService = SubscriptionService();
 
-  StreamSubscription<User?>? _sub;
   bool loading = true;
   AppUser? appUser;
-  User? firebaseUser;
+  AuthSession? session;
   List<ChildProfile> children = const [];
   ChildProfile? activeChild;
   NPC? activeNpc;
@@ -40,26 +33,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool repeatInstructions = false;
   bool hapticFeedback = true;
 
-  bool get isAuthed => firebaseUser != null && appUser != null;
-  bool get emailVerified =>
-      (firebaseUser?.emailVerified ?? false) ||
-      (appUser?.emailVerified ?? false);
+  bool get isAuthed => session?.isValid == true && appUser != null;
+  bool get emailVerified => appUser?.emailVerified ?? false;
   bool get hasChild => activeChild != null;
 
   Future<void> start() async {
     WidgetsBinding.instance.addObserver(this);
     await SoundService.instance.load();
     await _loadAccessibility();
-    if (firebaseError != null) {
-      loading = false;
-      error = firebaseError.toString();
-      notifyListeners();
-      return;
-    }
-    _sub = authRepository.authStateChanges().listen((user) async {
-      firebaseUser = user;
-      await refresh();
-    });
+    session = await authRepository.loadSession();
+    await refresh();
   }
 
   Future<void> refresh() async {
@@ -67,21 +50,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     error = null;
     notifyListeners();
     try {
-      firebaseUser = authRepository.currentFirebaseUser;
-      if (firebaseUser == null) {
-        appUser = null;
-        children = const [];
-        activeChild = null;
-        activeNpc = null;
+      session = authRepository.currentSession ?? await authRepository.loadSession();
+      if (session == null || !session!.isValid) {
+        _clearUserState();
       } else {
-        var userDoc = await authRepository.readUser(firebaseUser!.uid);
-        userDoc ??= await authRepository.repairParentDoc(firebaseUser!);
-        if (!userDoc.isActive || userDoc.role != 'PARENT') {
+        final user = await authRepository.me();
+        if (!user.isActive || user.role != 'PARENT') {
           await authRepository.logout();
           throw Exception('Tài khoản phụ huynh không hợp lệ hoặc đã bị khóa.');
         }
-        appUser = userDoc;
-        children = await childRepository.list(firebaseUser!.uid);
+        appUser = user;
+        children = await childRepository.list(user.id);
         activeChild = children.isEmpty ? null : children.first;
         if (activeChild != null) {
           await refreshStats();
@@ -91,15 +70,26 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }
     } catch (e) {
       error = e.toString();
+      if ('$e'.contains('401')) {
+        _clearUserState();
+      }
     } finally {
       loading = false;
       notifyListeners();
     }
   }
 
+  void _clearUserState() {
+    appUser = null;
+    session = null;
+    children = const [];
+    activeChild = null;
+    activeNpc = null;
+  }
+
   Future<void> refreshStats() async {
-    if (firebaseUser == null || activeChild == null) return;
-    final uid = firebaseUser!.uid;
+    if (appUser == null || activeChild == null) return;
+    final uid = appUser!.id;
     final childId = activeChild!.id;
 
     final results = await Future.wait([
@@ -115,7 +105,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     activeNpc = unlockedNpcs.isEmpty ? null : unlockedNpcs.first.npc;
   }
 
-  Future<void> logout() => authRepository.logout();
+  Future<void> logout() async {
+    await authRepository.logout();
+    _clearUserState();
+    notifyListeners();
+  }
 
   Future<void> _loadAccessibility() async {
     final prefs = await SharedPreferences.getInstance();
@@ -187,16 +181,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> refreshSubscription() async {
-    if (firebaseUser == null) return;
+    if (appUser == null) return;
     try {
-      final summary =
-          await subscriptionService.getSubscriptionSummary(firebaseUser!.uid);
+      final summary = await subscriptionService.getSubscriptionSummary(appUser!.id);
       if (summary != null && appUser != null) {
         appUser = appUser!.copyWith(subscriptionSummary: summary);
         notifyListeners();
       }
     } catch (e) {
-      print('Error refreshing subscription: $e');
+      debugPrint('Error refreshing subscription: $e');
     }
   }
 
@@ -215,7 +208,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _sub?.cancel();
     super.dispose();
   }
 }

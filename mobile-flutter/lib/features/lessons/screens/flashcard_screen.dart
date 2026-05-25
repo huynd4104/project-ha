@@ -37,7 +37,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Future<({Lesson lesson, List<Flashcard> cards})> load() async {
     final state = context.read<AppState>();
     final lesson = await repo.lessonForChild(
-      state.firebaseUser!.uid,
+      state.appUser!.id,
       state.activeChild!,
       widget.lessonId,
     );
@@ -171,7 +171,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                   }
                   final state = context.read<AppState>();
                   final result = await repo.submitFlashcardComplete(
-                    state.firebaseUser!.uid,
+                    state.appUser!.id,
                     state.activeChild!.id,
                     value.lesson,
                   );

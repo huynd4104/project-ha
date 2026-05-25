@@ -145,7 +145,7 @@ String skillLabel(String key) {
 }
 
 extension DevelopmentCategoryLabel on DevelopmentCategoryKey {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
   String get label => switch (this) {
     DevelopmentCategoryKey.speechDelay => 'Chậm nói / khó khăn lời nói',
     DevelopmentCategoryKey.attentionDifficulty => 'Khó tập trung',
@@ -158,12 +158,12 @@ extension DevelopmentCategoryLabel on DevelopmentCategoryKey {
 }
 
 extension LearningGoalLabel on LearningGoalKey {
-  String get firestoreValue => enumKey(this);
-  String get label => skillLabel(firestoreValue);
+  String get apiValue => enumKey(this);
+  String get label => skillLabel(apiValue);
 }
 
 extension SupportLevelLabel on SupportLevel {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
   String get label => switch (this) {
     SupportLevel.low => 'Cần hỗ trợ ít',
     SupportLevel.medium => 'Cần hỗ trợ vừa',
@@ -172,7 +172,7 @@ extension SupportLevelLabel on SupportLevel {
 }
 
 extension CoLearningModeLabel on CoLearningMode {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
   String get label => switch (this) {
     CoLearningMode.childWithGuidance => 'Bé học với hướng dẫn',
     CoLearningMode.parentChildTogether => 'Phụ huynh và bé cùng học',
@@ -181,23 +181,23 @@ extension CoLearningModeLabel on CoLearningMode {
 }
 
 extension LearningLevelLabel on LearningLevel {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
 }
 
 extension AccessTypeLabel on AccessType {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
 }
 
 extension PublishStatusLabel on PublishStatus {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
 }
 
 extension UnlockRuleLabel on UnlockRule {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
 }
 
 extension ActivityTypeLabel on ActivityType {
-  String get firestoreValue => enumKey(this);
+  String get apiValue => enumKey(this);
 }
 
 class DevelopmentCategory {

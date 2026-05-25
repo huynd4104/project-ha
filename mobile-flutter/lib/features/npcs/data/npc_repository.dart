@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../../../core/api/api_client.dart';
 import '../../../models/models.dart';
 
 class UnlockedNpcView {
@@ -9,41 +8,34 @@ class UnlockedNpcView {
 }
 
 class NpcRepository {
-  NpcRepository({FirebaseFirestore? db})
-    : _db = db ?? FirebaseFirestore.instance;
-  final FirebaseFirestore _db;
+  NpcRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  final ApiClient _api;
 
   Future<List<NPC>> allActive() async {
-    final snap = await _db
-        .collection('npcs')
-        .where('isActive', isEqualTo: true)
-        .get();
-    return snap.docs.map((doc) => NPC.fromMap(doc.id, doc.data())).toList();
+    final data = await _api.get('/api/npcs') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return NPC.fromMap('${map['id']}', map);
+    }).toList();
   }
 
   Future<List<UnlockedNpcView>> collection(
     String userId,
     String childId,
   ) async {
-    final snap = await _db
-        .collection('userUnlockedNpcs')
-        .where('userId', isEqualTo: userId)
-        .where('childId', isEqualTo: childId)
-        .get();
-    final futures = snap.docs.map((doc) async {
-      final unlock = UserUnlockedNpc.fromMap(doc.id, doc.data());
-      final npcDoc = await _db.collection('npcs').doc(unlock.npcId).get();
-      if (npcDoc.exists) {
-        return UnlockedNpcView(unlock, NPC.fromMap(npcDoc.id, npcDoc.data()!));
-      }
-      return null;
-    });
-    final results = await Future.wait(futures);
-    return results.whereType<UnlockedNpcView>().toList();
+    final data = await _api.get('/api/children/$childId/npcs/unlocked') as List;
+    return data.map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      final npcMap = Map<String, dynamic>.from(map['npc'] as Map);
+      return UnlockedNpcView(
+        UserUnlockedNpc.fromMap('${map['id']}', map),
+        NPC.fromMap('${npcMap['id']}', npcMap),
+      );
+    }).toList();
   }
 
   Future<NPC?> byId(String id) async {
-    final doc = await _db.collection('npcs').doc(id).get();
-    return doc.exists ? NPC.fromMap(doc.id, doc.data()!) : null;
+    final data = await _api.get('/api/npcs/$id') as Map<String, dynamic>;
+    return NPC.fromMap('${data['id']}', data);
   }
 }

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +9,7 @@ import '../../../core/widgets/loading_view.dart';
 import '../../../models/domain.dart';
 import '../../../models/progress.dart';
 import '../../../models/models.dart';
+import '../../learning_path/data/lesson_repository.dart';
 import 'paywall_screen.dart';
 import '../widgets/parent_metric_card.dart';
 import '../widgets/recommendation_card.dart';
@@ -44,60 +44,35 @@ class ParentDashboardScreen extends StatelessWidget {
   const ParentDashboardScreen({super.key});
 
   Future<_DashboardData> _fetchDashboardData(String uid, String childId) async {
-    final results = await Future.wait([
-      FirebaseFirestore.instance
-          .collection('progress')
-          .where('userId', isEqualTo: uid)
-          .where('childId', isEqualTo: childId)
-          .get(),
-      FirebaseFirestore.instance.collection('lessons').get(),
-      FirebaseFirestore.instance
-          .collection('activityAttempts')
-          .where('userId', isEqualTo: uid)
-          .where('childId', isEqualTo: childId)
-          .get(),
-    ]);
-
-    final progressSnap = results[0];
-    final lessonsSnap = results[1];
-    final attemptsSnap = results[2];
-
-    final history = progressSnap.docs
-        .map((doc) => UserProgress.fromMap(doc.id, doc.data()))
-        .toList();
-
-    try {
-      history.sort((a, b) {
-        final aDoc = progressSnap.docs.firstWhere((doc) => doc.id == a.id);
-        final bDoc = progressSnap.docs.firstWhere((doc) => doc.id == b.id);
-        final aTime = aDoc.data()['completedAt'] as Timestamp?;
-        final bTime = bDoc.data()['completedAt'] as Timestamp?;
-        if (aTime == null && bTime == null) return 0;
-        if (aTime == null) return 1;
-        if (bTime == null) return -1;
-        return bTime.compareTo(aTime);
-      });
-    } catch (_) {}
+    final summary = await LessonRepository().childSummary(childId);
+    final history = (summary['history'] as List? ?? const []).map((item) {
+      final map = Map<String, dynamic>.from(item as Map);
+      return UserProgress.fromMap('${map['id']}', map);
+    }).toList();
 
     final lessonTitles = <String, String>{};
-    for (final doc in lessonsSnap.docs) {
-      lessonTitles[doc.id] = doc.data()['title'] ?? '';
+    for (final item in summary['lessons'] as List? ?? const []) {
+      final map = Map<String, dynamic>.from(item as Map);
+      lessonTitles['${map['id']}'] = '${map['title'] ?? ''}';
     }
 
     return _DashboardData(
       history: history,
       lessonTitles: lessonTitles,
-      skillScores: _skillScoresFromAttempts(attemptsSnap.docs),
+      skillScores: _skillScoresFromAttempts(
+        (summary['attempts'] as List? ?? const [])
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList(),
+      ),
     );
   }
 
   List<_SkillScore> _skillScoresFromAttempts(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    List<Map<String, dynamic>> docs,
   ) {
     final totals = <String, double>{};
     final counts = <String, int>{};
-    for (final doc in docs) {
-      final data = doc.data();
+    for (final data in docs) {
       final tags = (data['skillTags'] as List? ?? const [])
           .map((item) => '$item'.trim())
           .where((item) => item.isNotEmpty)
@@ -134,7 +109,7 @@ class ParentDashboardScreen extends StatelessWidget {
     return Scaffold(
       body: FutureBuilder<_DashboardData>(
         future: _fetchDashboardData(
-          state.firebaseUser!.uid,
+          state.appUser!.id,
           state.activeChild!.id,
         ),
         builder: (_, snap) {

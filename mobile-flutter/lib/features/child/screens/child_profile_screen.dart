@@ -60,7 +60,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     final child = state.activeChild;
     if (child == null) {
       await state.childRepository.create(
-        state.firebaseUser!.uid,
+        state.appUser!.id,
         name.text,
         int.parse(age.text),
         gender,
