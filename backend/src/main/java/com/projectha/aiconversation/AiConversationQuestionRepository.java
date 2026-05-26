@@ -43,10 +43,10 @@ public class AiConversationQuestionRepository {
             INSERT INTO ai_conversation_questions(
               topic_id, question_text, question_audio_text, expected_answer,
               accepted_keywords, alternative_answers, evaluation_type, hint_text,
-              positive_feedback, retry_feedback, max_attempts, skill_tags,
+              positive_feedback, retry_feedback, max_attempts,
               difficulty_level, sort_order, is_active
             )
-            VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, CAST(? AS jsonb), ?, ?, ?)
+            VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
             """,
             topicId,
@@ -60,7 +60,6 @@ public class AiConversationQuestionRepository {
             payload.getOrDefault("positiveFeedback", ""),
             payload.getOrDefault("retryFeedback", ""),
             payload.getOrDefault("maxAttempts", 2),
-            Db.json(payload.getOrDefault("skillTags", List.of())),
             payload.getOrDefault("difficultyLevel", "BEGINNER"),
             payload.getOrDefault("sortOrder", 0),
             payload.getOrDefault("isActive", true)
@@ -81,7 +80,6 @@ public class AiConversationQuestionRepository {
               positive_feedback = ?,
               retry_feedback = ?,
               max_attempts = ?,
-              skill_tags = CAST(? AS jsonb),
               difficulty_level = ?,
               sort_order = ?,
               is_active = ?
@@ -98,7 +96,6 @@ public class AiConversationQuestionRepository {
             payload.getOrDefault("positiveFeedback", ""),
             payload.getOrDefault("retryFeedback", ""),
             payload.getOrDefault("maxAttempts", 2),
-            Db.json(payload.getOrDefault("skillTags", List.of())),
             payload.getOrDefault("difficultyLevel", "BEGINNER"),
             payload.getOrDefault("sortOrder", 0),
             payload.getOrDefault("isActive", true),

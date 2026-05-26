@@ -3,7 +3,6 @@ import '../../../../models/model_helpers.dart';
 class AiConversationTopic {
   const AiConversationTopic({
     required this.id,
-    required this.code,
     required this.title,
     required this.description,
     required this.ageRangeMin,
@@ -17,7 +16,6 @@ class AiConversationTopic {
   });
 
   final String id;
-  final String code;
   final String title;
   final String description;
   final int? ageRangeMin;
@@ -32,7 +30,6 @@ class AiConversationTopic {
   factory AiConversationTopic.fromMap(Map<String, dynamic> map) =>
       AiConversationTopic(
         id: '${map['id'] ?? ''}',
-        code: '${map['code'] ?? ''}',
         title: '${map['title'] ?? ''}',
         description: '${map['description'] ?? ''}',
         ageRangeMin: map['ageRangeMin'] == null

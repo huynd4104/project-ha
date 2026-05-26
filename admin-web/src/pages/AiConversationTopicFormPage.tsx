@@ -9,7 +9,6 @@ interface Props {
 }
 
 export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props) {
-  const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [ageRangeMin, setAgeRangeMin] = useState("");
@@ -24,7 +23,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setCode(topic?.code ?? "");
     setTitle(topic?.title ?? "");
     setDescription(topic?.description ?? "");
     setAgeRangeMin(topic?.ageRangeMin == null ? "" : `${topic.ageRangeMin}`);
@@ -40,7 +38,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!code.trim()) next.code = "Mã chủ đề không được để trống.";
     if (!title.trim()) next.title = "Tên chủ đề không được để trống.";
     const duration = Number(estimatedDurationSeconds);
     if (!Number.isFinite(duration) || duration < 30) {
@@ -59,7 +56,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
     setSaving(true);
     try {
       await onSubmit({
-        code: code.trim(),
         title: title.trim(),
         description: description.trim() || null,
         ageRangeMin: ageRangeMin.trim() ? Number(ageRangeMin) : null,
@@ -92,11 +88,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
                 a. Thông tin cơ bản
               </h3>
               <div className="form-grid">
-                <div className="field">
-                  <label>Mã chủ đề <span style={{ color: "red" }}>*</span></label>
-                  <input type="text" value={code} onChange={(event) => setCode(event.target.value)} placeholder="VD: greeting" />
-                  {errors.code && <span className="error-msg">{errors.code}</span>}
-                </div>
                 <div className="field">
                   <label>Tên chủ đề <span style={{ color: "red" }}>*</span></label>
                   <input type="text" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="VD: Chào hỏi và làm quen" />

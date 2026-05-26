@@ -40,13 +40,12 @@ public class AiConversationTopicRepository {
     public AiConversationTopic create(Map<String, Object> payload) {
         return AiConversationMapper.topic(jdbc.queryForMap("""
             INSERT INTO ai_conversation_topics(
-              code, title, description, age_range_min, age_range_max, difficulty_level,
+              title, description, age_range_min, age_range_max, difficulty_level,
               icon_name, mascot_reaction, estimated_duration_seconds, is_active, sort_order
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
             """,
-            payload.get("code"),
             payload.get("title"),
             payload.getOrDefault("description", ""),
             payload.get("ageRangeMin"),
@@ -64,7 +63,6 @@ public class AiConversationTopicRepository {
         require(id);
         return AiConversationMapper.topic(jdbc.queryForMap("""
             UPDATE ai_conversation_topics SET
-              code = ?,
               title = ?,
               description = ?,
               age_range_min = ?,
@@ -78,7 +76,6 @@ public class AiConversationTopicRepository {
             WHERE id = ?
             RETURNING *
             """,
-            payload.get("code"),
             payload.get("title"),
             payload.getOrDefault("description", ""),
             payload.get("ageRangeMin"),

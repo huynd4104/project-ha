@@ -15,7 +15,6 @@ final class AiConversationDtoMapper {
     static AiConversationTopicResponse topic(AiConversationTopic item) {
         return new AiConversationTopicResponse(
             item.id(),
-            item.code(),
             item.title(),
             item.description(),
             item.ageRangeMin(),
@@ -38,7 +37,6 @@ final class AiConversationDtoMapper {
             item.evaluationType().name(),
             item.hintText(),
             item.maxAttempts(),
-            item.skillTags(),
             item.difficultyLevel(),
             item.sortOrder()
         );
@@ -47,7 +45,6 @@ final class AiConversationDtoMapper {
     static AdminAiConversationTopicResponse adminTopic(AiConversationTopic item) {
         return new AdminAiConversationTopicResponse(
             item.id(),
-            item.code(),
             item.title(),
             item.description(),
             item.ageRangeMin(),
@@ -77,7 +74,6 @@ final class AiConversationDtoMapper {
             item.positiveFeedback(),
             item.retryFeedback(),
             item.maxAttempts(),
-            item.skillTags(),
             item.difficultyLevel(),
             item.sortOrder(),
             item.isActive(),

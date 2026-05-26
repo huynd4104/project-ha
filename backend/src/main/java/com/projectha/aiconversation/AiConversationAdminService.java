@@ -81,7 +81,6 @@ public class AiConversationAdminService {
     }
 
     private void validateTopic(AdminAiConversationTopicRequest request) {
-        if (blank(request.code())) throw new BadRequestException("Mã chủ đề không được để trống.");
         if (blank(request.title())) throw new BadRequestException("Tên chủ đề không được để trống.");
         int duration = request.estimatedDurationSeconds() == null ? 180 : request.estimatedDurationSeconds();
         if (duration < 30 || duration > 600) throw new BadRequestException("Thời lượng nên nằm trong khoảng 30-600 giây.");
@@ -105,7 +104,6 @@ public class AiConversationAdminService {
 
     private Map<String, Object> topicPayload(AdminAiConversationTopicRequest request) {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("code", request.code().trim());
         payload.put("title", request.title().trim());
         payload.put("description", request.description() == null ? "" : request.description().trim());
         payload.put("ageRangeMin", request.ageRangeMin());
@@ -131,7 +129,6 @@ public class AiConversationAdminService {
         payload.put("positiveFeedback", text(request.positiveFeedback(), ""));
         payload.put("retryFeedback", text(request.retryFeedback(), ""));
         payload.put("maxAttempts", request.maxAttempts() == null ? 2 : request.maxAttempts());
-        payload.put("skillTags", request.skillTags() == null ? List.of() : request.skillTags());
         payload.put("difficultyLevel", text(request.difficultyLevel(), "BEGINNER"));
         payload.put("sortOrder", request.sortOrder() == null ? 0 : request.sortOrder());
         payload.put("isActive", request.isActive() == null || request.isActive());

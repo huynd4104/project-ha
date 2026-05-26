@@ -14,7 +14,6 @@ class AiConversationQuestion {
     required this.positiveFeedback,
     required this.retryFeedback,
     required this.maxAttempts,
-    required this.skillTags,
     required this.difficultyLevel,
     required this.sortOrder,
     required this.isActive,
@@ -32,7 +31,6 @@ class AiConversationQuestion {
   final String positiveFeedback;
   final String retryFeedback;
   final int maxAttempts;
-  final List<String> skillTags;
   final int difficultyLevel;
   final int sortOrder;
   final bool isActive;
@@ -52,7 +50,6 @@ class AiConversationQuestion {
         positiveFeedback: '${map['positiveFeedback'] ?? ''}',
         retryFeedback: '${map['retryFeedback'] ?? ''}',
         maxAttempts: readInt(map['maxAttempts'], 2),
-        skillTags: readStringList(map['skillTags']),
         difficultyLevel: readInt(map['difficultyLevel'], 1),
         sortOrder: readInt(map['sortOrder']),
         isActive: map['isActive'] != false,

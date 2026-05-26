@@ -10,7 +10,6 @@ public final class AiConversationDtos {
 
     public record AiConversationTopicResponse(
         UUID id,
-        String code,
         String title,
         String description,
         Integer ageRangeMin,
@@ -31,7 +30,6 @@ public final class AiConversationDtos {
         String evaluationType,
         String hintText,
         int maxAttempts,
-        List<String> skillTags,
         String difficultyLevel,
         int sortOrder
     ) {}
@@ -164,7 +162,6 @@ public final class AiConversationDtos {
     ) {}
 
     public record AdminAiConversationTopicRequest(
-        String code,
         String title,
         String description,
         Integer ageRangeMin,
@@ -179,7 +176,6 @@ public final class AiConversationDtos {
 
     public record AdminAiConversationTopicResponse(
         UUID id,
-        String code,
         String title,
         String description,
         Integer ageRangeMin,
@@ -205,7 +201,6 @@ public final class AiConversationDtos {
         String positiveFeedback,
         String retryFeedback,
         Integer maxAttempts,
-        List<String> skillTags,
         String difficultyLevel,
         Integer sortOrder,
         Boolean isActive
@@ -224,7 +219,6 @@ public final class AiConversationDtos {
         String positiveFeedback,
         String retryFeedback,
         int maxAttempts,
-        List<String> skillTags,
         String difficultyLevel,
         int sortOrder,
         boolean isActive,

@@ -84,7 +84,7 @@ class AiConversationLiveController extends ChangeNotifier {
     _connectionTimeoutTimer = Timer(const Duration(seconds: 10), () {
       if (liveState == AiLiveState.preparing || liveState == AiLiveState.connecting) {
         if (kDebugMode) {
-          print('[AI Conversation State] Connection timeout after 10s');
+          debugPrint('[AI Conversation State] Connection timeout after 10s');
         }
         error = 'Không kết nối được. Con bấm Thử lại để kết nối lại nhé.';
         isPermissionError = false;
@@ -164,19 +164,19 @@ class AiConversationLiveController extends ChangeNotifier {
       } else if (session!.isRealGeminiLive) {
         _activeService = GeminiLiveConversationService();
         if (kDebugMode) {
-          print('[AI Conversation Service] using GeminiLiveConversationService');
+          debugPrint('[AI Conversation Service] using GeminiLiveConversationService');
         }
       } else {
         const useMockService = bool.fromEnvironment('USE_MOCK_AI_CONVERSATION', defaultValue: false);
         if (useMockService) {
           _activeService = MockAiLiveConversationService();
           if (kDebugMode) {
-            print('[AI Conversation Service] using MockAiLiveConversationService');
+            debugPrint('[AI Conversation Service] using MockAiLiveConversationService');
           }
         } else {
           _activeService = DeviceSttTtsConversationService();
           if (kDebugMode) {
-            print('[AI Conversation Service] using DeviceSttTtsConversationService');
+            debugPrint('[AI Conversation Service] using DeviceSttTtsConversationService');
           }
         }
       }
@@ -214,7 +214,7 @@ class AiConversationLiveController extends ChangeNotifier {
         }
 
         if (kDebugMode && oldState != liveState) {
-          print('[AI Conversation State] ${oldState.name} -> ${liveState.name}');
+          debugPrint('[AI Conversation State] ${oldState.name} -> ${liveState.name}');
         }
         notifyListeners();
       });

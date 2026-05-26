@@ -36,7 +36,6 @@ export function AiConversationTopicListPage() {
     if (!q) return topics;
     return topics.filter((topic) =>
       topic.title.toLowerCase().includes(q) ||
-      topic.code.toLowerCase().includes(q) ||
       (topic.description ?? "").toLowerCase().includes(q)
     );
   }, [search, topics]);
@@ -94,7 +93,7 @@ export function AiConversationTopicListPage() {
         <input
           type="text"
           className="search-input"
-          placeholder="Tìm theo tên, mã hoặc mô tả..."
+          placeholder="Tìm theo tên hoặc mô tả..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           style={{ flex: 1, margin: 0 }}
@@ -135,11 +134,6 @@ export function AiConversationTopicListPage() {
                   <tr key={topic.id}>
                     <td>
                       <strong style={{ fontSize: "14px", color: "var(--text-main)" }}>{topic.title}</strong>
-                      <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "4px" }}>
-                        <code style={{ fontSize: "11px", color: "var(--text-muted)", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
-                          Mã: {topic.code}
-                        </code>
-                      </div>
                       <div style={{ color: "var(--text-muted)", fontSize: "12px", marginTop: "6px" }}>
                         {topic.description || "Không có mô tả"}
                       </div>

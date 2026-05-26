@@ -30,7 +30,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
   const [positiveFeedback, setPositiveFeedback] = useState("");
   const [retryFeedback, setRetryFeedback] = useState("");
   const [maxAttempts, setMaxAttempts] = useState("2");
-  const [skillTags, setSkillTags] = useState("");
   const [difficultyLevel, setDifficultyLevel] = useState("BEGINNER");
   const [sortOrder, setSortOrder] = useState("0");
   const [isActive, setIsActive] = useState(true);
@@ -48,7 +47,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     setPositiveFeedback(question?.positiveFeedback ?? "");
     setRetryFeedback(question?.retryFeedback ?? "");
     setMaxAttempts(`${question?.maxAttempts ?? 2}`);
-    setSkillTags((question?.skillTags ?? []).join("\n"));
     setDifficultyLevel(question?.difficultyLevel ?? "BEGINNER");
     setSortOrder(`${question?.sortOrder ?? 0}`);
     setIsActive(question?.isActive ?? true);
@@ -94,7 +92,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
         positiveFeedback: positiveFeedback.trim() || null,
         retryFeedback: retryFeedback.trim() || null,
         maxAttempts: Number(maxAttempts),
-        skillTags: parseList(skillTags),
         difficultyLevel,
         sortOrder: Number(sortOrder),
         isActive
@@ -252,17 +249,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
                   {errors.sortOrder && <span className="error-msg">{errors.sortOrder}</span>}
                 </div>
               </div>
-              <div className="field">
-                <label>
-                  Nhóm kỹ năng (Skill tags) <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng một tag)</span>
-                </label>
-                <textarea
-                  value={skillTags}
-                  onChange={(event) => setSkillTags(event.target.value)}
-                  rows={2}
-                  placeholder="VD: greeting&#10;social_skills"
-                />
-              </div>
+
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
                 <ToggleSwitch
                   id="questionActive"

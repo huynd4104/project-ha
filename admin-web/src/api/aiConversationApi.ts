@@ -4,7 +4,6 @@ export type AiConversationEvaluationType = "EXACT" | "KEYWORD" | "SEMANTIC" | "O
 
 export interface AiConversationTopic {
   id: string;
-  code: string;
   title: string;
   description?: string | null;
   ageRangeMin?: number | null;
@@ -32,7 +31,6 @@ export interface AiConversationQuestion {
   positiveFeedback?: string | null;
   retryFeedback?: string | null;
   maxAttempts: number;
-  skillTags: string[];
   difficultyLevel: string;
   sortOrder: number;
   isActive: boolean;

@@ -50,8 +50,7 @@ export function AiConversationQuestionListPage() {
     return questions.filter((question) =>
       question.questionText.toLowerCase().includes(q) ||
       (question.expectedAnswer ?? "").toLowerCase().includes(q) ||
-      question.acceptedKeywords.join(" ").toLowerCase().includes(q) ||
-      question.skillTags.join(" ").toLowerCase().includes(q)
+      question.acceptedKeywords.join(" ").toLowerCase().includes(q)
     );
   }, [questions, search]);
 
@@ -111,7 +110,7 @@ export function AiConversationQuestionListPage() {
         <input
           type="text"
           className="search-input"
-          placeholder="Tìm theo câu hỏi, đáp án, từ khóa hoặc kỹ năng..."
+          placeholder="Tìm theo câu hỏi, đáp án hoặc từ khóa..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           style={{ flex: 1, margin: 0 }}
@@ -142,7 +141,6 @@ export function AiConversationQuestionListPage() {
                   <th>Đáp án kỳ vọng</th>
                   <th>Phương thức chấm</th>
                   <th>Từ khóa chính</th>
-                  <th>Nhóm kỹ năng</th>
                   <th>Độ khó</th>
                   <th>Trạng thái</th>
                   <th>Thứ tự</th>
@@ -181,19 +179,6 @@ export function AiConversationQuestionListPage() {
                           question.acceptedKeywords.map((kw, i) => (
                             <span key={i} className="badge info" style={{ textTransform: "none", fontSize: "11px" }}>
                               {kw}
-                            </span>
-                          ))
-                        ) : (
-                          <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>—</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "160px" }}>
-                        {question.skillTags.length > 0 ? (
-                          question.skillTags.map((tag, i) => (
-                            <span key={i} className="badge purple" style={{ textTransform: "none", fontSize: "11px" }}>
-                              {tag}
                             </span>
                           ))
                         ) : (

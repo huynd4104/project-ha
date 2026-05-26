@@ -30,7 +30,6 @@ enum AiConversationEvaluationResult {
 
 record AiConversationTopic(
     UUID id,
-    String code,
     String title,
     String description,
     Integer ageRangeMin,
@@ -58,7 +57,6 @@ record AiConversationQuestion(
     String positiveFeedback,
     String retryFeedback,
     int maxAttempts,
-    List<String> skillTags,
     String difficultyLevel,
     int sortOrder,
     boolean isActive,

@@ -19,7 +19,6 @@ final class AiConversationMapper {
         Map<String, Object> row = Db.row(raw);
         return new AiConversationTopic(
             uuid(row.get("id")),
-            str(row.get("code")),
             str(row.get("title")),
             str(row.get("description")),
             nullableInt(row.get("ageRangeMin")),
@@ -50,7 +49,6 @@ final class AiConversationMapper {
             str(row.get("positiveFeedback")),
             str(row.get("retryFeedback")),
             intValue(row.get("maxAttempts"), 2),
-            strings(row.get("skillTags")),
             str(row.get("difficultyLevel"), "BEGINNER"),
             intValue(row.get("sortOrder"), 0),
             bool(row.get("isActive"), true),
