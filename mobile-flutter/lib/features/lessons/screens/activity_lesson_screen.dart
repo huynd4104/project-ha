@@ -25,14 +25,14 @@ class ActivityLessonScreen extends StatefulWidget {
 class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
   final _lessonRepo = LessonRepository();
   late Future<({Lesson lesson, List<Activity> activities})> _dataFuture;
-  
+
   int _currentIndex = 0;
   DateTime _activityStartTime = DateTime.now();
-  
+
   // Track attempts results
   final List<Map<String, dynamic>> _attempts = [];
   bool _showFeedback = false;
-  
+
   // Current feedback states
   FeedbackType _feedbackType = FeedbackType.correct;
   String _feedbackMessage = '';
@@ -55,7 +55,7 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
       widget.lessonId,
     );
     final allActivities = await _lessonRepo.activitiesForLesson(lesson);
-    
+
     final summary = state.appUser?.subscriptionSummary;
     final hasPremiumAccess = AccessCheck.canAccessContent(
       accessType: AccessType.premium,
@@ -72,7 +72,13 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
     return (lesson: lesson, activities: activities);
   }
 
-  Future<void> _handleAnswer(String selectedAnswer, String result, double score, Activity activity, Lesson lesson) async {
+  Future<void> _handleAnswer(
+    String selectedAnswer,
+    String result,
+    double score,
+    Activity activity,
+    Lesson lesson,
+  ) async {
     if (_isSubmittingAttempt) return;
     setState(() => _isSubmittingAttempt = true);
 
@@ -104,31 +110,31 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
       debugPrint('Error submitting activity attempt: $e');
     }
 
-    // 3. Prepare contextual NPC bubble dialogue
+    // 3. Prepare contextual NPC bubble message
     final npc = lesson.npc;
     String feedbackMsg = '';
     String npcMsg = '';
 
     if (result == 'correct' || result == 'done') {
       _feedbackType = FeedbackType.correct;
-      feedbackMsg = activity.feedback.correct.isNotEmpty 
-          ? activity.feedback.correct 
+      feedbackMsg = activity.feedback.correct.isNotEmpty
+          ? activity.feedback.correct
           : 'Tuyệt vời! Con làm đúng rồi!';
       npcMsg = (npc != null && npc.dialogueTemplates.correct.isNotEmpty)
           ? npc.dialogueTemplates.correct
           : 'Tuyệt vời! Con làm rất tốt!';
     } else if (result == 'almost') {
       _feedbackType = FeedbackType.nearCorrect;
-      feedbackMsg = activity.feedback.almost.isNotEmpty 
-          ? activity.feedback.almost 
+      feedbackMsg = activity.feedback.almost.isNotEmpty
+          ? activity.feedback.almost
           : 'Gần chính xác rồi, cố gắng lên con!';
       npcMsg = (npc != null && npc.dialogueTemplates.encouragement.isNotEmpty)
           ? npc.dialogueTemplates.encouragement
           : 'Gần đúng rồi con ơi, cố lên chút nữa!';
     } else {
       _feedbackType = FeedbackType.wrong;
-      feedbackMsg = activity.feedback.wrong.isNotEmpty 
-          ? activity.feedback.wrong 
+      feedbackMsg = activity.feedback.wrong.isNotEmpty
+          ? activity.feedback.wrong
           : 'Chưa chính xác. Chúng mình thử lại nhé!';
       npcMsg = (npc != null && npc.dialogueTemplates.wrong.isNotEmpty)
           ? npc.dialogueTemplates.wrong
@@ -163,12 +169,17 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
     final state = context.read<AppState>();
 
     try {
-      final correctCount = _attempts.where((a) => a['result'] == 'correct' || a['result'] == 'done').length;
-      final finalScore = activities.isEmpty ? 0 : ((correctCount / activities.length) * 100).round();
+      final correctCount = _attempts
+          .where((a) => a['result'] == 'correct' || a['result'] == 'done')
+          .length;
+      final finalScore = activities.isEmpty
+          ? 0
+          : ((correctCount / activities.length) * 100).round();
 
       // Collect all answers payload
       final Map<String, String> answersMap = {
-        for (final att in _attempts) att['activityId'] as String: att['result'] as String
+        for (final att in _attempts)
+          att['activityId'] as String: att['result'] as String,
       };
 
       final result = await _lessonRepo.submitActivityLessonComplete(
@@ -187,7 +198,10 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi hoàn thành bài học: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Lỗi hoàn thành bài học: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -237,7 +251,6 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
         if (activities.isEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             final path = switch (lesson.type) {
-              LessonType.dialogue => 'dialogue',
               LessonType.flashcard => 'flashcard',
               _ => 'math',
             };
@@ -249,14 +262,16 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
         final activity = activities[_currentIndex];
         final progress = _currentIndex / activities.length;
 
-        // Determine mascot dialogue bubble message
+        // Determine mascot bubble message
         String bubbleMessage = _npcMessage;
         if (bubbleMessage.isEmpty) {
-          bubbleMessage = (lesson.npc != null && lesson.npc!.dialogueTemplates.beforeActivity.isNotEmpty)
+          bubbleMessage =
+              (lesson.npc != null &&
+                  lesson.npc!.dialogueTemplates.beforeActivity.isNotEmpty)
               ? lesson.npc!.dialogueTemplates.beforeActivity
               : (lesson.npc != null && lesson.npc!.defaultDialogue.isNotEmpty)
-                  ? lesson.npc!.defaultDialogue
-                  : 'Chào con! Mình cùng hoàn thành bài học này nhé.';
+              ? lesson.npc!.defaultDialogue
+              : 'Chào con! Mình cùng hoàn thành bài học này nhé.';
         }
 
         if (_isCompletingLesson) {
@@ -267,7 +282,10 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Đang nộp bài học và tính điểm...', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Đang nộp bài học và tính điểm...',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
@@ -287,16 +305,17 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                 children: [
                   // 1. Progress Bar & Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         IconButton(
                           onPressed: _confirmExit,
                           icon: const Icon(Icons.close_rounded),
                         ),
-                        Expanded(
-                          child: LessonProgressBar(value: progress),
-                        ),
+                        Expanded(child: LessonProgressBar(value: progress)),
                         const SizedBox(width: 8),
                         Text(
                           '${_currentIndex + 1}/${activities.length}',
@@ -306,9 +325,12 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                     ),
                   ),
 
-                  // 2. NPC & Dialogue Bubble
+                  // 2. NPC & Message Bubble
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 8.0,
+                    ),
                     child: MascotMessageBubble(
                       npc: lesson.npc,
                       message: bubbleMessage,
@@ -349,7 +371,9 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                     FeedbackPanel(
                       type: _feedbackType,
                       message: _feedbackMessage,
-                      ctaLabel: _currentIndex == activities.length - 1 ? 'Hoàn thành bài' : 'Tiếp tục',
+                      ctaLabel: _currentIndex == activities.length - 1
+                          ? 'Hoàn thành bài'
+                          : 'Tiếp tục',
                       onPressed: () => _nextActivity(activities, lesson),
                     ),
                 ],

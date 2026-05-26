@@ -165,8 +165,8 @@ class HomeScreen extends StatelessWidget {
                   ? (state.activeNpc!.dialogueTemplates.welcome.isNotEmpty
                         ? state.activeNpc!.dialogueTemplates.welcome
                         : (state.activeNpc!.defaultDialogue.isNotEmpty
-                            ? state.activeNpc!.defaultDialogue
-                            : 'Hôm nay mình cùng học nhé!'))
+                              ? state.activeNpc!.defaultDialogue
+                              : 'Hôm nay mình cùng học nhé!'))
                   : 'Bé chưa có bạn đồng hành nào. Hãy quét mã QR trên đồ chơi để mở khóa bạn nhỏ nhé!',
             ).animate().fadeIn().slideY(begin: .08),
             const SizedBox(height: 14),
@@ -174,12 +174,17 @@ class HomeScreen extends StatelessWidget {
               future: child == null
                   ? null
                   : Future.wait([
-                      LessonRepository().currentLearningPlan(state.appUser!.id, child.id),
+                      LessonRepository().currentLearningPlan(
+                        state.appUser!.id,
+                        child.id,
+                      ),
                       LessonRepository().progress(state.appUser!.id, child.id),
-                    ]).then((res) => (
-                      plan: res[0] as LearningPlan,
-                      progress: res[1] as List<UserProgress>
-                    )),
+                    ]).then(
+                      (res) => (
+                        plan: res[0] as LearningPlan,
+                        progress: res[1] as List<UserProgress>,
+                      ),
+                    ),
               builder: (_, pathSnap) {
                 if (child == null) return const SizedBox.shrink();
                 if (!pathSnap.hasData) {
@@ -190,10 +195,13 @@ class HomeScreen extends StatelessWidget {
                 }
                 final value = pathSnap.data!;
                 final plan = value.plan;
-                final List<UserProgress> progressList = List<UserProgress>.from(value.progress);
+                final List<UserProgress> progressList = List<UserProgress>.from(
+                  value.progress,
+                );
 
                 // Nếu chưa chọn lộ trình
-                if (child.currentPathId == null || child.currentPathId!.isEmpty) {
+                if (child.currentPathId == null ||
+                    child.currentPathId!.isEmpty) {
                   return AppCard(
                     borderColor: AppColors.orange.withOpacity(.25),
                     color: const Color(0xFFFDF8F6),
@@ -205,7 +213,10 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             const CircleAvatar(
                               backgroundColor: AppColors.orange,
-                              child: Icon(Icons.explore_outlined, color: Colors.white),
+                              child: Icon(
+                                Icons.explore_outlined,
+                                color: Colors.white,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -219,7 +230,10 @@ class HomeScreen extends StatelessWidget {
                                   const SizedBox(height: 2),
                                   const Text(
                                     'Bé chưa chọn lộ trình học phù hợp.',
-                                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -262,7 +276,8 @@ class HomeScreen extends StatelessWidget {
                 }
 
                 final pathName = plan.title;
-                final isCompletedAll = nextLesson == null && plan.lessons.isNotEmpty;
+                final isCompletedAll =
+                    nextLesson == null && plan.lessons.isNotEmpty;
 
                 return AppCard(
                   borderColor: AppColors.sky.withOpacity(.25),
@@ -346,8 +361,12 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(),
-                                      child: const Text('Để sau', style: TextStyle(color: Colors.grey)),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text(
+                                        'Để sau',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
                                     ),
                                     TextButton(
                                       onPressed: () {
@@ -355,12 +374,18 @@ class HomeScreen extends StatelessWidget {
                                         ParentGate.show(context, () {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
-                                              builder: (context) => const PaywallScreen(),
+                                              builder: (context) =>
+                                                  const PaywallScreen(),
                                             ),
                                           );
                                         });
                                       },
-                                      child: const Text('Dành cho Bố Mẹ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      child: const Text(
+                                        'Dành cho Bố Mẹ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -387,7 +412,10 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            if (child != null && (child.secondaryDifficulties.isEmpty || child.interests.isEmpty || child.learningGoals.isEmpty))
+            if (child != null &&
+                (child.secondaryDifficulties.isEmpty ||
+                    child.interests.isEmpty ||
+                    child.learningGoals.isEmpty))
               Padding(
                 padding: const EdgeInsets.only(top: 14),
                 child: AppCard(
@@ -398,7 +426,10 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       const CircleAvatar(
                         backgroundColor: Color(0xFFDCFCE7),
-                        child: Icon(Icons.edit_note_rounded, color: Color(0xFF10B981)),
+                        child: Icon(
+                          Icons.edit_note_rounded,
+                          color: Color(0xFF10B981),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
@@ -450,10 +481,7 @@ class HomeScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Nhiệm vụ hôm nay',
-                          style: AppTextStyles.title,
-                        ),
+                        Text('Nhiệm vụ hôm nay', style: AppTextStyles.title),
                         TextButton(
                           onPressed: () => context.go('/rewards'),
                           child: const Text('Xem thưởng'),
@@ -472,6 +500,13 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 6),
             Text('Đi nhanh', style: AppTextStyles.title),
             const SizedBox(height: 10),
+            _ActionCard(
+              title: 'Hội thoại cùng AI',
+              subtitle: 'Chọn chủ đề và luyện nói 3 phút',
+              icon: Icons.record_voice_over_rounded,
+              color: AppColors.teal,
+              onTap: () => context.push('/ai-conversations/topics'),
+            ),
             _ActionCard(
               title: 'Lộ trình học',
               subtitle: 'Xem bản đồ bài học',
@@ -504,7 +539,7 @@ class HomeScreen extends StatelessWidget {
               title: 'Phụ huynh',
               subtitle: 'Xem tiến bộ và gợi ý tại nhà',
               icon: Icons.dashboard_rounded,
-              color: AppColors.teal,
+              color: AppColors.primary,
               onTap: () => context.go('/parent'),
             ),
           ],

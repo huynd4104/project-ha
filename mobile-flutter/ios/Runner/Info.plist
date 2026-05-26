@@ -49,5 +49,7 @@
 	<string>Ứng dụng cần truy cập camera để quét mã QR mở khóa Mascot.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Ứng dụng cần sử dụng microphone để cho phép con trả lời câu hỏi bằng giọng nói.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ứng dụng cần nhận diện giọng nói để hiểu câu trả lời của con.</string>
 </dict>
 </plist>

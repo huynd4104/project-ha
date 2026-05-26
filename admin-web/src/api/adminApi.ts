@@ -16,7 +16,6 @@ const pathToCollection: Record<string, string> = {
   "/activation-codes": "activation-codes",
   "/lessons": "lessons",
   "/math-questions": "math-questions",
-  "/dialogues": "dialogues",
   "/flashcards": "flashcards",
   "/spelling-activities": "spelling-activities",
   "/rhyme-challenges": "rhyme-challenges",

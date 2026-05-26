@@ -87,10 +87,6 @@ public class LearningService {
         return repo.byLesson("math_questions", lessonId, "question_text");
     }
 
-    public List<Map<String, Object>> dialogues(UUID lessonId) {
-        return repo.byLesson("dialogues", lessonId, "title");
-    }
-
     public List<Map<String, Object>> flashcards(UUID lessonId) {
         return repo.byLesson("flashcards", lessonId, "front_text");
     }
@@ -145,9 +141,6 @@ public class LearningService {
             } else if (flashcard) {
                 totalQuestions = flashcards(lessonId).size();
                 correctAnswers = totalQuestions;
-            } else if ("DIALOGUE".equals(lessonType)) {
-                totalQuestions = dialogues(lessonId).size();
-                correctAnswers = totalQuestions;
             } else {
                 List<Map<String, Object>> questions = mathQuestions(lessonId);
                 totalQuestions = questions.size();
@@ -165,7 +158,6 @@ public class LearningService {
         }
         gamification.updateMissionProgress(userId, childId, flashcard ? "REVIEW_FLASHCARD" : "COMPLETE_LESSON", 1);
         if ("MATH".equals(lessonType)) gamification.updateMissionProgress(userId, childId, "COMPLETE_MATH", 1);
-        if ("DIALOGUE".equals(lessonType)) gamification.updateMissionProgress(userId, childId, "COMPLETE_DIALOGUE", 1);
         Map<String, Object> rewards = new LinkedHashMap<>(gamification.rewardSummary(userId, childId, xp));
         rewards.put("score", score);
         rewards.put("totalQuestions", totalQuestions);

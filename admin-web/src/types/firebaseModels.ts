@@ -56,7 +56,7 @@ export type Lesson = {
   id: string;
   title: string;
   description: string;
-  type: "MATH" | "DIALOGUE" | "FLASHCARD" | "THINKING" | "SPELLING" | "RHYME";
+  type: "MATH" | "FLASHCARD" | "THINKING" | "SPELLING" | "RHYME";
   lessonType?: string;
   orderIndex: number;
   programId?: string | null;

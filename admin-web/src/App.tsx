@@ -1,9 +1,10 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AiConversationQuestionListPage } from "./pages/AiConversationQuestionListPage";
+import { AiConversationTopicListPage } from "./pages/AiConversationTopicListPage";
 import { ChildrenPage } from "./pages/ChildrenPage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { DialoguesPage } from "./pages/DialoguesPage";
 import { FlashcardsPage } from "./pages/FlashcardsPage";
 import { LessonsPage } from "./pages/LessonsPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -78,7 +79,8 @@ export default function App() {
         <Route path="/thinking-questions" element={<MathQuestionsPage />} />
         <Route path="/spelling-questions" element={<MathQuestionsPage />} />
         <Route path="/rhyme-questions" element={<MathQuestionsPage />} />
-        <Route path="/dialogues" element={<DialoguesPage />} />
+        <Route path="/ai-conversations" element={<AiConversationTopicListPage />} />
+        <Route path="/ai-conversations/topics/:topicId/questions" element={<AiConversationQuestionListPage />} />
         <Route path="/flashcards" element={<FlashcardsPage />} />
 
         <Route path="/change-password" element={<ChangePasswordPage />} />

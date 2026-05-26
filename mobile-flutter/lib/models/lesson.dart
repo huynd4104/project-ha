@@ -2,12 +2,10 @@ import 'npc.dart';
 import 'model_helpers.dart';
 import 'domain.dart';
 
-enum LessonType { math, dialogue, flashcard, thinking, spelling, rhyme }
+enum LessonType { math, flashcard, thinking, spelling, rhyme }
 
 LessonType lessonTypeFromString(String value) {
   switch (value.toUpperCase()) {
-    case 'DIALOGUE':
-      return LessonType.dialogue;
     case 'FLASHCARD':
       return LessonType.flashcard;
     case 'THINKING':

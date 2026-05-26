@@ -10,6 +10,9 @@ export const httpClient = {
   async put(url: string, body?: any) {
     return this.request(url, "PUT", body);
   },
+  async patch(url: string, body?: any) {
+    return this.request(url, "PATCH", body);
+  },
   async delete(url: string) {
     return this.request(url, "DELETE");
   },

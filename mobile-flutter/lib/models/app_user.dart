@@ -47,14 +47,13 @@ class AppUser {
     bool? isActive,
     bool? emailVerified,
     SubscriptionSummary? subscriptionSummary,
-  }) =>
-      AppUser(
-        id: id,
-        email: email,
-        fullName: fullName ?? this.fullName,
-        role: role,
-        isActive: isActive ?? this.isActive,
-        emailVerified: emailVerified ?? this.emailVerified,
-        subscriptionSummary: subscriptionSummary ?? this.subscriptionSummary,
-      );
+  }) => AppUser(
+    id: id,
+    email: email,
+    fullName: fullName ?? this.fullName,
+    role: role,
+    isActive: isActive ?? this.isActive,
+    emailVerified: emailVerified ?? this.emailVerified,
+    subscriptionSummary: subscriptionSummary ?? this.subscriptionSummary,
+  );
 }

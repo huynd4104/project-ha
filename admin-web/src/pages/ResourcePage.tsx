@@ -18,7 +18,6 @@ const resources = [
   { key: "activation-codes", label: "Mã kích hoạt" },
   { key: "lessons", label: "Bài học" },
   { key: "math-questions", label: "Câu hỏi toán" },
-  { key: "dialogues", label: "Hội thoại" },
   { key: "flashcards", label: "Thẻ học" },
   { key: "badges", label: "Huy hiệu" },
   { key: "daily-missions", label: "Nhiệm vụ hàng ngày" },

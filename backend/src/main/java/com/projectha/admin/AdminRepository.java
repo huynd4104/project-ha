@@ -22,7 +22,6 @@ public class AdminRepository {
         Map.entry("lessons", "lessons"),
         Map.entry("activities", "activities"),
         Map.entry("math-questions", "math_questions"),
-        Map.entry("dialogues", "dialogues"),
         Map.entry("flashcards", "flashcards"),
         Map.entry("media-files", "media_files"),
         Map.entry("npcs", "npcs"),

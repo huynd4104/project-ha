@@ -10,7 +10,7 @@ import { useTableControls } from "../utils/tableControls";
 import type { Lesson, NPC, PublishStatus, AccessType, LearningLevel } from "../types/firebaseModels";
 
 const LESSON_TYPES = [
-  "MATH", "DIALOGUE", "FLASHCARD", "THINKING", "SPELLING", "RHYME",
+  "MATH", "FLASHCARD", "THINKING", "SPELLING", "RHYME",
   "LISTEN_AND_CHOOSE", "VOICE_QUIZ", "EMOTION", "DAILY_LIFE", "PARENT_ACTIVITY", "MIXED"
 ];
 

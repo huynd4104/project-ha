@@ -66,11 +66,6 @@ public class LearningController {
         return service.mathQuestions(lessonId);
     }
 
-    @GetMapping("/lessons/{lessonId}/dialogues")
-    public List<Map<String, Object>> dialogues(@PathVariable UUID lessonId) {
-        return service.dialogues(lessonId);
-    }
-
     @GetMapping("/lessons/{lessonId}/flashcards")
     public List<Map<String, Object>> flashcards(@PathVariable UUID lessonId) {
         return service.flashcards(lessonId);

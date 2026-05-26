@@ -22,24 +22,23 @@ class SubscriptionEntitlements {
       );
 
   Map<String, dynamic> toMap() => {
-        'premiumContent': premiumContent,
-        'voiceQuiz': voiceQuiz,
-        'advancedReports': advancedReports,
-        'premiumNpcs': premiumNpcs,
-      };
+    'premiumContent': premiumContent,
+    'voiceQuiz': voiceQuiz,
+    'advancedReports': advancedReports,
+    'premiumNpcs': premiumNpcs,
+  };
 
   SubscriptionEntitlements copyWith({
     bool? premiumContent,
     bool? voiceQuiz,
     bool? advancedReports,
     bool? premiumNpcs,
-  }) =>
-      SubscriptionEntitlements(
-        premiumContent: premiumContent ?? this.premiumContent,
-        voiceQuiz: voiceQuiz ?? this.voiceQuiz,
-        advancedReports: advancedReports ?? this.advancedReports,
-        premiumNpcs: premiumNpcs ?? this.premiumNpcs,
-      );
+  }) => SubscriptionEntitlements(
+    premiumContent: premiumContent ?? this.premiumContent,
+    voiceQuiz: voiceQuiz ?? this.voiceQuiz,
+    advancedReports: advancedReports ?? this.advancedReports,
+    premiumNpcs: premiumNpcs ?? this.premiumNpcs,
+  );
 }
 
 class SubscriptionSummary {
@@ -66,22 +65,21 @@ class SubscriptionSummary {
       );
 
   Map<String, dynamic> toMap() => {
-        'plan': plan,
-        'status': status,
-        'expiresAt': expiresAt,
-        'entitlements': entitlements.toMap(),
-      };
+    'plan': plan,
+    'status': status,
+    'expiresAt': expiresAt,
+    'entitlements': entitlements.toMap(),
+  };
 
   SubscriptionSummary copyWith({
     String? plan,
     String? status,
     DateTime? expiresAt,
     SubscriptionEntitlements? entitlements,
-  }) =>
-      SubscriptionSummary(
-        plan: plan ?? this.plan,
-        status: status ?? this.status,
-        expiresAt: expiresAt ?? this.expiresAt,
-        entitlements: entitlements ?? this.entitlements,
-      );
+  }) => SubscriptionSummary(
+    plan: plan ?? this.plan,
+    status: status ?? this.status,
+    expiresAt: expiresAt ?? this.expiresAt,
+    entitlements: entitlements ?? this.entitlements,
+  );
 }

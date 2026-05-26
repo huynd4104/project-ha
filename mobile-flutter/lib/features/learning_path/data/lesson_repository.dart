@@ -97,7 +97,8 @@ class LessonRepository {
     ChildProfile child,
     String lessonId,
   ) async {
-    final data = await _api.get('/api/lessons/$lessonId') as Map<String, dynamic>;
+    final data =
+        await _api.get('/api/lessons/$lessonId') as Map<String, dynamic>;
     return _lessonFromMap(data);
   }
 
@@ -110,15 +111,6 @@ class LessonRepository {
     if (activities.isNotEmpty) return activities;
 
     switch (lesson.type) {
-      case LessonType.dialogue:
-        return (await dialogues(lesson.id))
-            .map(
-              (item) => ActivityAdapters.fromDialogue(
-                item,
-                skillTags: lesson.skillTags,
-              ),
-            )
-            .toList();
       case LessonType.flashcard:
         return (await flashcards(lesson.id))
             .map(
@@ -157,22 +149,13 @@ class LessonRepository {
   }
 
   Future<List<MathQuestion>> mathQuestions(String lessonId) async {
-    final data = await _api.get('/api/lessons/$lessonId/math-questions') as List;
+    final data =
+        await _api.get('/api/lessons/$lessonId/math-questions') as List;
     final items = data.map((item) {
       final map = Map<String, dynamic>.from(item as Map);
       return MathQuestion.fromMap('${map['id']}', map);
     }).toList();
     items.sort((a, b) => a.questionText.compareTo(b.questionText));
-    return items;
-  }
-
-  Future<List<Dialogue>> dialogues(String lessonId) async {
-    final data = await _api.get('/api/lessons/$lessonId/dialogues') as List;
-    final items = data.map((item) {
-      final map = Map<String, dynamic>.from(item as Map);
-      return Dialogue.fromMap('${map['id']}', map);
-    }).toList();
-    items.sort((a, b) => a.title.compareTo(b.title));
     return items;
   }
 
@@ -236,10 +219,7 @@ class LessonRepository {
   }) async {
     final data = await _api.post(
       '/api/children/$childId/lessons/${lesson.id}/complete',
-      {
-        'answers': answers,
-        'completionType': lessonTypeToString(lesson.type),
-      },
+      {'answers': answers, 'completionType': lessonTypeToString(lesson.type)},
     );
     return _lessonResultFromMap(Map<String, dynamic>.from(data as Map));
   }
@@ -263,12 +243,13 @@ class LessonRepository {
     required int score,
     required Map<String, String> answers,
   }) async {
-    final data = await _api.post('/api/children/$childId/lessons/$lessonId/complete', {
-      'completionType': 'ACTIVITY',
-      'correctAnswers': correctAnswers,
-      'score': score,
-      'answers': answers,
-    });
+    final data = await _api
+        .post('/api/children/$childId/lessons/$lessonId/complete', {
+          'completionType': 'ACTIVITY',
+          'correctAnswers': correctAnswers,
+          'score': score,
+          'answers': answers,
+        });
     return _lessonResultFromMap(Map<String, dynamic>.from(data as Map));
   }
 
@@ -288,8 +269,12 @@ class LessonRepository {
     }).toList();
     return LearningPlan(
       lessons: lessons,
-      path: pathMap == null ? null : LearningPath.fromMap('${pathMap['id']}', pathMap),
-      program: programMap == null ? null : Program.fromMap('${programMap['id']}', programMap),
+      path: pathMap == null
+          ? null
+          : LearningPath.fromMap('${pathMap['id']}', pathMap),
+      program: programMap == null
+          ? null
+          : Program.fromMap('${programMap['id']}', programMap),
       recommendations: const [],
       usesLegacyFallback: data['usesLegacyFallback'] == true,
       pathItems: pathItems,

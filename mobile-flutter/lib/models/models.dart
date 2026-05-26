@@ -4,7 +4,6 @@ export 'app_user.dart';
 export 'badge.dart';
 export 'child_profile.dart';
 export 'daily_mission.dart';
-export 'dialogue.dart';
 export 'domain.dart';
 export 'flashcard.dart';
 export 'lesson.dart';

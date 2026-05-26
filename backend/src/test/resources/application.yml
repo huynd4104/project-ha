@@ -31,3 +31,9 @@ project-ha:
     demo-premium-upgrade: true
     mock-voice-provider: true
     voice-provider: mock
+  ai:
+    gemini:
+      api-key:
+      live-model: gemini-3.1-flash-live-preview
+      live-enabled: false
+      response-language: vi-VN

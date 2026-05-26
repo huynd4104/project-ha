@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { mediaService, MediaAsset } from "../services/mediaService";
 
 interface MediaPickerProps {
-  category?: "NPC" | "FLASHCARD" | "DIALOGUE" | "GENERAL";
+  category?: "NPC" | "FLASHCARD" | "AI_CONVERSATION" | "GENERAL";
   type?: "IMAGE" | "AUDIO" | "VIDEO";
   currentValue?: string;
   onSelect: (url: string) => void;
@@ -104,7 +104,7 @@ export function MediaPicker({ category, type, currentValue = "", onSelect, onClo
                 <option value="GENERAL">Tất cả danh mục</option>
                 <option value="NPC">Mascot</option>
                 <option value="FLASHCARD">Thẻ học</option>
-                <option value="DIALOGUE">Hội thoại</option>
+                <option value="AI_CONVERSATION">Hội thoại AI</option>
               </select>
             )}
           </div>

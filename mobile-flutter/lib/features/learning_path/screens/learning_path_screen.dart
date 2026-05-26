@@ -42,7 +42,11 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
     return (plan: plan, progress: progress);
   }
 
-  Lesson? _getCurrentLesson(List<Lesson> lessons, Set<String> completed, SubscriptionSummary? summary) {
+  Lesson? _getCurrentLesson(
+    List<Lesson> lessons,
+    Set<String> completed,
+    SubscriptionSummary? summary,
+  ) {
     for (final lesson in lessons) {
       if (!completed.contains(lesson.id)) {
         final hasPremiumAccess = AccessCheck.canAccessContent(
@@ -83,7 +87,11 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
               .map((p) => p.lessonId.replaceAll('_flashcard', ''))
               .toSet();
 
-          final currentLesson = _getCurrentLesson(value.plan.lessons, completed, summary);
+          final currentLesson = _getCurrentLesson(
+            value.plan.lessons,
+            completed,
+            summary,
+          );
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,10 +130,15 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
                           ),
                           if (value.plan.usesLegacyFallback)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.orange.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                               child: const Text(
                                 'Bản mẫu',
@@ -154,7 +167,9 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 22,
-                                backgroundColor: AppColors.primary.withOpacity(0.15),
+                                backgroundColor: AppColors.primary.withOpacity(
+                                  0.15,
+                                ),
                                 child: const Icon(
                                   Icons.play_arrow_rounded,
                                   color: AppColors.primary,
@@ -191,15 +206,23 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
-                                onPressed: () => context.push('/lesson/${currentLesson.id}'),
+                                onPressed: () =>
+                                    context.push('/lesson/${currentLesson.id}'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
                                   elevation: 2,
-                                  shadowColor: AppColors.primary.withOpacity(0.5),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  shadowColor: AppColors.primary.withOpacity(
+                                    0.5,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppRadius.md),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
                                   ),
                                 ),
                                 child: const Text(

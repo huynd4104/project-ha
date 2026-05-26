@@ -12,7 +12,7 @@ interface DailyMission {
   id: string;
   title: string;
   description: string;
-  type: "COMPLETE_LESSON" | "REVIEW_FLASHCARD" | "SCAN_QR" | "COMPLETE_DIALOGUE" | "COMPLETE_MATH";
+  type: "COMPLETE_LESSON" | "REVIEW_FLASHCARD" | "SCAN_QR" | "COMPLETE_MATH";
   targetValue: number;
   rewardXp: number;
   isActive: boolean;
@@ -22,7 +22,6 @@ const MISSION_TYPE_LABELS: Record<DailyMission["type"], string> = {
   COMPLETE_LESSON: "Hoàn thành bài học",
   REVIEW_FLASHCARD: "Ôn tập Flashcard",
   SCAN_QR: "Quét mã QR",
-  COMPLETE_DIALOGUE: "Hoàn thành hội thoại",
   COMPLETE_MATH: "Hoàn thành bài toán"
 };
 
@@ -266,7 +265,6 @@ export function DailyMissionsPage() {
                     <option value="COMPLETE_LESSON">Hoàn thành bài học</option>
                     <option value="REVIEW_FLASHCARD">Ôn tập Flashcard</option>
                     <option value="SCAN_QR">Quét mã QR</option>
-                    <option value="COMPLETE_DIALOGUE">Hoàn thành hội thoại</option>
                     <option value="COMPLETE_MATH">Hoàn thành bài toán</option>
                   </select>
                 </div>

@@ -57,7 +57,6 @@ const valueLabels: Record<string, string> = {
 
   // Subjects / Type
   MATH: "Toán",
-  DIALOGUE: "Hội thoại",
   FLASHCARD: "Flashcard",
 
   // Support Level

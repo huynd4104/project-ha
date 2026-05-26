@@ -17,7 +17,7 @@ interface Lesson {
   id: string;
   title: string;
   description: string;
-  type: "MATH" | "DIALOGUE" | "FLASHCARD" | "THINKING" | "SPELLING" | "RHYME";
+  type: "MATH" | "FLASHCARD" | "THINKING" | "SPELLING" | "RHYME";
   orderIndex: number;
   npcId?: string | null;
   isActive: boolean;
@@ -104,21 +104,18 @@ export function LessonsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const [mathRes, dialogueRes, flashcardRes] = await Promise.all([
+      const [mathRes, flashcardRes] = await Promise.all([
         adminApi.list("/math-questions"),
-        adminApi.list("/dialogues"),
         adminApi.list("/flashcards")
       ]);
 
       const mathSnap = (mathRes.data.data || []).filter((q: any) => q.lessonId === id);
-      const dialogueSnap = (dialogueRes.data.data || []).filter((d: any) => d.lessonId === id);
       const flashcardSnap = (flashcardRes.data.data || []).filter((f: any) => f.lessonId === id);
 
-      if (mathSnap.length > 0 || dialogueSnap.length > 0 || flashcardSnap.length > 0) {
+      if (mathSnap.length > 0 || flashcardSnap.length > 0) {
         alert(
           `Không thể xóa bài học này vì đang có dữ liệu liên kết tồn tại:\n` +
           `• Câu hỏi toán: ${mathSnap.length} câu\n` +
-          `• Câu hội thoại: ${dialogueSnap.length} câu\n` +
           `• Thẻ học (Flashcard): ${flashcardSnap.length} thẻ\n\n` +
           `Vui lòng xóa các câu hỏi/thẻ học liên quan trước khi xóa bài học.`
         );

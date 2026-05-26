@@ -41,10 +41,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       state.activeChild!,
       widget.lessonId,
     );
-    return (
-      lesson: lesson,
-      cards: await repo.flashcards(widget.lessonId),
-    );
+    return (lesson: lesson, cards: await repo.flashcards(widget.lessonId));
   }
 
   Future<void> confirmExit() async {

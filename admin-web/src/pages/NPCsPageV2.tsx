@@ -11,7 +11,7 @@ import { downloadExcelTemplate, toExcelTemplateFilename } from "../utils/csv";
 import { uiLabel } from "../utils/adminLabels";
 import { useTableControls } from "../utils/tableControls";
 import type { DialogueTemplates } from "../types/firebaseModels";
-const DIALOGUE_FIELDS: { key: keyof DialogueTemplates; label: string; placeholder: string }[] = [
+const SPEECH_FIELDS: { key: keyof DialogueTemplates; label: string; placeholder: string }[] = [
   { key: "welcome", label: "Chào mừng", placeholder: "Xin chào bé! Hôm nay mình học gì nhỉ?" },
   { key: "beforeActivity", label: "Trước hoạt động", placeholder: "Mình cùng bắt đầu nào!" },
   { key: "correct", label: "Trả lời đúng", placeholder: "Giỏi lắm! Đúng rồi!" },
@@ -470,7 +470,7 @@ export function NPCsPageV2() {
 
                         <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", marginTop: "8px" }}>
                           <label style={{ fontWeight: "600", fontSize: "14px", marginBottom: "8px", display: "block" }}>Mẫu câu thoại</label>
-                          {DIALOGUE_FIELDS.map((df) => (
+                          {SPEECH_FIELDS.map((df) => (
                             <div className="field" key={df.key}>
                               <label style={{ fontSize: "12px" }}>{df.label}</label>
                               <input type="text" placeholder={df.placeholder} value={dialogueTemplates[df.key] || ""} onChange={(e) => updateDT(df.key, e.target.value)} />

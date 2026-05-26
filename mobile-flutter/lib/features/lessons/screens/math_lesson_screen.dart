@@ -42,10 +42,7 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
       state.activeChild!,
       widget.lessonId,
     );
-    return (
-      lesson: lesson,
-      items: await repo.mathQuestions(widget.lessonId),
-    );
+    return (lesson: lesson, items: await repo.mathQuestions(widget.lessonId));
   }
 
   Future<void> finish(Lesson lesson, List<MathQuestion> items) async {

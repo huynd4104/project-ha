@@ -64,7 +64,12 @@ class LearningMap extends StatelessWidget {
     return titles[index.clamp(0, titles.length - 1)];
   }
 
-  LessonNodeState _state(int index, Lesson lesson, Set<String> completed, SubscriptionSummary? summary) {
+  LessonNodeState _state(
+    int index,
+    Lesson lesson,
+    Set<String> completed,
+    SubscriptionSummary? summary,
+  ) {
     final hasPremiumAccess = AccessCheck.canAccessContent(
       accessType: lesson.accessType,
       summary: summary,
@@ -80,7 +85,7 @@ class LearningMap extends StatelessWidget {
 
     if (pathItems.isEmpty) {
       if (index == 0) return LessonNodeState.current;
-      
+
       bool isFirstUncompleted = true;
       for (var j = 0; j < index; j++) {
         if (!completed.contains(lessons[j].id)) {
@@ -124,7 +129,9 @@ class LearningMap extends StatelessWidget {
 
     if (item.unlockRule == UnlockRule.previousCompleted) {
       if (item.prerequisiteLessonIds.isNotEmpty) {
-        final allPrereqsDone = item.prerequisiteLessonIds.every((id) => completed.contains(id));
+        final allPrereqsDone = item.prerequisiteLessonIds.every(
+          (id) => completed.contains(id),
+        );
         if (!allPrereqsDone) return LessonNodeState.locked;
       } else {
         if (index > 0) {

@@ -25,7 +25,8 @@ import '../../../models/models.dart';
 import '../widgets/audio_button.dart';
 import '../widgets/microphone_button.dart';
 
-typedef AnswerCallback = void Function(String selectedAnswer, String result, double score);
+typedef AnswerCallback =
+    void Function(String selectedAnswer, String result, double score);
 
 // 1. CHOICE_ANSWER Renderer (listenAndChooseImage, lookAndChooseWord, multipleChoice)
 class ChoiceAnswerRenderer extends StatefulWidget {
@@ -55,7 +56,8 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
       _isAnswered = true;
     });
 
-    final isCorrect = option.isCorrect || 
+    final isCorrect =
+        option.isCorrect ||
         widget.activity.correctAnswers.contains(option.id) ||
         widget.activity.correctAnswers.contains(option.text);
 
@@ -70,7 +72,9 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
   @override
   Widget build(BuildContext context) {
     final activity = widget.activity;
-    final hasImages = activity.options.any((o) => o.imageUrl != null && o.imageUrl!.isNotEmpty);
+    final hasImages = activity.options.any(
+      (o) => o.imageUrl != null && o.imageUrl!.isNotEmpty,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,9 +110,7 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
           Container(
             height: 160,
             margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: AppImage(
@@ -139,17 +141,19 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
-                              color: isSelected ? AppColors.primary : Colors.grey[200]!,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey[200]!,
                               width: isSelected ? 3.5 : 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: isSelected 
-                                    ? AppColors.primary.withOpacity(0.15) 
+                                color: isSelected
+                                    ? AppColors.primary.withOpacity(0.15)
                                     : Colors.black.withOpacity(0.03),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
-                              )
+                              ),
                             ],
                           ),
                           child: Column(
@@ -157,14 +161,28 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                             children: [
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-                                  child: option.imageUrl != null && option.imageUrl!.isNotEmpty
-                                      ? AppImage(imageUrl: option.imageUrl!, fit: BoxFit.cover)
-                                      : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(22),
+                                  ),
+                                  child:
+                                      option.imageUrl != null &&
+                                          option.imageUrl!.isNotEmpty
+                                      ? AppImage(
+                                          imageUrl: option.imageUrl!,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : const Icon(
+                                          Icons.image_outlined,
+                                          size: 48,
+                                          color: Colors.grey,
+                                        ),
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 10.0,
+                                ),
                                 child: Text(
                                   option.text,
                                   style: const TextStyle(
@@ -194,18 +212,26 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                       child: Opacity(
                         opacity: _isAnswered && !isSelected ? 0.5 : 1.0,
                         child: AppCard(
-                          borderColor: isSelected ? AppColors.primary : Colors.grey[200]!,
+                          borderColor: isSelected
+                              ? AppColors.primary
+                              : Colors.grey[200]!,
                           color: isSelected ? AppColors.cream : Colors.white,
-                          onTap: _isAnswered ? null : () => _submit(option, idx),
+                          onTap: _isAnswered
+                              ? null
+                              : () => _submit(option, idx),
                           child: Center(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
                               child: Text(
                                 option.text,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: isSelected ? AppColors.primary : AppColors.text,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.text,
                                 ),
                               ),
                             ),
@@ -244,7 +270,7 @@ class _TextAnswerRendererState extends State<TextAnswerRenderer> {
     if (text.isEmpty) return;
 
     final lowerText = text.toLowerCase();
-    
+
     // Check match in correct answers
     bool isCorrect = false;
     for (final ans in widget.activity.correctAnswers) {
@@ -262,12 +288,8 @@ class _TextAnswerRendererState extends State<TextAnswerRenderer> {
       }
     }
 
-    final result = isCorrect 
-        ? 'correct' 
-        : (isAlmost ? 'almost' : 'wrong');
-    final score = isCorrect 
-        ? 10.0 
-        : (isAlmost ? 5.0 : 0.0);
+    final result = isCorrect ? 'correct' : (isAlmost ? 'almost' : 'wrong');
+    final score = isCorrect ? 10.0 : (isAlmost ? 5.0 : 0.0);
 
     widget.onAnswerSubmitted(text, result, score);
   }
@@ -305,7 +327,10 @@ class _TextAnswerRendererState extends State<TextAnswerRenderer> {
               margin: const EdgeInsets.only(bottom: 20),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: AppImage(imageUrl: activity.imageUrl!, fit: BoxFit.contain),
+                child: AppImage(
+                  imageUrl: activity.imageUrl!,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           TextField(
@@ -368,7 +393,7 @@ class _SpellingRendererState extends State<SpellingRenderer> {
     _correctWord = widget.activity.correctAnswers.isNotEmpty
         ? widget.activity.correctAnswers.first.toUpperCase()
         : 'HELLO';
-    
+
     // Split and shuffle
     _letterPool = _correctWord.split('').toList()..shuffle(Random());
     _assembledLetters.clear();
@@ -384,11 +409,11 @@ class _SpellingRendererState extends State<SpellingRenderer> {
     if (_letterPool.isEmpty) {
       final currentWord = _assembledLetters.join('');
       final isCorrect = currentWord == _correctWord;
-      
+
       Future.delayed(const Duration(milliseconds: 350), () {
         widget.onAnswerSubmitted(
-          currentWord, 
-          isCorrect ? 'correct' : 'wrong', 
+          currentWord,
+          isCorrect ? 'correct' : 'wrong',
           isCorrect ? 10.0 : 0.0,
         );
       });
@@ -411,7 +436,9 @@ class _SpellingRendererState extends State<SpellingRenderer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          activity.instruction.isNotEmpty ? activity.instruction : 'Sắp xếp chữ cái để tạo từ đúng:',
+          activity.instruction.isNotEmpty
+              ? activity.instruction
+              : 'Sắp xếp chữ cái để tạo từ đúng:',
           style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -428,10 +455,13 @@ class _SpellingRendererState extends State<SpellingRenderer> {
             margin: const EdgeInsets.only(bottom: 16),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: AppImage(imageUrl: activity.imageUrl!, fit: BoxFit.contain),
+              child: AppImage(
+                imageUrl: activity.imageUrl!,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-        
+
         // Target slots
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
@@ -461,8 +491,8 @@ class _SpellingRendererState extends State<SpellingRenderer> {
                     child: Text(
                       hasLetter ? _assembledLetters[idx] : '',
                       style: const TextStyle(
-                        fontSize: 20, 
-                        fontWeight: FontWeight.bold, 
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
@@ -473,7 +503,10 @@ class _SpellingRendererState extends State<SpellingRenderer> {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: _removeLastLetter,
-                  icon: const Icon(Icons.backspace_rounded, color: AppColors.coral),
+                  icon: const Icon(
+                    Icons.backspace_rounded,
+                    color: AppColors.coral,
+                  ),
                 ),
               ],
             ],
@@ -502,13 +535,17 @@ class _SpellingRendererState extends State<SpellingRenderer> {
                       color: Colors.black.withOpacity(0.04),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
-                    )
+                    ),
                   ],
                 ),
                 child: Center(
                   child: Text(
                     letter,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.text),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
               ),
@@ -561,8 +598,8 @@ class _DragDropRendererState extends State<DragDropRenderer> {
 
     final isCorrect = widget.activity.correctAnswers.contains(_selectedText);
     widget.onAnswerSubmitted(
-      _selectedText!, 
-      isCorrect ? 'correct' : 'wrong', 
+      _selectedText!,
+      isCorrect ? 'correct' : 'wrong',
       isCorrect ? 10.0 : 0.0,
     );
   }
@@ -570,7 +607,7 @@ class _DragDropRendererState extends State<DragDropRenderer> {
   @override
   Widget build(BuildContext context) {
     final activity = widget.activity;
-    
+
     // Display prompt with slot
     // e.g. "Con mèo kêu ____" -> replace placeholder with text or highlight
     final displayText = activity.prompt.replaceAll('____', ' [ ? ] ');
@@ -579,7 +616,9 @@ class _DragDropRendererState extends State<DragDropRenderer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          activity.instruction.isNotEmpty ? activity.instruction : 'Chọn từ đúng điền vào chỗ trống:',
+          activity.instruction.isNotEmpty
+              ? activity.instruction
+              : 'Chọn từ đúng điền vào chỗ trống:',
           style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -593,10 +632,15 @@ class _DragDropRendererState extends State<DragDropRenderer> {
           ),
           child: Column(
             children: [
-              if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty) ...[
+              if (activity.imageUrl != null &&
+                  activity.imageUrl!.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: AppImage(imageUrl: activity.imageUrl!, height: 120, fit: BoxFit.contain),
+                  child: AppImage(
+                    imageUrl: activity.imageUrl!,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -604,7 +648,11 @@ class _DragDropRendererState extends State<DragDropRenderer> {
                 _selectedText != null
                     ? activity.prompt.replaceAll('____', ' [ $_selectedText ] ')
                     : displayText,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -626,7 +674,10 @@ class _DragDropRendererState extends State<DragDropRenderer> {
             return GestureDetector(
               onTap: () => _selectWord(opt.text),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.sky : Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -689,19 +740,23 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
   @override
   Widget build(BuildContext context) {
     final activity = widget.activity;
-    
+
     // Front and back contents
     final frontText = activity.prompt;
     // Lấy back text từ correctAnswers hoặc options
     final backText = activity.correctAnswers.isNotEmpty
         ? activity.correctAnswers.first
-        : (activity.options.isNotEmpty ? activity.options.first.text : 'Nghĩa của từ');
+        : (activity.options.isNotEmpty
+              ? activity.options.first.text
+              : 'Nghĩa của từ');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          activity.instruction.isNotEmpty ? activity.instruction : 'Chạm vào thẻ để lật xem ý nghĩa:',
+          activity.instruction.isNotEmpty
+              ? activity.instruction
+              : 'Chạm vào thẻ để lật xem ý nghĩa:',
           style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -716,7 +771,7 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
                 curve: Curves.easeInOut,
                 builder: (context, val, child) {
                   final isFront = val < pi / 2;
-                  
+
                   return Transform(
                     transform: Matrix4.identity()
                       ..setEntry(3, 2, 0.001) // perspective
@@ -738,7 +793,7 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
                                   color: Colors.black.withOpacity(0.05),
                                   blurRadius: 16,
                                   offset: const Offset(0, 8),
-                                )
+                                ),
                               ],
                             ),
                             child: Padding(
@@ -746,22 +801,34 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty) ...[
+                                  if (activity.imageUrl != null &&
+                                      activity.imageUrl!.isNotEmpty) ...[
                                     Expanded(
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child: AppImage(imageUrl: activity.imageUrl!, fit: BoxFit.contain),
+                                        child: AppImage(
+                                          imageUrl: activity.imageUrl!,
+                                          fit: BoxFit.contain,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 16),
                                   ],
                                   Text(
                                     frontText,
-                                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.text),
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.text,
+                                    ),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 8),
-                                  Icon(Icons.touch_app_rounded, color: Colors.grey[400], size: 24),
+                                  Icon(
+                                    Icons.touch_app_rounded,
+                                    color: Colors.grey[400],
+                                    size: 24,
+                                  ),
                                 ],
                               ),
                             ),
@@ -784,7 +851,7 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
                                     color: Colors.black.withOpacity(0.05),
                                     blurRadius: 16,
                                     offset: const Offset(0, 8),
-                                  )
+                                  ),
                                 ],
                               ),
                               child: Padding(
@@ -792,18 +859,32 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Color(0xFF10B981),
+                                      size: 48,
+                                    ),
                                     const SizedBox(height: 20),
                                     Text(
                                       backText,
-                                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF166534),
+                                      ),
                                       textAlign: TextAlign.center,
                                     ),
-                                    if (activity.parentInstruction.isNotEmpty) ...[
+                                    if (activity
+                                        .parentInstruction
+                                        .isNotEmpty) ...[
                                       const SizedBox(height: 16),
                                       Text(
                                         activity.parentInstruction,
-                                        style: TextStyle(fontSize: 13, color: Colors.grey[600], fontStyle: FontStyle.italic),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                          fontStyle: FontStyle.italic,
+                                        ),
                                         textAlign: TextAlign.center,
                                       ),
                                     ],
@@ -839,9 +920,9 @@ class _FlashcardRendererState extends State<FlashcardRenderer> {
   }
 }
 
-// 6. DIALOGUE_ROLEPLAY (hearAndRepeat, scenario) Renderer
-class DialogueRoleplayRenderer extends StatefulWidget {
-  const DialogueRoleplayRenderer({
+// 6. SCENARIO_PRACTICE (hearAndRepeat, scenario) Renderer
+class ScenarioPracticeRenderer extends StatefulWidget {
+  const ScenarioPracticeRenderer({
     super.key,
     required this.activity,
     required this.onAnswerSubmitted,
@@ -851,10 +932,11 @@ class DialogueRoleplayRenderer extends StatefulWidget {
   final AnswerCallback onAnswerSubmitted;
 
   @override
-  State<DialogueRoleplayRenderer> createState() => _DialogueRoleplayRendererState();
+  State<ScenarioPracticeRenderer> createState() =>
+      _ScenarioPracticeRendererState();
 }
 
-class _DialogueRoleplayRendererState extends State<DialogueRoleplayRenderer> {
+class _ScenarioPracticeRendererState extends State<ScenarioPracticeRenderer> {
   bool _isListening = false;
 
   void _startListening() {
@@ -880,13 +962,15 @@ class _DialogueRoleplayRendererState extends State<DialogueRoleplayRenderer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          activity.instruction.isNotEmpty ? activity.instruction : 'Nghe và lặp lại đoạn hội thoại sau:',
+          activity.instruction.isNotEmpty
+              ? activity.instruction
+              : 'Nghe và lặp lại tình huống sau:',
           style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        
-        // Chat dialogue bubbles
+
+        // Practice bubbles
         Expanded(
           child: ListView(
             children: [
@@ -909,10 +993,17 @@ class _DialogueRoleplayRendererState extends State<DialogueRoleplayRenderer> {
                     children: [
                       const Text(
                         'Bạn đồng hành:',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(activity.prompt, style: const TextStyle(fontSize: 16)),
+                      Text(
+                        activity.prompt,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                 ),
@@ -938,12 +1029,20 @@ class _DialogueRoleplayRendererState extends State<DialogueRoleplayRenderer> {
                       children: [
                         const Text(
                           'Con nói:',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.sky),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.sky,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           activity.options.first.text,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF0369A1)),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0369A1),
+                          ),
                         ),
                       ],
                     ),
@@ -952,18 +1051,15 @@ class _DialogueRoleplayRendererState extends State<DialogueRoleplayRenderer> {
             ],
           ),
         ),
-        
+
         if (activity.audioUrl != null && activity.audioUrl!.isNotEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
-              child: AudioButton(
-                onPressed: () {},
-                label: 'Nghe mẫu',
-              ),
+              child: AudioButton(onPressed: () {}, label: 'Nghe mẫu'),
             ),
           ),
-        
+
         Center(
           child: Column(
             children: [
@@ -973,7 +1069,9 @@ class _DialogueRoleplayRendererState extends State<DialogueRoleplayRenderer> {
               ),
               const SizedBox(height: 8),
               Text(
-                _isListening ? 'Đang lắng nghe con nói...' : 'Nhấn vào micro để lặp lại',
+                _isListening
+                    ? 'Đang lắng nghe con nói...'
+                    : 'Nhấn vào micro để lặp lại',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: _isListening ? AppColors.coral : Colors.grey,
@@ -1039,7 +1137,8 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
   }
 
   void _playPrompt() {
-    if (widget.activity.audioUrl != null && widget.activity.audioUrl!.isNotEmpty) {
+    if (widget.activity.audioUrl != null &&
+        widget.activity.audioUrl!.isNotEmpty) {
       SoundService.instance.playUrl(widget.activity.audioUrl);
     }
   }
@@ -1055,7 +1154,8 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
         String? path;
         if (!kIsWeb) {
           final dir = await getTemporaryDirectory();
-          path = '${dir.path}/voice_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          path =
+              '${dir.path}/voice_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
         }
         _tempPath = path;
 
@@ -1078,7 +1178,7 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
       } else {
         setState(() {
           _state = VoiceState.error;
-          _errorMessage = kIsWeb 
+          _errorMessage = kIsWeb
               ? 'Trình duyệt hiện không hỗ trợ ghi âm. Vui lòng dùng thiết bị di động hoặc cấp quyền micro.'
               : 'Micro chưa được bật. Phụ huynh hãy cấp quyền micro giúp con.';
         });
@@ -1233,11 +1333,19 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.workspace_premium_rounded, size: 50, color: Colors.amber),
+            const Icon(
+              Icons.workspace_premium_rounded,
+              size: 50,
+              color: Colors.amber,
+            ),
             const SizedBox(height: 12),
             const Text(
               'Tính Năng Premium',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.amber,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -1267,7 +1375,9 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          activity.instruction.isNotEmpty ? activity.instruction : 'Nói câu trả lời của con vào micro:',
+          activity.instruction.isNotEmpty
+              ? activity.instruction
+              : 'Nói câu trả lời của con vào micro:',
           style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -1298,7 +1408,8 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        if (activity.ttsPromptText != null && activity.ttsPromptText!.isNotEmpty) ...[
+        if (activity.ttsPromptText != null &&
+            activity.ttsPromptText!.isNotEmpty) ...[
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1307,7 +1418,11 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                 const SizedBox(width: 8),
                 Text(
                   '"${activity.ttsPromptText}"',
-                  style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: AppColors.muted),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.muted,
+                  ),
                 ),
               ],
             ),
@@ -1318,10 +1433,7 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
         // Audio playing cue
         if (activity.audioUrl != null && activity.audioUrl!.isNotEmpty) ...[
           Center(
-            child: AudioButton(
-              onPressed: _playPrompt,
-              label: 'Nghe câu hỏi',
-            ),
+            child: AudioButton(onPressed: _playPrompt, label: 'Nghe câu hỏi'),
           ),
           const SizedBox(height: 16),
         ],
@@ -1331,11 +1443,18 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
           const Center(
             child: Column(
               children: [
-                SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.primary)),
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
                 SizedBox(height: 12),
                 Text(
                   'Mimi đang lắng nghe con nói...',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.muted),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.muted,
+                  ),
                 ),
               ],
             ),
@@ -1346,8 +1465,22 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
               children: [
                 const Icon(Icons.check_circle, color: Colors.green, size: 56),
                 const SizedBox(height: 8),
-                Text(_feedback, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
-                if (_transcript.isNotEmpty) Text('Mimi nghe được: "$_transcript"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic)),
+                Text(
+                  _feedback,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                    fontSize: 16,
+                  ),
+                ),
+                if (_transcript.isNotEmpty)
+                  Text(
+                    'Mimi nghe được: "$_transcript"',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
               ],
             ),
           )
@@ -1357,17 +1490,36 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
               children: [
                 const Icon(Icons.star_half, color: Colors.orange, size: 56),
                 const SizedBox(height: 8),
-                Text(_feedback, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 16)),
-                if (_transcript.isNotEmpty) Text('Mimi nghe được: "$_transcript"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic)),
+                Text(
+                  _feedback,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                    fontSize: 16,
+                  ),
+                ),
+                if (_transcript.isNotEmpty)
+                  Text(
+                    'Mimi nghe được: "$_transcript"',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _startRecording,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.orange,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('Thử lại nhé', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Thử lại nhé',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -1378,17 +1530,36 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
               children: [
                 const Icon(Icons.cancel, color: Colors.red, size: 56),
                 const SizedBox(height: 8),
-                Text(_feedback, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16)),
-                if (_transcript.isNotEmpty) Text('Mimi nghe được: "$_transcript"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic)),
+                Text(
+                  _feedback,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                    fontSize: 16,
+                  ),
+                ),
+                if (_transcript.isNotEmpty)
+                  Text(
+                    'Mimi nghe được: "$_transcript"',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _startRecording,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('Thử lại nhé', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Thử lại nhé',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -1399,18 +1570,31 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 48,
+                  ),
                   const SizedBox(height: 8),
-                  Text(_errorMessage ?? 'Lỗi không xác định', style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+                  Text(
+                    _errorMessage ?? 'Lỗi không xác định',
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _startRecording,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[700],
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    child: const Text('Thử lại', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Thử lại',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
@@ -1428,12 +1612,22 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                       color: AppColors.orange.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.mic_off_rounded, color: AppColors.orange, size: 56),
+                    child: const Icon(
+                      Icons.mic_off_rounded,
+                      color: AppColors.orange,
+                      size: 56,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _feedback.isNotEmpty ? _feedback : 'Mimi chưa nghe rõ con nói gì, con hãy nói to hơn một chút nhé!',
-                    style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.orange, fontSize: 15),
+                    _feedback.isNotEmpty
+                        ? _feedback
+                        : 'Mimi chưa nghe rõ con nói gì, con hãy nói to hơn một chút nhé!',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.orange,
+                      fontSize: 15,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -1442,7 +1636,10 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.orange,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
@@ -1450,7 +1647,10 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                     ),
                     child: const Text(
                       'Bé nói lại nhé!',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ],
@@ -1465,15 +1665,21 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
               children: [
                 MicrophoneButton(
                   active: _state == VoiceState.recording,
-                  onPressed: _state == VoiceState.recording ? _stopAndUpload : _startRecording,
+                  onPressed: _state == VoiceState.recording
+                      ? _stopAndUpload
+                      : _startRecording,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  _state == VoiceState.recording ? 'Đang ghi âm... Chạm lại để dừng.' : 'Chạm micro để phát biểu',
+                  _state == VoiceState.recording
+                      ? 'Đang ghi âm... Chạm lại để dừng.'
+                      : 'Chạm micro để phát biểu',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: _state == VoiceState.recording ? AppColors.coral : Colors.grey[600],
+                    color: _state == VoiceState.recording
+                        ? AppColors.coral
+                        : Colors.grey[600],
                   ),
                 ),
                 if (widget.activity.retryLimit > 0)
@@ -1481,7 +1687,10 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
                       'Lượt làm lại: $_retriesUsed / ${widget.activity.retryLimit}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ),
               ],
@@ -1518,7 +1727,10 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                         decoration: const InputDecoration(
                           hintText: 'Nhập text mock (ví dụ: xin chào)',
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                           border: OutlineInputBorder(),
                         ),
                         onChanged: (val) {
@@ -1530,9 +1742,13 @@ class _VoiceAnswerRendererState extends State<VoiceAnswerRenderer> {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: () => _stopAndUpload(manualMockText: _quickMockText),
+                      onPressed: () =>
+                          _stopAndUpload(manualMockText: _quickMockText),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                       child: const Text('Gửi Mock'),
                     ),
@@ -1585,7 +1801,7 @@ class ParentMarkRenderer extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 20),
-        
+
         // Task to do
         Container(
           padding: const EdgeInsets.all(18),
@@ -1594,30 +1810,35 @@ class ParentMarkRenderer extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey[200]!),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-              )
+              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
             ],
           ),
           child: Column(
             children: [
-              if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty) ...[
+              if (activity.imageUrl != null &&
+                  activity.imageUrl!.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: AppImage(imageUrl: activity.imageUrl!, height: 140, fit: BoxFit.contain),
+                  child: AppImage(
+                    imageUrl: activity.imageUrl!,
+                    height: 140,
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
               Text(
                 activity.prompt,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
-        
+
         const Spacer(),
         const Text(
           'Kết quả thực hiện của con:',
@@ -1625,7 +1846,7 @@ class ParentMarkRenderer extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        
+
         // Mark buttons
         Row(
           children: [

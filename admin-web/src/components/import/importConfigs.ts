@@ -11,11 +11,11 @@ import type { ValidationResult } from "./types";
 import { QUIZ_LESSON_TYPES } from "../../utils/lessonTypes";
 
 const mediaTypes = ["IMAGE", "AUDIO", "VIDEO"] as const;
-const mediaCategories = ["NPC", "FLASHCARD", "DIALOGUE", "BADGE", "GENERAL"] as const;
+const mediaCategories = ["NPC", "FLASHCARD", "AI_CONVERSATION", "BADGE", "GENERAL"] as const;
 const answerOptions = ["A", "B", "C", "D"] as const;
 const badgeTypes = ["LESSON", "STREAK", "XP", "NPC", "MISSION"] as const;
 const badgeConditionTypes = ["COMPLETE_LESSONS", "STREAK_DAYS", "TOTAL_XP", "UNLOCK_NPCS", "COMPLETE_DAILY_MISSIONS"] as const;
-const missionTypes = ["COMPLETE_LESSON", "REVIEW_FLASHCARD", "SCAN_QR", "COMPLETE_DIALOGUE", "COMPLETE_MATH"] as const;
+const missionTypes = ["COMPLETE_LESSON", "REVIEW_FLASHCARD", "SCAN_QR", "COMPLETE_MATH"] as const;
 
 type NamedRecord = { id: string; name?: string; title?: string; type?: string; code?: string };
 
@@ -192,7 +192,7 @@ export function lessonsImportConfig(npcs: NamedRecord[], existingLessons: NamedR
       if (!title) errors.push("title bắt buộc.");
       if (title && titles.has(title.toLowerCase())) errors.push("Lesson đã tồn tại.");
       if (!validateRequired(row.description)) errors.push("description bắt buộc.");
-      if (!validateEnum(type, ["MATH", "DIALOGUE", "FLASHCARD", "THINKING", "SPELLING", "RHYME"])) errors.push(`type phải là một trong: MATH, DIALOGUE, FLASHCARD, THINKING, SPELLING, RHYME.`);
+      if (!validateEnum(type, ["MATH", "FLASHCARD", "THINKING", "SPELLING", "RHYME"])) errors.push(`type phải là một trong: MATH, FLASHCARD, THINKING, SPELLING, RHYME.`);
       if (relatedNpc && !npc) errors.push(`Không tìm thấy nhân vật: ${relatedNpc}`);
       return ok({
         title,
@@ -208,35 +208,6 @@ export function lessonsImportConfig(npcs: NamedRecord[], existingLessons: NamedR
 export function mathQuestionsImportConfig(lessons: NamedRecord[], defaultCategory: string): ImportConfig {
   const { map: lessonMap, warnings } = makeNameMap(lessons, "title", "Lesson");
   return questionConfig("Import CSV Câu hỏi học tập", "math-questions-template.csv", QUIZ_LESSON_TYPES, lessonMap, warnings, defaultCategory);
-}
-
-export function dialoguesImportConfig(lessons: NamedRecord[]): ImportConfig {
-  const { map: lessonMap, warnings } = makeNameMap(lessons, "title", "Lesson");
-  return {
-    title: "Import CSV Dialogues",
-    templateFilename: "dialogues-template.csv",
-    templateHeaders: ["lessonTitle", "title", "sceneText", "audioUrl", "questionText", "optionA", "optionB", "optionC", "optionD", "correctOption"],
-    templateExampleRows: [{ lessonTitle: "", title: "Gặp bạn mới", sceneText: "Mimi gặp một người bạn mới.", audioUrl: "", questionText: "Mimi nên nói gì?", optionA: "Xin chào", optionB: "Tạm biệt", optionC: "Không nói gì", optionD: "Khóc", correctOption: "A" }],
-    warnings,
-    validateRow(row) {
-      const errors: string[] = [];
-      const lessonTitle = normalizeString(row.lessonTitle);
-      const lesson = lessonTitle ? lessonMap.get(lessonTitle.toLowerCase()) : null;
-      if (lessonTitle && !lesson) errors.push(`Không tìm thấy lesson: ${lessonTitle}`);
-      if (lesson && lesson.type !== "DIALOGUE") errors.push("Lesson sai type, cần DIALOGUE.");
-      if (!validateRequired(row.title)) errors.push("title bắt buộc.");
-      if (!validateRequired(row.sceneText)) errors.push("sceneText bắt buộc.");
-      if (row.audioUrl && !validateUrl(row.audioUrl)) errors.push("audioUrl phải là URL http(s) hoặc đường dẫn bắt đầu bằng /.");
-      addQuestionErrors(row, errors);
-      return ok({
-        lessonId: lesson?.id ?? null,
-        title: normalizeString(row.title),
-        sceneText: normalizeString(row.sceneText),
-        audioUrl: normalizeOptionalString(row.audioUrl),
-        ...normalizedQuestion(row)
-      }, errors);
-    }
-  };
 }
 
 export function flashcardsImportConfig(lessons: NamedRecord[]): ImportConfig {

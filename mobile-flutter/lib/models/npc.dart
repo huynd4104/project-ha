@@ -29,13 +29,13 @@ class NPCDialogueTemplates {
       );
 
   Map<String, dynamic> toMap() => {
-        'welcome': welcome,
-        'beforeActivity': beforeActivity,
-        'correct': correct,
-        'wrong': wrong,
-        'lessonComplete': lessonComplete,
-        'encouragement': encouragement,
-      };
+    'welcome': welcome,
+    'beforeActivity': beforeActivity,
+    'correct': correct,
+    'wrong': wrong,
+    'lessonComplete': lessonComplete,
+    'encouragement': encouragement,
+  };
 }
 
 class NPC {
@@ -86,7 +86,9 @@ class NPC {
     skillTags: readStringList(map['skillTags']),
     programIds: readStringList(map['programIds']),
     pathIds: readStringList(map['pathIds']),
-    dialogueTemplates: NPCDialogueTemplates.fromMap(readMap(map['dialogueTemplates'])),
+    dialogueTemplates: NPCDialogueTemplates.fromMap(
+      readMap(map['dialogueTemplates']),
+    ),
     unlockBenefit: '${map['unlockBenefit'] ?? ''}',
     accessType: accessTypeFromString(map['accessType']),
   );

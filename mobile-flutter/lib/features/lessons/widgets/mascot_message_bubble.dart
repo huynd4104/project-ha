@@ -32,11 +32,7 @@ class MascotMessageBubble extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _MascotAvatar(
-          npc: npc,
-          mascotReaction: mascotReaction,
-          icon: icon,
-        ),
+        _MascotAvatar(npc: npc, mascotReaction: mascotReaction, icon: icon),
         const SizedBox(width: 10),
         Expanded(
           child: Container(

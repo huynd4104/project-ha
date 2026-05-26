@@ -33,7 +33,6 @@ class LessonDetailScreen extends StatelessWidget {
         if (!snap.hasData) return const Scaffold(body: LoadingView());
         final lesson = snap.data!;
         final path = switch (lesson.type) {
-          LessonType.dialogue => 'dialogue',
           LessonType.flashcard => 'flashcard',
           _ => 'math',
         };
@@ -66,7 +65,10 @@ class LessonDetailScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: const Icon(Icons.arrow_back_rounded, color: AppColors.text),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
               ),
@@ -79,7 +81,7 @@ class LessonDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               AppCard(
-                borderColor: hasAccess 
+                borderColor: hasAccess
                     ? AppColors.sky.withOpacity(0.25)
                     : AppColors.orange.withOpacity(0.25),
                 color: Colors.white,
@@ -91,7 +93,9 @@ class LessonDetailScreen extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 28,
-                          backgroundColor: (hasAccess ? AppColors.sky : AppColors.orange).withOpacity(0.12),
+                          backgroundColor:
+                              (hasAccess ? AppColors.sky : AppColors.orange)
+                                  .withOpacity(0.12),
                           child: Icon(
                             _lessonIcon(lesson.type),
                             color: hasAccess ? AppColors.sky : AppColors.orange,
@@ -99,15 +103,26 @@ class LessonDetailScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: (hasAccess ? AppColors.primary : AppColors.orange).withOpacity(0.15),
+                            color:
+                                (hasAccess
+                                        ? AppColors.primary
+                                        : AppColors.orange)
+                                    .withOpacity(0.15),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Text(
-                            lesson.accessType == AccessType.premium ? 'PREMIUM' : 'MIỄN PHÍ',
+                            lesson.accessType == AccessType.premium
+                                ? 'PREMIUM'
+                                : 'MIỄN PHÍ',
                             style: TextStyle(
-                              color: hasAccess ? AppColors.primary : AppColors.orange,
+                              color: hasAccess
+                                  ? AppColors.primary
+                                  : AppColors.orange,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
                               letterSpacing: 0.5,
@@ -141,8 +156,12 @@ class LessonDetailScreen extends StatelessWidget {
                         ),
                         _InfoPill(
                           icon: Icons.star_rounded,
-                          label: lesson.accessType == AccessType.premium ? 'Cao cấp' : 'Cơ bản',
-                          color: hasAccess ? AppColors.primary : AppColors.orange,
+                          label: lesson.accessType == AccessType.premium
+                              ? 'Cao cấp'
+                              : 'Cơ bản',
+                          color: hasAccess
+                              ? AppColors.primary
+                              : AppColors.orange,
                         ),
                         _InfoPill(
                           icon: Icons.volume_up_rounded,
@@ -161,7 +180,11 @@ class LessonDetailScreen extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.face_retouching_natural_rounded, color: AppColors.orange, size: 20),
+                            const Icon(
+                              Icons.face_retouching_natural_rounded,
+                              color: AppColors.orange,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Bạn đồng hành: ${lesson.npc!.name}',
@@ -180,9 +203,15 @@ class LessonDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               AppButton(
-                label: hasAccess ? 'Bắt đầu học ngay' : 'Mở khóa Premium cho bé',
-                icon: hasAccess ? Icons.play_arrow_rounded : Icons.lock_open_rounded,
-                backgroundColor: hasAccess ? AppColors.primary : AppColors.orange,
+                label: hasAccess
+                    ? 'Bắt đầu học ngay'
+                    : 'Mở khóa Premium cho bé',
+                icon: hasAccess
+                    ? Icons.play_arrow_rounded
+                    : Icons.lock_open_rounded,
+                backgroundColor: hasAccess
+                    ? AppColors.primary
+                    : AppColors.orange,
                 onPressed: () async {
                   if (!hasAccess) {
                     ParentGate.show(context, () {
@@ -195,8 +224,8 @@ class LessonDetailScreen extends StatelessWidget {
                     return;
                   }
 
-                  final activities =
-                      await LessonRepository().activitiesForLesson(lesson);
+                  final activities = await LessonRepository()
+                      .activitiesForLesson(lesson);
 
                   if (context.mounted) {
                     if (activities.isNotEmpty) {
@@ -215,7 +244,6 @@ class LessonDetailScreen extends StatelessWidget {
   }
 
   IconData _lessonIcon(LessonType type) => switch (type) {
-    LessonType.dialogue => Icons.chat_bubble_rounded,
     LessonType.flashcard => Icons.style_rounded,
     LessonType.thinking => Icons.psychology_rounded,
     LessonType.spelling => Icons.abc_rounded,
@@ -225,7 +253,11 @@ class LessonDetailScreen extends StatelessWidget {
 }
 
 class _InfoPill extends StatelessWidget {
-  const _InfoPill({required this.icon, required this.label, required this.color});
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
   final IconData icon;
   final String label;
   final Color color;
@@ -243,7 +275,7 @@ class _InfoPill extends StatelessWidget {
         Icon(icon, color: color, size: 18),
         const SizedBox(width: 6),
         Text(
-          label, 
+          label,
           style: TextStyle(
             fontWeight: FontWeight.w900,
             color: color,

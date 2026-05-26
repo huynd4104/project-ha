@@ -31,10 +31,11 @@ class LessonNode extends StatelessWidget {
       LessonNodeState.current => AppColors.sky,
       LessonNodeState.available => AppColors.yellow,
       LessonNodeState.locked => AppColors.border,
-      LessonNodeState.premiumLocked => const Color(0xFFF59E0B), // Premium Amber/Orange
+      LessonNodeState.premiumLocked => const Color(
+        0xFFF59E0B,
+      ), // Premium Amber/Orange
     };
     final icon = switch (lesson.type) {
-      LessonType.dialogue => Icons.chat_bubble_rounded,
       LessonType.flashcard => Icons.style_rounded,
       LessonType.spelling => Icons.abc_rounded,
       LessonType.rhyme => Icons.music_note_rounded,
@@ -56,7 +57,10 @@ class LessonNode extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Để sau', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Để sau',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
@@ -69,7 +73,10 @@ class LessonNode extends StatelessWidget {
                       );
                     });
                   },
-                  child: const Text('Dành cho Bố Mẹ', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Dành cho Bố Mẹ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -189,7 +196,6 @@ class LessonNode extends StatelessWidget {
   };
 
   String _typeLabel() => switch (lesson.type) {
-    LessonType.dialogue => 'Nghe nói',
     LessonType.flashcard => 'Thẻ học',
     LessonType.thinking => 'Tư duy',
     LessonType.spelling => 'Từ vựng',

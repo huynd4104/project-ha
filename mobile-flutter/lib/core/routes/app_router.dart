@@ -7,12 +7,19 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/verify_email_screen.dart';
 import '../../features/auth/screens/welcome_screen.dart';
+import '../../features/ai_conversation/presentation/child/screens/ai_conversation_intro_screen.dart';
+import '../../features/ai_conversation/presentation/child/screens/ai_conversation_live_screen.dart';
+import '../../features/ai_conversation/presentation/child/screens/ai_conversation_summary_screen.dart';
+import '../../features/ai_conversation/presentation/child/screens/ai_conversation_topic_screen.dart';
+import '../../features/ai_conversation/presentation/parent/screens/child_ai_progress_dashboard_screen.dart';
+import '../../features/ai_conversation/presentation/parent/screens/child_ai_progress_topic_screen.dart';
+import '../../features/ai_conversation/presentation/parent/screens/child_ai_session_detail_screen.dart';
+import '../../features/ai_conversation/presentation/parent/screens/child_ai_session_history_screen.dart';
 import '../../features/child/screens/child_profile_screen.dart';
 import '../../features/gamification/screens/rewards_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/learning_path/screens/learning_path_screen.dart';
 import '../../features/learning_path/screens/lesson_detail_screen.dart';
-import '../../features/lessons/screens/dialogue_lesson_screen.dart';
 import '../../features/lessons/screens/flashcard_screen.dart';
 import '../../features/lessons/screens/math_lesson_screen.dart';
 import '../../features/lessons/screens/result_screen.dart';
@@ -57,10 +64,7 @@ GoRouter buildRouter(AppState state) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/loading',
-        builder: (_, __) => const GuardLoadingScreen(),
-      ),
+      GoRoute(path: '/loading', builder: (_, __) => const GuardLoadingScreen()),
       GoRoute(
         path: '/config-error',
         builder: (_, __) => Scaffold(
@@ -120,17 +124,52 @@ GoRouter buildRouter(AppState state) {
         builder: (_, s) => MathLessonScreen(lessonId: s.pathParameters['id']!),
       ),
       GoRoute(
-        path: '/lesson/:id/dialogue',
-        builder: (_, s) =>
-            DialogueLessonScreen(lessonId: s.pathParameters['id']!),
-      ),
-      GoRoute(
         path: '/lesson/:id/flashcard',
         builder: (_, s) => FlashcardScreen(lessonId: s.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/ai-conversations/topics',
+        builder: (_, __) => const AiConversationTopicScreen(),
+      ),
+      GoRoute(
+        path: '/ai-conversations/topics/:topicId/intro',
+        builder: (_, s) =>
+            AiConversationIntroScreen(topicId: s.pathParameters['topicId']!),
+      ),
+      GoRoute(
+        path: '/ai-conversations/topics/:topicId/live',
+        builder: (_, s) =>
+            AiConversationLiveScreen(topicId: s.pathParameters['topicId']!),
+      ),
+      GoRoute(
+        path: '/ai-conversations/sessions/:sessionId/summary',
+        builder: (_, s) => AiConversationSummaryScreen(
+          sessionId: s.pathParameters['sessionId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/parent/ai-conversations',
+        builder: (_, __) => const ChildAiProgressDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/parent/ai-conversations/topics/:topicId',
+        builder: (_, s) =>
+            ChildAiProgressTopicScreen(topicId: s.pathParameters['topicId']!),
+      ),
+      GoRoute(
+        path: '/parent/ai-conversations/sessions',
+        builder: (_, __) => const ChildAiSessionHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/parent/ai-conversations/sessions/:sessionId',
+        builder: (_, s) => ChildAiSessionDetailScreen(
+          sessionId: s.pathParameters['sessionId']!,
+        ),
+      ),
+      GoRoute(
         path: '/lesson/:id/activity',
-        builder: (_, s) => ActivityLessonScreen(lessonId: s.pathParameters['id']!),
+        builder: (_, s) =>
+            ActivityLessonScreen(lessonId: s.pathParameters['id']!),
       ),
       GoRoute(
         path: '/path-selection',

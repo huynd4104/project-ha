@@ -4,7 +4,7 @@ export interface MediaAsset {
   id: string;
   name: string;
   type: "IMAGE" | "AUDIO" | "VIDEO";
-  category: "NPC" | "FLASHCARD" | "DIALOGUE" | "BADGE" | "GENERAL";
+  category: "NPC" | "FLASHCARD" | "AI_CONVERSATION" | "BADGE" | "GENERAL";
   url: string;
   thumbnailUrl?: string;
   createdAt?: any;

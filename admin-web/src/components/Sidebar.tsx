@@ -37,6 +37,7 @@ const groups: NavGroup[] = [
       { to: "/learning-paths-v2", label: "Lộ trình học", icon: "path" },
       { to: "/lessons-v2", label: "Bài học", icon: "lesson" },
       { to: "/activity-builder", label: "Hoạt động trong bài học", icon: "activity" },
+      { to: "/ai-conversations", label: "Hội thoại cùng AI", icon: "activity" },
       { to: "/path-builder", label: "Sắp xếp bài học vào lộ trình", icon: "sort" }
     ]
   },
@@ -44,7 +45,6 @@ const groups: NavGroup[] = [
     title: "Kho nội dung học", icon: "archive",
     items: [
       { to: "/flashcards", label: "Thư viện Flashcard", icon: "lesson" },
-      { to: "/dialogues", label: "Thư viện hội thoại", icon: "activity" },
       { to: "/math-questions", label: "Thư viện câu hỏi toán", icon: "activity" },
       { to: "/thinking-questions", label: "Thư viện tư duy", icon: "activity" },
       { to: "/spelling-questions", label: "Thư viện đánh vần", icon: "activity" },

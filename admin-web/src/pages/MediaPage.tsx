@@ -338,7 +338,7 @@ export function MediaPage() {
           <option value="ALL">Tất cả danh mục</option>
           <option value="NPC">Mascot</option>
           <option value="FLASHCARD">Flashcard</option>
-          <option value="DIALOGUE">Dialogue</option>
+          <option value="AI_CONVERSATION">AI Conversation</option>
           <option value="BADGE">Badge</option>
           <option value="GENERAL">General</option>
         </select>
@@ -429,7 +429,7 @@ export function MediaPage() {
                     <select value={assetCategory} onChange={(e) => setAssetCategory(e.target.value as any)}>
                       <option value="NPC">Mascot</option>
                       <option value="FLASHCARD">Flashcard</option>
-                      <option value="DIALOGUE">Dialogue</option>
+                      <option value="AI_CONVERSATION">AI Conversation</option>
                       <option value="BADGE">Badge</option>
                       <option value="GENERAL">General</option>
                     </select>

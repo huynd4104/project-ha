@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
@@ -67,9 +68,7 @@ class ParentDashboardScreen extends StatelessWidget {
     );
   }
 
-  List<_SkillScore> _skillScoresFromAttempts(
-    List<Map<String, dynamic>> docs,
-  ) {
+  List<_SkillScore> _skillScoresFromAttempts(List<Map<String, dynamic>> docs) {
     final totals = <String, double>{};
     final counts = <String, int>{};
     for (final data in docs) {
@@ -108,10 +107,7 @@ class ParentDashboardScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     return Scaffold(
       body: FutureBuilder<_DashboardData>(
-        future: _fetchDashboardData(
-          state.appUser!.id,
-          state.activeChild!.id,
-        ),
+        future: _fetchDashboardData(state.appUser!.id, state.activeChild!.id),
         builder: (_, snap) {
           if (!snap.hasData) return const LoadingView();
           final data = snap.data!;
@@ -134,7 +130,49 @@ class ParentDashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildSubscriptionBanner(context, state.appUser?.subscriptionSummary),
+              _buildSubscriptionBanner(
+                context,
+                state.appUser?.subscriptionSummary,
+              ),
+              const SizedBox(height: 12),
+              AppCard(
+                onTap: () => context.push('/parent/ai-conversations'),
+                color: const Color(0xFFF0F9FF),
+                borderColor: AppColors.sky.withValues(alpha: .25),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 28,
+                      backgroundColor: AppColors.sky,
+                      child: Icon(
+                        Icons.record_voice_over_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tiến bộ hội thoại AI',
+                            style: AppTextStyles.subtitle,
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Xem chủ đề, lịch sử phiên và gợi ý luyện nói.',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               AppCard(
                 child: Row(
@@ -212,7 +250,10 @@ class ParentDashboardScreen extends StatelessWidget {
                   borderColor: AppColors.border,
                   child: const Center(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 24.0,
+                        horizontal: 16.0,
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -301,16 +342,27 @@ class ParentDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSubscriptionBanner(BuildContext context, SubscriptionSummary? summary) {
+  Widget _buildSubscriptionBanner(
+    BuildContext context,
+    SubscriptionSummary? summary,
+  ) {
     final plan = summary?.plan ?? 'FREE';
     final status = summary?.status ?? 'NONE';
     final expiresAt = summary?.expiresAt;
 
-    final bool isExpired = expiresAt != null && expiresAt.isBefore(DateTime.now());
-    final bool isPremium = (plan == 'PREMIUM' || plan == 'TRIAL') && status == 'ACTIVE' && !isExpired;
+    final bool isExpired =
+        expiresAt != null && expiresAt.isBefore(DateTime.now());
+    final bool isPremium =
+        (plan == 'PREMIUM' || plan == 'TRIAL') &&
+        status == 'ACTIVE' &&
+        !isExpired;
 
-    final String planLabel = plan == 'TRIAL' ? 'Dùng thử (TRIAL)' : (plan == 'PREMIUM' ? 'PREMIUM (Demo)' : 'FREE');
-    final String dateStr = expiresAt != null ? '${expiresAt.day}/${expiresAt.month}/${expiresAt.year}' : 'Không giới hạn';
+    final String planLabel = plan == 'TRIAL'
+        ? 'Dùng thử (TRIAL)'
+        : (plan == 'PREMIUM' ? 'PREMIUM (Demo)' : 'FREE');
+    final String dateStr = expiresAt != null
+        ? '${expiresAt.day}/${expiresAt.month}/${expiresAt.year}'
+        : 'Không giới hạn';
 
     return AppCard(
       child: Column(
@@ -319,14 +371,20 @@ class ParentDashboardScreen extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isPremium ? Icons.workspace_premium_rounded : Icons.star_border_rounded,
+                isPremium
+                    ? Icons.workspace_premium_rounded
+                    : Icons.star_border_rounded,
                 color: isPremium ? AppColors.yellow : AppColors.muted,
                 size: 28,
               ),
               const SizedBox(width: 8),
               Text(
                 'Gói dịch vụ: $planLabel',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                ),
               ),
             ],
           ),
@@ -334,11 +392,19 @@ class ParentDashboardScreen extends StatelessWidget {
           if (isPremium) ...[
             const Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 16,
+                ),
                 SizedBox(width: 6),
                 Text(
                   'Đang hoạt động',
-                  style: TextStyle(fontSize: 14, color: AppColors.success, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.success,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -350,13 +416,19 @@ class ParentDashboardScreen extends StatelessWidget {
           ] else ...[
             const Text(
               'Gói miễn phí giới hạn một số tính năng và nội dung nâng cao.',
-              style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.muted,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const PaywallScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const PaywallScreen(),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(

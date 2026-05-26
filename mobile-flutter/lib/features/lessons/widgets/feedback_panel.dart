@@ -11,28 +11,28 @@ enum FeedbackType { correct, wrong, nearCorrect }
 
 extension _FeedbackTypeX on FeedbackType {
   Color get color => switch (this) {
-        FeedbackType.correct => AppColors.success,
-        FeedbackType.wrong => AppColors.coral,
-        FeedbackType.nearCorrect => AppColors.orange,
-      };
+    FeedbackType.correct => AppColors.success,
+    FeedbackType.wrong => AppColors.coral,
+    FeedbackType.nearCorrect => AppColors.orange,
+  };
 
   String get title => switch (this) {
-        FeedbackType.correct => 'Đúng rồi!',
-        FeedbackType.wrong => 'Thử lại nhé!',
-        FeedbackType.nearCorrect => 'Con làm gần đúng rồi!',
-      };
+    FeedbackType.correct => 'Đúng rồi!',
+    FeedbackType.wrong => 'Thử lại nhé!',
+    FeedbackType.nearCorrect => 'Con làm gần đúng rồi!',
+  };
 
   MascotReaction get mascotReaction => switch (this) {
-        FeedbackType.correct => MascotReaction.correct,
-        FeedbackType.wrong => MascotReaction.tryAgain,
-        FeedbackType.nearCorrect => MascotReaction.almostCorrect,
-      };
+    FeedbackType.correct => MascotReaction.correct,
+    FeedbackType.wrong => MascotReaction.tryAgain,
+    FeedbackType.nearCorrect => MascotReaction.almostCorrect,
+  };
 
   IconData get ctaIcon => switch (this) {
-        FeedbackType.correct => Icons.arrow_forward_rounded,
-        FeedbackType.wrong => Icons.refresh_rounded,
-        FeedbackType.nearCorrect => Icons.refresh_rounded,
-      };
+    FeedbackType.correct => Icons.arrow_forward_rounded,
+    FeedbackType.wrong => Icons.refresh_rounded,
+    FeedbackType.nearCorrect => Icons.refresh_rounded,
+  };
 }
 
 class FeedbackPanel extends StatelessWidget {
@@ -66,11 +66,7 @@ class FeedbackPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // ── Mascot reaction image ──────────────────────────────────────
-            MascotImage(
-              reaction: type.mascotReaction,
-              width: 88,
-              height: 88,
-            ),
+            MascotImage(reaction: type.mascotReaction, width: 88, height: 88),
             const SizedBox(height: 6),
 
             // ── Feedback title row ─────────────────────────────────────────

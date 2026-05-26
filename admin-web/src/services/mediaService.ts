@@ -81,15 +81,15 @@ export const mediaService = {
         thumbnailUrl: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=150&auto=format&fit=crop"
       },
       {
-        name: "Nhạc vui nhộn (Dialogue Audio)",
+        name: "Nhạc vui nhộn (AI Conversation Audio)",
         type: "AUDIO",
-        category: "DIALOGUE",
+        category: "AI_CONVERSATION",
         url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
       },
       {
-        name: "Âm thanh tiếng chim hót (Dialogue Audio)",
+        name: "Âm thanh tiếng chim hót (AI Conversation Audio)",
         type: "AUDIO",
-        category: "DIALOGUE",
+        category: "AI_CONVERSATION",
         url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
       }
     ];

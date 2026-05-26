@@ -49,7 +49,6 @@ export const ACTIVATION_TYPE_LABELS: Record<string, string> = {
 
 export const LESSON_TYPE_LABELS: Record<string, string> = {
   MATH: "Toán",
-  DIALOGUE: "Hội thoại",
   FLASHCARD: "Thẻ học",
   THINKING: "Tư duy",
   SPELLING: "Đánh vần",

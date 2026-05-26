@@ -12,7 +12,7 @@ const ACTIVITY_TYPES: ActivityType[] = [
   "PARENT_MARK_RESULT", "HEAR_AND_REPEAT", "MATCH_OBJECTS", "FLASHCARD_REVIEW"
 ];
 
-type LibrarySource = "flashcards" | "dialogues" | "math" | "thinking" | "spelling" | "rhyme";
+type LibrarySource = "flashcards" | "math" | "thinking" | "spelling" | "rhyme";
 type ChoiceKey = "A" | "B" | "C" | "D";
 
 interface OptionItem { id?: string; text: string; imageUrl?: string; isCorrect: boolean }
@@ -31,12 +31,6 @@ interface ChoiceLibraryItem {
   orderIndex?: number;
 }
 
-interface DialogueLibraryItem extends ChoiceLibraryItem {
-  title?: string;
-  sceneText?: string;
-  audioUrl?: string | null;
-}
-
 interface FlashcardLibraryItem {
   id: string;
   lessonId?: string;
@@ -47,7 +41,7 @@ interface FlashcardLibraryItem {
   orderIndex?: number;
 }
 
-type LibraryItem = ChoiceLibraryItem | DialogueLibraryItem | FlashcardLibraryItem;
+type LibraryItem = ChoiceLibraryItem | FlashcardLibraryItem;
 type ContentLibraryItems = Record<LibrarySource, LibraryItem[]>;
 
 const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D"];
@@ -55,7 +49,7 @@ const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D"];
 const LIBRARY_SOURCE_CONFIG: Record<LibrarySource, {
   label: string;
   shortLabel: string;
-  collection: "flashcards" | "dialogues" | "mathQuestions";
+  collection: "flashcards" | "mathQuestions";
   activityType: ActivityType;
   instruction: string;
 }> = {
@@ -65,13 +59,6 @@ const LIBRARY_SOURCE_CONFIG: Record<LibrarySource, {
     collection: "flashcards",
     activityType: "FLASHCARD_REVIEW",
     instruction: "Chạm vào thẻ để lật xem nội dung."
-  },
-  dialogues: {
-    label: "Hội thoại",
-    shortLabel: "Hội thoại",
-    collection: "dialogues",
-    activityType: "DAILY_LIFE_SCENARIO",
-    instruction: "Nghe tình huống và luyện câu trả lời phù hợp."
   },
   math: {
     label: "Câu hỏi toán",
@@ -105,7 +92,6 @@ const LIBRARY_SOURCE_CONFIG: Record<LibrarySource, {
 
 const EMPTY_CONTENT_LIBRARY_ITEMS: ContentLibraryItems = {
   flashcards: [],
-  dialogues: [],
   math: [],
   thinking: [],
   spelling: [],
@@ -163,11 +149,10 @@ export function ActivityBuilderPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [lRes, sRes, fRes, dRes, qRes, aRes] = await Promise.all([
+      const [lRes, sRes, fRes, qRes, aRes] = await Promise.all([
         adminApi.list("/lessons"),
         adminApi.list("/skills"),
         adminApi.list("/flashcards"),
-        adminApi.list("/dialogues"),
         adminApi.list("/math-questions"),
         adminApi.list("/activities")
       ]);
@@ -176,7 +161,6 @@ export function ActivityBuilderPage() {
       setLessons(all);
       setSkills(sRes.data.data || []);
       const flashcards = (fRes.data.data || []) as FlashcardLibraryItem[];
-      const dialogues = (dRes.data.data || []) as DialogueLibraryItem[];
       const questions = (qRes.data.data || []) as ChoiceLibraryItem[];
       const acts = (aRes.data.data || []) as Activity[];
 
@@ -199,7 +183,6 @@ export function ActivityBuilderPage() {
         });
       const nextLibraryItems: ContentLibraryItems = {
         flashcards,
-        dialogues,
         math: questionsByLessonType("MATH"),
         thinking: questionsByLessonType("THINKING"),
         spelling: questionsByLessonType("SPELLING"),
@@ -517,30 +500,6 @@ export function ActivityBuilderPage() {
       });
     }
 
-    if (source === "dialogues") {
-      const dialogue = item as DialogueLibraryItem;
-      const options = choiceOptions(dialogue, true);
-      const correct = correctChoice(dialogue);
-      const audio = cleanString(dialogue.audioUrl);
-      return stripUndefined({
-        ...base,
-        prompt: cleanString(dialogue.questionText) || cleanString(dialogue.title) || "Luyện tình huống giao tiếp",
-        instruction: cleanString(dialogue.sceneText) || config.instruction,
-        audioUrl: audio || null,
-        mediaRefs: mediaRefs([
-          audio ? { type: "audio", url: audio, label: cleanString(dialogue.title) || cleanString(dialogue.questionText) } : null
-        ]),
-        options,
-        correctAnswers: uniqueStrings([correct?.id, correct?.text]),
-        feedback: {
-          correct: "Con trả lời phù hợp rồi.",
-          wrong: "Mình nghe lại tình huống và thử câu trả lời khác nhé.",
-          almost: null
-        },
-        retryLimit: 1
-      });
-    }
-
     const question = item as ChoiceLibraryItem;
     const image = cleanString(question.imageUrl);
     const correct = correctChoice(question);
@@ -583,13 +542,11 @@ export function ActivityBuilderPage() {
 
   function libraryItemTitle(source: LibrarySource, item: LibraryItem) {
     if (source === "flashcards") return cleanString((item as FlashcardLibraryItem).frontText) || "Flashcard chưa có mặt trước";
-    if (source === "dialogues") return cleanString((item as DialogueLibraryItem).title) || cleanString((item as DialogueLibraryItem).questionText) || "Hội thoại chưa có tiêu đề";
     return cleanString((item as ChoiceLibraryItem).questionText) || "Câu hỏi chưa có nội dung";
   }
 
   function libraryItemDescription(source: LibrarySource, item: LibraryItem) {
     if (source === "flashcards") return cleanString((item as FlashcardLibraryItem).backText);
-    if (source === "dialogues") return cleanString((item as DialogueLibraryItem).sceneText) || cleanString((item as DialogueLibraryItem).questionText);
     return cleanString((item as ChoiceLibraryItem).explanation);
   }
 
@@ -708,24 +665,6 @@ export function ActivityBuilderPage() {
       );
     }
 
-    if (source === "dialogues") {
-      const dialogue = item as DialogueLibraryItem;
-      const correct = correctChoice(dialogue);
-      return (
-        <div className="library-detail-card">
-          <div className="library-detail-grid">
-            {renderDetailRow("Bài học", sourceLessonTitle(dialogue.lessonId))}
-            {renderDetailRow("Tiêu đề", cleanString(dialogue.title))}
-            {renderDetailRow("Bối cảnh", cleanString(dialogue.sceneText))}
-            {renderDetailRow("Âm thanh", renderAudioValue(dialogue.audioUrl))}
-            {renderDetailRow("Câu hỏi", cleanString(dialogue.questionText))}
-            {renderDetailRow("Lựa chọn", renderOptionsSummary(choiceOptions(dialogue)))}
-            {renderDetailRow("Đáp án đúng", correct ? `${correct.id}. ${correct.text}` : "")}
-          </div>
-        </div>
-      );
-    }
-
     const question = item as ChoiceLibraryItem;
     const correct = correctChoice(question);
     return (
@@ -823,28 +762,6 @@ export function ActivityBuilderPage() {
             <input type="text" placeholder="https://..." value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} />
           </div>
         </div>
-      </>
-    );
-  }
-
-  function renderDialogueEditFields() {
-    return (
-      <>
-        {renderSourceEditContext()}
-        {renderLockedActivityType()}
-        <div className="field">
-          <label>Câu hỏi / tình huống <span style={{ color: "red" }}>*</span></label>
-          <textarea placeholder="VD: Khi được giúp đỡ, con nói gì?" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>Bối cảnh / lời thoại mẫu</label>
-          <textarea placeholder="Ngữ cảnh hội thoại cho trẻ" value={instruction} onChange={(e) => setInstruction(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>Âm thanh hội thoại</label>
-          <input type="text" placeholder="https://..." value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} />
-        </div>
-        {renderOptionsEditor("Câu trả lời lựa chọn", false)}
       </>
     );
   }
@@ -951,7 +868,6 @@ export function ActivityBuilderPage() {
 
   function renderActivityFields() {
     if (editingSource === "flashcards") return renderFlashcardEditFields();
-    if (editingSource === "dialogues") return renderDialogueEditFields();
     if (editingSource) return renderQuestionEditFields();
     return renderManualActivityFields();
   }
@@ -1046,7 +962,6 @@ export function ActivityBuilderPage() {
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       {[
                         ["flashcards", "Từ Flashcard"],
-                        ["dialogues", "Từ Hội thoại"],
                         ["math", "Từ Câu hỏi toán"],
                         ["thinking", "Từ Tư duy"],
                         ["spelling", "Từ Đánh vần"],
