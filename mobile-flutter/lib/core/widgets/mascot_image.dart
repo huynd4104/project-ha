@@ -62,6 +62,8 @@ class MascotImage extends StatelessWidget {
       alignment: alignment,
       semanticLabel: label.isEmpty ? null : label,
       excludeFromSemantics: label.isEmpty,
+      filterQuality: FilterQuality.medium,
+      gaplessPlayback: true,
       errorBuilder: (_, _, _) => _MascotFallback(
         width: width,
         height: height,
