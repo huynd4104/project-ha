@@ -27,6 +27,7 @@ class ChildRepository {
     SupportLevel supportLevel = SupportLevel.medium,
     int dailyDurationMinutes = 5,
     CoLearningMode coLearningMode = CoLearningMode.parentChildTogether,
+    String? avatarUrl,
   }) async {
     final data = await _api.post('/api/children', {
       'displayName': name.trim(),
@@ -42,6 +43,7 @@ class ChildRepository {
       'coLearningMode': coLearningMode.apiValue,
       'interests': <String>[],
       'accessibilityPreferences': <String, dynamic>{},
+      'avatarUrl': avatarUrl ?? '',
     }) as Map<String, dynamic>;
     return ChildProfile.fromMap('${data['id']}', data);
   }

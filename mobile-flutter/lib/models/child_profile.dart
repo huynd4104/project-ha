@@ -20,6 +20,7 @@ class ChildProfile {
     this.currentPathId,
     this.currentProgramId,
     this.selectedAt,
+    this.avatarUrl,
   });
 
   final String id;
@@ -39,6 +40,7 @@ class ChildProfile {
   final String? currentPathId;
   final String? currentProgramId;
   final DateTime? selectedAt;
+  final String? avatarUrl;
 
   String get displayName => name;
 
@@ -65,6 +67,7 @@ class ChildProfile {
         currentPathId: map['currentPathId'] as String?,
         currentProgramId: map['currentProgramId'] as String?,
         selectedAt: readDate(map['selectedAt']),
+        avatarUrl: map['avatarUrl'] as String? ?? map['avatar_url'] as String?,
       );
 
   Map<String, dynamic> toMap() => {
@@ -87,6 +90,7 @@ class ChildProfile {
     'currentPathId': currentPathId,
     'currentProgramId': currentProgramId,
     'selectedAt': selectedAt?.toIso8601String(),
+    'avatarUrl': avatarUrl,
   };
 
   ChildProfile copyWith({
@@ -105,6 +109,7 @@ class ChildProfile {
     String? currentPathId,
     String? currentProgramId,
     DateTime? selectedAt,
+    String? avatarUrl,
   }) => ChildProfile(
     id: id,
     userId: userId,
@@ -124,5 +129,6 @@ class ChildProfile {
     currentPathId: currentPathId ?? this.currentPathId,
     currentProgramId: currentProgramId ?? this.currentProgramId,
     selectedAt: selectedAt ?? this.selectedAt,
+    avatarUrl: avatarUrl ?? this.avatarUrl,
   );
 }

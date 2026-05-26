@@ -34,9 +34,9 @@ public class ChildRepository {
             INSERT INTO children(
               user_id, display_name, name, age, gender, note, primary_difficulty,
               secondary_difficulties, learning_goals, support_level, daily_duration_minutes,
-              co_learning_mode, interests, accessibility_preferences
+              co_learning_mode, interests, accessibility_preferences, avatar_url
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb))
+            VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?)
             RETURNING *
             """,
             userId,
@@ -52,7 +52,8 @@ public class ChildRepository {
             number(payload.get("dailyDurationMinutes"), 5),
             str(payload, "coLearningMode", "PARENT_CHILD_TOGETHER"),
             Db.json(payload.getOrDefault("interests", List.of())),
-            Db.json(payload.getOrDefault("accessibilityPreferences", Map.of()))
+            Db.json(payload.getOrDefault("accessibilityPreferences", Map.of())),
+            str(payload, "avatarUrl", str(payload, "avatar_url", ""))
         ));
     }
 
@@ -76,7 +77,8 @@ public class ChildRepository {
               accessibility_preferences = CAST(? AS jsonb),
               current_program_id = COALESCE(CAST(NULLIF(?, '') AS uuid), current_program_id),
               current_path_id = COALESCE(CAST(NULLIF(?, '') AS uuid), current_path_id),
-              selected_at = COALESCE(CAST(NULLIF(?, '') AS timestamptz), selected_at)
+              selected_at = COALESCE(CAST(NULLIF(?, '') AS timestamptz), selected_at),
+              avatar_url = ?
             WHERE id = ? AND user_id = ?
             RETURNING *
             """,
@@ -96,6 +98,7 @@ public class ChildRepository {
             str(payload, "currentProgramId", ""),
             str(payload, "currentPathId", ""),
             str(payload, "selectedAt", ""),
+            str(payload, "avatarUrl", str(payload, "avatar_url", "")),
             childId,
             userId
         ));

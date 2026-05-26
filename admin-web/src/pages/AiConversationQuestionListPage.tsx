@@ -96,7 +96,7 @@ export function AiConversationQuestionListPage() {
       <div className="toolbar">
         <div>
           <button className="secondary" onClick={() => navigate("/ai-conversations")} style={{ marginBottom: "12px" }}>
-            ⬅️ Quay lại danh sách chủ đề
+            ⬅ Quay lại danh sách chủ đề
           </button>
           <h1>Câu hỏi thuộc chủ đề: {topic?.title ?? "Hội thoại cùng AI"}</h1>
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>
@@ -157,11 +157,7 @@ export function AiConversationQuestionListPage() {
                           Giọng nói: {question.questionAudioText}
                         </div>
                       )}
-                      {question.hintText && (
-                        <div style={{ color: "#0369a1", background: "#f0f9ff", fontSize: "12px", marginTop: "6px", padding: "4px 8px", borderRadius: "4px", display: "inline-block" }}>
-                          💡 Gợi ý: {question.hintText}
-                        </div>
-                      )}
+
                     </td>
                     <td>
                       {question.expectedAnswer ? (

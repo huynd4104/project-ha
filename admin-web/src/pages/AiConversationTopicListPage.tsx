@@ -157,9 +157,7 @@ export function AiConversationTopicListPage() {
                         <button className="secondary" onClick={() => openEdit(topic)}>
                           Sửa
                         </button>
-                        <button className="secondary" onClick={() => toggleActive(topic)}>
-                          {topic.isActive ? "Tắt" : "Bật lại"}
-                        </button>
+
                         <button className="danger" onClick={() => removeTopic(topic)}>
                           Xóa
                         </button>

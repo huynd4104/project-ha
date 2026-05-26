@@ -45,15 +45,15 @@ class HomeScreen extends StatelessWidget {
                         'Hãy cùng cố gắng nào!',
                         style: AppTextStyles.headline,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        child == null
-                            ? (state.appUser?.fullName ?? 'Phụ huynh')
-                            : '${child.name} • ${child.age} tuổi',
-                        style: AppTextStyles.muted.copyWith(
-                          fontWeight: FontWeight.w800,
+                      if (child == null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          state.appUser?.fullName ?? 'Phụ huynh',
+                          style: AppTextStyles.muted.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -106,20 +106,29 @@ class HomeScreen extends StatelessWidget {
                       CircleAvatar(
                         radius: 38,
                         backgroundColor: AppColors.yellow,
-                        child: state.activeNpc != null
+                        child: child?.avatarUrl != null && child!.avatarUrl!.isNotEmpty
                             ? ClipOval(
                                 child: AppImage(
-                                  imageUrl: state.activeNpc!.imageUrl,
+                                  imageUrl: child.avatarUrl!,
                                   width: 76,
                                   height: 76,
                                   fit: BoxFit.cover,
                                 ),
                               )
-                            : const Icon(
-                                Icons.auto_awesome_rounded,
-                                color: AppColors.text,
-                                size: 40,
-                              ),
+                            : (state.activeNpc != null
+                                ? ClipOval(
+                                    child: AppImage(
+                                      imageUrl: state.activeNpc!.imageUrl,
+                                      width: 76,
+                                      height: 76,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: AppColors.text,
+                                    size: 40,
+                                  )),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
