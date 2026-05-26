@@ -11,6 +11,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/loading_view.dart';
 import '../../../data/repositories/ai_conversation_repository.dart';
+import '../../../data/models/ai_conversation_session.dart';
 import '../../../data/services/ai_conversation_permission_service.dart';
 import '../../../state/ai_conversation_live_controller.dart';
 import '../widgets/ai_conversation_feedback_bubble.dart';
@@ -21,9 +22,14 @@ import '../widgets/ai_conversation_question_bubble.dart';
 import '../widgets/ai_conversation_timer_bar.dart';
 
 class AiConversationLiveScreen extends StatefulWidget {
-  const AiConversationLiveScreen({super.key, required this.topicId});
+  const AiConversationLiveScreen({
+    super.key,
+    required this.topicId,
+    this.preloadedSession,
+  });
 
   final String topicId;
+  final AiConversationSession? preloadedSession;
 
   @override
   State<AiConversationLiveScreen> createState() =>
@@ -40,7 +46,14 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
   void initState() {
     super.initState();
     controller = AiConversationLiveController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+    _start();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (kDebugMode) {
+        debugPrint('[AI Conversation Lifecycle] live screen rendered');
+      }
+      controller.onLiveScreenReady();
+    });
   }
 
   Future<void> _start() async {
@@ -52,6 +65,7 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
       userId: user.id,
       childId: child.id,
       topicId: widget.topicId,
+      preloadedSession: widget.preloadedSession,
     );
     if (!mounted) return;
     setState(() {

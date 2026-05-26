@@ -55,6 +55,17 @@ class AiConversationLiveController extends ChangeNotifier {
   StreamSubscription<String>? _statusSub;
   StreamSubscription<TranscriptResult>? _transcriptSub;
 
+  bool _isLiveScreenReady = false;
+  bool _hasStartedSpeakingFirstQuestion = false;
+  bool _isDisposed = false;
+  bool _isPrepared = false;
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
+  }
+
   AiConversationQuestion? get currentQuestion =>
       currentIndex < questions.length ? questions[currentIndex] : null;
 
@@ -107,7 +118,14 @@ class AiConversationLiveController extends ChangeNotifier {
     required String userId,
     required String childId,
     required String topicId,
+    AiConversationSession? preloadedSession,
   }) async {
+    if (kDebugMode) {
+      debugPrint('[AI Conversation Lifecycle] prepareSession started');
+    }
+    _isDisposed = false;
+    _isPrepared = false;
+    _hasStartedSpeakingFirstQuestion = false;
     loading = true;
     error = null;
     isPermissionError = false;
@@ -150,12 +168,16 @@ class AiConversationLiveController extends ChangeNotifier {
       // Log the final missing status for debugging
       await AiConversationPermissionService.getMissingPermission();
 
-      // 3. Start session via backend to obtain config
-      session = await _repository.startSession(
-        userId: userId,
-        childId: childId,
-        topicId: topicId,
-      );
+      // 3. Obtain session
+      if (preloadedSession != null) {
+        session = preloadedSession;
+      } else {
+        session = await _repository.startSession(
+          userId: userId,
+          childId: childId,
+          topicId: topicId,
+        );
+      }
       questions = session!.questions;
 
       // 4. Select appropriate service dynamically
@@ -228,23 +250,15 @@ class AiConversationLiveController extends ChangeNotifier {
 
       // 7. Connect the active service
       await _activeService.connect(session!);
+      _cancelConnectionTimeout();
 
-      // 8. Auto-speak the first question
-      if (currentQuestion != null) {
-        final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
-            ? currentQuestion!.questionAudioText
-            : currentQuestion!.questionText;
-        
-        // Before speaking, transition state to aiSpeaking
-        liveState = AiLiveState.aiSpeaking;
-        _cancelConnectionTimeout();
-        notifyListeners();
-
-        await _activeService.speak(speakText);
-        liveState = AiLiveState.childTurn;
-        notifyListeners();
-        _startChildTurnReminder();
+      if (kDebugMode) {
+        debugPrint('[AI Conversation Lifecycle] prepareSession completed');
       }
+
+      _isPrepared = true;
+      _checkAndSpeakFirstQuestion();
+
     } catch (e) {
       _cancelConnectionTimeout();
       final msg = e.toString();
@@ -258,6 +272,66 @@ class AiConversationLiveController extends ChangeNotifier {
     } finally {
       loading = false;
       notifyListeners();
+    }
+  }
+
+  void onLiveScreenReady() {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        debugPrint('[AI Conversation Lifecycle] disposed before speak');
+      }
+      return;
+    }
+    if (_isLiveScreenReady) return;
+    _isLiveScreenReady = true;
+    _checkAndSpeakFirstQuestion();
+  }
+
+  Future<void> _checkAndSpeakFirstQuestion() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        debugPrint('[AI Conversation Lifecycle] disposed before speak');
+      }
+      return;
+    }
+    if (!_isPrepared || !_isLiveScreenReady) return;
+    if (_hasStartedSpeakingFirstQuestion) {
+      if (kDebugMode) {
+        debugPrint('[AI Conversation Lifecycle] first question speak skipped because already spoken');
+      }
+      return;
+    }
+    _hasStartedSpeakingFirstQuestion = true;
+
+    if (currentQuestion != null) {
+      if (kDebugMode) {
+        debugPrint('[AI Conversation Lifecycle] first question speak started');
+      }
+      final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
+          ? currentQuestion!.questionAudioText
+          : currentQuestion!.questionText;
+
+      // Before speaking, transition state to aiSpeaking
+      liveState = AiLiveState.aiSpeaking;
+      _cancelConnectionTimeout();
+      notifyListeners();
+
+      try {
+        await _activeService.speak(speakText);
+        if (_isDisposed) {
+          if (kDebugMode) {
+            debugPrint('[AI Conversation Lifecycle] disposed before speak completed');
+          }
+          return;
+        }
+        liveState = AiLiveState.childTurn;
+        notifyListeners();
+        _startChildTurnReminder();
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('First question speak error: $e');
+        }
+      }
     }
   }
 
@@ -322,6 +396,7 @@ class AiConversationLiveController extends ChangeNotifier {
         attemptNo: 1,
         hintUsed: false,
       );
+      if (_isDisposed) return null;
       liveState = AiLiveState.feedback;
       notifyListeners();
 
@@ -332,6 +407,7 @@ class AiConversationLiveController extends ChangeNotifier {
               ? 'Con làm tốt lắm! Cùng trả lời câu tiếp theo nhé.'
               : 'Con cố gắng lên nhé, cùng luyện tập thêm nào.');
       await _activeService.speak(speakFeedback);
+      if (_isDisposed) return null;
 
       // Move to next question
       currentIndex += 1;
@@ -345,18 +421,22 @@ class AiConversationLiveController extends ChangeNotifier {
             ? currentQuestion!.questionAudioText
             : currentQuestion!.questionText;
         await _activeService.speak(speakText);
+        if (_isDisposed) return null;
         liveState = AiLiveState.childTurn;
         notifyListeners();
         _startChildTurnReminder();
       }
       return lastResult;
     } catch (e) {
+      if (_isDisposed) return null;
       error = 'Có lỗi xảy ra. Mình thử lại câu này nhé.';
       liveState = AiLiveState.error;
       return null;
     } finally {
-      submitting = false;
-      notifyListeners();
+      if (!_isDisposed) {
+        submitting = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -420,6 +500,7 @@ class AiConversationLiveController extends ChangeNotifier {
   }
 
   Future<void> close() async {
+    _isDisposed = true;
     _cancelSilenceTimer();
     _cancelChildTurnReminder();
     _cancelConnectionTimeout();
@@ -432,6 +513,7 @@ class AiConversationLiveController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _cancelSilenceTimer();
     _cancelChildTurnReminder();
     _cancelConnectionTimeout();

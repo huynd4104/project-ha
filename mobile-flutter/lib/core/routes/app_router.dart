@@ -9,6 +9,7 @@ import '../../features/auth/screens/verify_email_screen.dart';
 import '../../features/auth/screens/welcome_screen.dart';
 import '../../features/ai_conversation/presentation/child/screens/ai_conversation_intro_screen.dart';
 import '../../features/ai_conversation/presentation/child/screens/ai_conversation_live_screen.dart';
+import '../../features/ai_conversation/data/models/ai_conversation_session.dart';
 import '../../features/ai_conversation/presentation/child/screens/ai_conversation_summary_screen.dart';
 import '../../features/ai_conversation/presentation/child/screens/ai_conversation_topic_screen.dart';
 import '../../features/ai_conversation/presentation/parent/screens/child_ai_progress_dashboard_screen.dart';
@@ -146,8 +147,10 @@ GoRouter buildRouter(AppState state) {
       ),
       GoRoute(
         path: '/ai-conversations/topics/:topicId/live',
-        builder: (_, s) =>
-            AiConversationLiveScreen(topicId: s.pathParameters['topicId']!),
+        builder: (_, s) => AiConversationLiveScreen(
+          topicId: s.pathParameters['topicId']!,
+          preloadedSession: s.extra as AiConversationSession?,
+        ),
       ),
       GoRoute(
         path: '/ai-conversations/sessions/:sessionId/summary',
