@@ -42,9 +42,29 @@ class NPCDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           children: [
             AppCard(
-              child: (npc.imageUrl.isEmpty)
-                  ? const Icon(Icons.auto_awesome_rounded, size: 120)
-                  : AppImage(imageUrl: npc.imageUrl, height: 260),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final imageWidth = constraints.maxWidth;
+                  final imageHeight = (imageWidth * 1.25)
+                      .clamp(280.0, 460.0)
+                      .toDouble();
+
+                  return SizedBox(
+                    width: imageWidth,
+                    height: imageHeight,
+                    child: Center(
+                      child: (npc.imageUrl.isEmpty)
+                          ? const Icon(Icons.auto_awesome_rounded, size: 120)
+                          : AppImage(
+                              imageUrl: npc.imageUrl,
+                              width: imageWidth,
+                              height: imageHeight,
+                              fit: BoxFit.contain,
+                            ),
+                    ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
             Text(
