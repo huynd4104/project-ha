@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'app_icon_button.dart';
 
 /// A small chip-style back button for auth screens.
 class AuthBackChip extends StatelessWidget {
@@ -8,31 +9,10 @@ class AuthBackChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: AppColors.text),
-            SizedBox(width: 4),
-            Text(
-              'Quay lại',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.text,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppIconButton(
+      icon: Icons.arrow_back_ios_new_rounded,
+      tooltip: 'Quay lại',
+      onPressed: onTap,
     );
   }
 }

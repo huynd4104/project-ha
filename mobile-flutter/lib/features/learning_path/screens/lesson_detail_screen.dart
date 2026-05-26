@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -49,27 +50,16 @@ class LessonDetailScreen extends StatelessWidget {
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: InkWell(
-                  onTap: () {
+                child: AppIconButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  tooltip: 'Trở lại',
+                  onPressed: () {
                     if (Navigator.canPop(context)) {
                       Navigator.of(context).pop();
                     } else {
                       context.go('/learning');
                     }
                   },
-                  borderRadius: BorderRadius.circular(99),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: AppColors.text,
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(height: 16),

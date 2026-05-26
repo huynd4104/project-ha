@@ -6,6 +6,7 @@ import '../../../core/services/app_state.dart';
 import '../../../core/utils/api_error_mapper.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/password_field.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -42,15 +43,22 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Đổi mật khẩu'),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-        onPressed: () {
-          if (Navigator.canPop(context)) {
-            Navigator.of(context).pop();
-          } else {
-            context.go('/profile');
-          }
-        },
+      leadingWidth: 64,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 12.0),
+        child: Center(
+          child: AppIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            tooltip: 'Trở lại',
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.of(context).pop();
+              } else {
+                context.go('/profile');
+              }
+            },
+          ),
+        ),
       ),
     ),
     body: Form(

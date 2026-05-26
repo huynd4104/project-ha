@@ -32,48 +32,38 @@ class _AiConversationTopicScreenState extends State<AiConversationTopicScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-        onPressed: () {
-          if (Navigator.canPop(context)) {
-            Navigator.of(context).pop();
-          } else {
-            context.go('/');
+    body: SafeArea(
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          if (controller.loading) return const LoadingView();
+          if (controller.error != null) {
+            return ErrorView(message: controller.error!);
           }
-        },
-      ),
-    ),
-    body: AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        if (controller.loading) return const LoadingView();
-        if (controller.error != null) {
-          return ErrorView(message: controller.error!);
-        }
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-          children: [
-            Text('Hội thoại cùng AI', style: AppTextStyles.headline),
-            const SizedBox(height: 6),
-            Text(
-              'Con chọn một chủ đề để cùng nói chuyện nhé!',
-              style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 18),
-            for (final topic in controller.topics)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: AiTopicCard(
-                  topic: topic,
-                  onTap: () => context.push(
-                    '/ai-conversations/topics/${topic.id}/intro',
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+            children: [
+              Text('Hội thoại cùng AI', style: AppTextStyles.headline),
+              const SizedBox(height: 6),
+              Text(
+                'Con chọn một chủ đề để cùng nói chuyện nhé!',
+                style: AppTextStyles.muted.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 18),
+              for (final topic in controller.topics)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AiTopicCard(
+                    topic: topic,
+                    onTap: () => context.push(
+                      '/ai-conversations/topics/${topic.id}/intro',
+                    ),
                   ),
                 ),
-              ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     ),
   );
 }

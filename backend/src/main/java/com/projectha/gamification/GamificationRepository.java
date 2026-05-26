@@ -96,11 +96,15 @@ public class GamificationRepository {
     public Map<String, Object> claimMission(UUID userId, UUID childId, UUID missionId) {
         return Db.row(jdbc.queryForMap("""
             UPDATE user_mission_progress
-            SET reward_claimed = true, reward_claimed_at = now()
-            WHERE user_id = ? AND child_id = ? AND mission_id = ? AND date = CURRENT_DATE
-              AND is_completed = true AND reward_claimed = false
+            SET reward_claimed = true,
+                reward_claimed_at = now(),
+                is_completed = true,
+                completed_at = COALESCE(completed_at, now())
+            WHERE user_id = ? AND child_id = ? AND mission_id = ? AND date = ?
+              AND (is_completed = true OR current_value >= target_value)
+              AND reward_claimed = false
             RETURNING *
-            """, userId, childId, missionId));
+            """, userId, childId, missionId, LocalDate.now()));
     }
 
     public Map<String, Object> mission(UUID missionId) {

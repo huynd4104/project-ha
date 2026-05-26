@@ -6,6 +6,7 @@ import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_image.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/loading_view.dart';
@@ -24,15 +25,22 @@ class NPCCollectionScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mascot của bé'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/home');
-            }
-          },
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: AppIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              tooltip: 'Trở lại',
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            ),
+          ),
         ),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.text,

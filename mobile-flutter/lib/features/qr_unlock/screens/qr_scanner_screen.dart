@@ -9,6 +9,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/api_error_mapper.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../data/activation_repository.dart';
 
@@ -113,7 +114,24 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Quét QR', style: AppTextStyles.headline),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    AppIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      tooltip: 'Trở lại',
+                      onPressed: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.of(context).pop();
+                        } else {
+                          context.go('/home');
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 14),
+                    Text('Quét QR', style: AppTextStyles.headline),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 const AppCard(
                   color: AppColors.cream,

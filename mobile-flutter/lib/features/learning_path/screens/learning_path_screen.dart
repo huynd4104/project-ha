@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
 import '../../../core/utils/access_check.dart';
@@ -109,9 +110,9 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
                       Row(
                         children: [
                           if (widget.pathId != null) ...[
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                              color: AppColors.text,
+                            AppIconButton(
+                              icon: Icons.arrow_back_ios_new_rounded,
+                              tooltip: 'Trở lại',
                               onPressed: () {
                                 try {
                                   if (context.canPop()) {
@@ -124,19 +125,15 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
                                 }
                               },
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                           ],
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Chặng học của bé',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.text,
-                                  ),
+                                  style: AppTextStyles.headline,
                                 ),
                                 const SizedBox(height: 2),
                                 Text(

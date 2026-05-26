@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_icon_button.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -131,15 +132,22 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Xác thực tài khoản'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/login');
-            }
-          },
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: AppIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              tooltip: 'Trở lại',
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/login');
+                }
+              },
+            ),
+          ),
         ),
         actions: [
           IconButton(

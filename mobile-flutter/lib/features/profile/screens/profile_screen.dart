@@ -7,6 +7,7 @@ import '../../../core/services/sound_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -39,15 +40,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'Tài khoản',
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/home');
-            }
-          },
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: AppIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              tooltip: 'Trở lại',
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+            ),
+          ),
         ),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.text,
@@ -86,8 +94,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      (user?.fullName?.isNotEmpty == true)
-                          ? user!.fullName![0].toUpperCase()
+                      (user?.fullName.isNotEmpty == true)
+                          ? user!.fullName[0].toUpperCase()
                           : '?',
                       style: const TextStyle(
                         color: Colors.white,
@@ -149,8 +157,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 20),
 
           // ── Edit name ───────────────────────────────────────
-          _SectionLabel(label: 'Thông tin cá nhân'),
-          const SizedBox(height: 10),
           AppTextField(
             controller: name,
             label: 'Họ tên',

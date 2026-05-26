@@ -5,8 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/services/app_state.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../models/models.dart';
 import '../../../core/api/api_client.dart';
@@ -210,39 +213,294 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     if (mounted) context.go('/home');
   }
 
+  Widget _buildGenderSelector() {
+    final options = ['Không ghi', 'Nam', 'Nữ'];
+    final icons = [Icons.transgender_rounded, Icons.male_rounded, Icons.female_rounded];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Giới tính của bé',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.text),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(options.length, (index) {
+            final opt = options[index];
+            final isSelected = gender == opt;
+            final optionColor = index == 1 ? AppColors.sky : (index == 2 ? AppColors.pink : AppColors.primary);
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: index == options.length - 1 ? 0 : 8.0,
+                ),
+                child: AppCard(
+                  onTap: () => setState(() => gender = opt),
+                  color: isSelected ? optionColor.withValues(alpha: 0.12) : Colors.white,
+                  borderColor: isSelected ? optionColor : AppColors.border,
+                  borderWidth: isSelected ? 2.5 : 1.5,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Column(
+                    children: [
+                      Icon(icons[index], color: isSelected ? optionColor : AppColors.muted, size: 20),
+                      const SizedBox(height: 4),
+                      Text(
+                        opt,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          color: isSelected ? optionColor : AppColors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDifficultySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Khó khăn chính của bé',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.text),
+        ),
+        const SizedBox(height: 8),
+        ...DevelopmentCategoryKey.values.map((val) {
+          final isSelected = primaryDifficulty == val;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: AppCard(
+              onTap: () => setState(() => primaryDifficulty = val),
+              color: isSelected ? AppColors.orange.withValues(alpha: 0.12) : Colors.white,
+              borderColor: isSelected ? AppColors.orange : AppColors.border,
+              borderWidth: isSelected ? 2.5 : 1.5,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                    color: isSelected ? AppColors.orange : AppColors.muted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      val.label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: isSelected ? AppColors.orange : AppColors.text,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildLearningGoals() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Mục tiêu học tập',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.text),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: LearningGoalKey.values.map((goal) {
+            final isSelected = learningGoals.contains(goal);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    learningGoals.remove(goal);
+                  } else {
+                    learningGoals.add(goal);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.sky.withValues(alpha: 0.12) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? AppColors.sky : AppColors.border,
+                    width: isSelected ? 2 : 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isSelected ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
+                      color: isSelected ? AppColors.sky : AppColors.muted,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      goal.label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        color: isSelected ? AppColors.sky : AppColors.text,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupportLevelSelector() {
+    final options = SupportLevel.values;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Mức độ hỗ trợ cần thiết',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.text),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(options.length, (index) {
+            final lvl = options[index];
+            final isSelected = supportLevel == lvl;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: index == options.length - 1 ? 0 : 8.0,
+                ),
+                child: AppCard(
+                  onTap: () => setState(() => supportLevel = lvl),
+                  color: isSelected ? AppColors.teal.withValues(alpha: 0.12) : Colors.white,
+                  borderColor: isSelected ? AppColors.teal : AppColors.border,
+                  borderWidth: isSelected ? 2.5 : 1.5,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                  child: Column(
+                    children: [
+                      Icon(
+                        index == 0
+                            ? Icons.brightness_low_rounded
+                            : (index == 1 ? Icons.brightness_medium_rounded : Icons.brightness_high_rounded),
+                        color: isSelected ? AppColors.teal : AppColors.muted,
+                        size: 20,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        lvl.label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          color: isSelected ? AppColors.teal : AppColors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCoLearningSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Cách học cùng bé',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.text),
+        ),
+        const SizedBox(height: 8),
+        ...CoLearningMode.values.map((val) {
+          final isSelected = coLearningMode == val;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: AppCard(
+              onTap: () => setState(() => coLearningMode = val),
+              color: isSelected ? AppColors.primary.withValues(alpha: 0.12) : Colors.white,
+              borderColor: isSelected ? AppColors.primary : AppColors.border,
+              borderWidth: isSelected ? 2.5 : 1.5,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
+                    color: isSelected ? AppColors.primary : AppColors.muted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      val.label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: isSelected ? AppColors.primary : AppColors.text,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Hồ sơ của bé'),
+      leadingWidth: (Navigator.canPop(context) || context.read<AppState>().hasChild) ? 64 : null,
       leading: (Navigator.canPop(context) || context.read<AppState>().hasChild)
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.of(context).pop();
-                } else {
-                  context.go('/profile');
-                }
-              },
+          ? Padding(
+              padding: const EdgeInsets.only(left: 12.0),
+              child: Center(
+                child: AppIconButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  tooltip: 'Trở lại',
+                  onPressed: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.of(context).pop();
+                    } else {
+                      context.go('/profile');
+                    }
+                  },
+                ),
+              ),
             )
           : null,
-      actions: [
-        TextButton(
-          onPressed: () => context.read<AppState>().logout(),
-          child: const Text('Đăng xuất'),
-        ),
-      ],
     ),
     body: Form(
       key: formKey,
       child: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         children: [
-          const Text(
-            'Tạo hồ sơ để cá nhân hóa lộ trình học.',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 18),
           Center(
             child: Stack(
               children: [
@@ -296,7 +554,14 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
+          
+          // Section: General Info
+          const Text(
+            'Thông tin cơ bản',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppColors.text),
+          ),
+          const SizedBox(height: 12),
           AppTextField(
             controller: name,
             label: 'Tên bé',
@@ -312,69 +577,31 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
             validator: (v) =>
                 int.tryParse(v ?? '') == null ? 'Tuổi chưa hợp lệ.' : null,
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: gender,
-            items: const [
-              'Không ghi',
-              'Nam',
-              'Nữ',
-            ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-            onChanged: (v) => setState(() => gender = v ?? gender),
-            decoration: const InputDecoration(labelText: 'Giới tính'),
+          const SizedBox(height: 16),
+          _buildGenderSelector(),
+          const SizedBox(height: 24),
+
+          // Section: Development & Support
+          const Text(
+            'Phát triển & Hỗ trợ',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppColors.text),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<DevelopmentCategoryKey>(
-            value: primaryDifficulty,
-            items: DevelopmentCategoryKey.values
-                .map(
-                  (value) =>
-                      DropdownMenuItem(value: value, child: Text(value.label)),
-                )
-                .toList(),
-            onChanged: (v) =>
-                setState(() => primaryDifficulty = v ?? primaryDifficulty),
-            decoration: const InputDecoration(labelText: 'Khó khăn chính'),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Mục tiêu học tập',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: LearningGoalKey.values.map((goal) {
-              final selected = learningGoals.contains(goal);
-              return FilterChip(
-                label: Text(goal.label),
-                selected: selected,
-                onSelected: (value) {
-                  setState(() {
-                    if (value) {
-                      learningGoals.add(goal);
-                    } else {
-                      learningGoals.remove(goal);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<SupportLevel>(
-            value: supportLevel,
-            items: SupportLevel.values
-                .map(
-                  (value) =>
-                      DropdownMenuItem(value: value, child: Text(value.label)),
-                )
-                .toList(),
-            onChanged: (v) => setState(() => supportLevel = v ?? supportLevel),
-            decoration: const InputDecoration(labelText: 'Mức hỗ trợ'),
+          _buildDifficultySelector(),
+          const SizedBox(height: 16),
+          _buildSupportLevelSelector(),
+          const SizedBox(height: 24),
+
+          // Section: Goals & Learn mode
+          _buildLearningGoals(),
+          const SizedBox(height: 24),
+          _buildCoLearningSelector(),
+          const SizedBox(height: 24),
+          
+          // Section: Duration & Note
+          const Text(
+            'Thời lượng học & Ghi chú',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppColors.text),
           ),
           const SizedBox(height: 12),
           AppTextField(
@@ -391,26 +618,14 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
             },
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<CoLearningMode>(
-            value: coLearningMode,
-            items: CoLearningMode.values
-                .map(
-                  (value) =>
-                      DropdownMenuItem(value: value, child: Text(value.label)),
-                )
-                .toList(),
-            onChanged: (v) =>
-                setState(() => coLearningMode = v ?? coLearningMode),
-            decoration: const InputDecoration(labelText: 'Cách học cùng bé'),
-          ),
-          const SizedBox(height: 12),
           AppTextField(
             controller: note,
             label: 'Ghi chú cho phụ huynh',
             icon: Icons.notes_rounded,
             maxLines: 3,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
+          
           AppButton(
             label: 'Lưu hồ sơ',
             icon: Icons.check_rounded,

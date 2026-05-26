@@ -122,13 +122,6 @@ class ParentDashboardScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 56, 18, 24),
             children: [
               Text('Bảng phụ huynh', style: AppTextStyles.headline),
-              const SizedBox(height: 4),
-              Text(
-                state.activeChild?.name ?? 'Hồ sơ bé',
-                style: AppTextStyles.muted.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
               const SizedBox(height: 12),
               _buildSubscriptionBanner(
                 context,

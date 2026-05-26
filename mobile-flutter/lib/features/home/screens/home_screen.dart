@@ -481,9 +481,9 @@ class HomeScreen extends StatelessWidget {
                       state.activeChild!.id,
                     ),
               builder: (_, snap) {
-                if (!snap.hasData || snap.data!.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+                if (!snap.hasData) return const SizedBox.shrink();
+                final activeMissions = snap.data!.where((m) => !m.progress.rewardClaimed).toList();
+                if (activeMissions.isEmpty) return const SizedBox.shrink();
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -497,10 +497,20 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    for (final mission in snap.data!.take(2))
+                    for (final mission in activeMissions.take(2))
                       DailyMissionCard(
                         item: mission,
-                        onClaim: () => context.go('/rewards'),
+                        onClaim: () async {
+                          try {
+                            final repo = GamificationRepository();
+                            await repo.claimMissionReward(
+                              state.appUser!.id,
+                              state.activeChild!.id,
+                              mission,
+                            );
+                            await state.refreshStats();
+                          } catch (_) {}
+                        },
                       ),
                   ],
                 );

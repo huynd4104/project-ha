@@ -78,7 +78,9 @@ class GamificationRepository {
     String childId,
     MissionWithProgress item,
   ) async {
-    if (!item.progress.isCompleted) {
+    final isCompleted = item.progress.isCompleted ||
+        (item.progress.currentValue >= item.progress.targetValue);
+    if (!isCompleted) {
       throw Exception('Nhiệm vụ chưa hoàn thành.');
     }
     if (item.progress.rewardClaimed) {

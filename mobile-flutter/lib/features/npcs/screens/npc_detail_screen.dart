@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_image.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../data/npc_repository.dart';
@@ -19,15 +20,22 @@ class NPCDetailScreen extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(
           title: Text(npc.name),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.of(context).pop();
-              } else {
-                context.go('/npcs');
-              }
-            },
+          leadingWidth: 64,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12.0),
+            child: Center(
+              child: AppIconButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                tooltip: 'Trở lại',
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.of(context).pop();
+                  } else {
+                    context.go('/npcs');
+                  }
+                },
+              ),
+            ),
           ),
         ),
         body: ListView(

@@ -103,6 +103,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     streak = results[1] as Streak?;
     final unlockedNpcs = results[2] as List<UnlockedNpcView>;
     activeNpc = unlockedNpcs.isEmpty ? null : unlockedNpcs.first.npc;
+    notifyListeners();
   }
 
   Future<void> logout() async {
