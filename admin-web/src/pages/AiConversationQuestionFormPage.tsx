@@ -4,6 +4,7 @@ import type {
   AiConversationQuestion,
   AiConversationQuestionPayload
 } from "../api/aiConversationApi";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 
 interface Props {
   question: AiConversationQuestion | null;
@@ -11,7 +12,12 @@ interface Props {
   onSubmit: (payload: AiConversationQuestionPayload) => Promise<void>;
 }
 
-const evaluationTypes: AiConversationEvaluationType[] = ["EXACT", "KEYWORD", "SEMANTIC", "OPEN_ENDED"];
+const evaluationTypes: { value: AiConversationEvaluationType; label: string }[] = [
+  { value: "KEYWORD", label: "Theo từ khóa (KEYWORD)" },
+  { value: "SEMANTIC", label: "Theo ngữ nghĩa (SEMANTIC)" },
+  { value: "EXACT", label: "Khớp chính xác (EXACT)" },
+  { value: "OPEN_ENDED", label: "Câu hỏi mở (OPEN_ENDED)" }
+];
 
 export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }: Props) {
   const [questionText, setQuestionText] = useState("");
@@ -25,7 +31,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
   const [retryFeedback, setRetryFeedback] = useState("");
   const [maxAttempts, setMaxAttempts] = useState("2");
   const [skillTags, setSkillTags] = useState("");
-  const [difficultyLevel, setDifficultyLevel] = useState("1");
+  const [difficultyLevel, setDifficultyLevel] = useState("BEGINNER");
   const [sortOrder, setSortOrder] = useState("0");
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,7 +49,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     setRetryFeedback(question?.retryFeedback ?? "");
     setMaxAttempts(`${question?.maxAttempts ?? 2}`);
     setSkillTags((question?.skillTags ?? []).join("\n"));
-    setDifficultyLevel(`${question?.difficultyLevel ?? 1}`);
+    setDifficultyLevel(question?.difficultyLevel ?? "BEGINNER");
     setSortOrder(`${question?.sortOrder ?? 0}`);
     setIsActive(question?.isActive ?? true);
     setErrors({});
@@ -56,12 +62,17 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!questionText.trim()) next.questionText = "Câu hỏi không được để trống.";
-    if (!evaluationType) next.evaluationType = "Cần chọn kiểu đánh giá.";
-    if (!Number.isFinite(Number(maxAttempts)) || Number(maxAttempts) < 1) next.maxAttempts = "Số lần thử phải từ 1 trở lên.";
-    if (!Number.isFinite(Number(sortOrder))) next.sortOrder = "Thứ tự phải là số.";
+    if (!questionText.trim()) next.questionText = "Vui lòng nhập câu hỏi.";
+    if (!evaluationType) next.evaluationType = "Vui lòng chọn cách chấm.";
+    const attempts = Number(maxAttempts);
+    if (!Number.isFinite(attempts) || attempts < 1) {
+      next.maxAttempts = "Số lần thử tối đa phải từ 1 trở lên.";
+    }
+    if (!Number.isFinite(Number(sortOrder))) {
+      next.sortOrder = "Thứ tự phải là một số hợp lệ.";
+    }
     if (evaluationType === "KEYWORD" && parseList(acceptedKeywords).length === 0) {
-      next.acceptedKeywords = "KEYWORD cần ít nhất một từ khóa chấp nhận.";
+      next.acceptedKeywords = "Vui lòng nhập ít nhất một từ khóa khi chọn cách chấm Theo từ khóa.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -97,88 +108,175 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-content" onClick={(event) => event.stopPropagation()} style={{ width: "min(900px, 95vw)" }}>
         <div className="modal-header">
-          <h2>{question ? "Sửa câu hỏi" : "Thêm câu hỏi"}</h2>
+          <h2>{question ? "Chỉnh sửa câu hỏi hội thoại" : "Thêm câu hỏi hội thoại mới"}</h2>
           <button className="modal-close" onClick={onCancel} type="button">&times;</button>
         </div>
         <form onSubmit={submit}>
-          <div className="modal-body">
-            <label>
-              Câu hỏi
-              <textarea value={questionText} onChange={(event) => setQuestionText(event.target.value)} rows={2} />
-              {errors.questionText && <span className="error-msg">{errors.questionText}</span>}
-            </label>
-            <div className="form-grid" style={{ marginTop: "16px" }}>
-              <label>
-                Text AI đọc
-                <input value={questionAudioText} onChange={(event) => setQuestionAudioText(event.target.value)} />
-              </label>
-              <label>
-                Đáp án kỳ vọng
-                <input value={expectedAnswer} onChange={(event) => setExpectedAnswer(event.target.value)} />
-              </label>
-              <label>
-                Kiểu đánh giá
-                <select value={evaluationType} onChange={(event) => setEvaluationType(event.target.value as AiConversationEvaluationType)}>
-                  {evaluationTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-                </select>
-                {errors.evaluationType && <span className="error-msg">{errors.evaluationType}</span>}
-              </label>
-              <label>
-                Số lần thử
-                <input type="number" min="1" value={maxAttempts} onChange={(event) => setMaxAttempts(event.target.value)} />
-                {errors.maxAttempts && <span className="error-msg">{errors.maxAttempts}</span>}
-              </label>
-              <label>
-                Độ khó
-                <select value={difficultyLevel} onChange={(event) => setDifficultyLevel(event.target.value)}>
-                  <option value="BEGINNER">BEGINNER</option>
-                  <option value="BASIC">BASIC</option>
-                  <option value="INTERMEDIATE">INTERMEDIATE</option>
-                </select>
-              </label>
-              <label>
-                Thứ tự
-                <input type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
-                {errors.sortOrder && <span className="error-msg">{errors.sortOrder}</span>}
-              </label>
+          <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            
+            {/* Section A: Nội dung câu hỏi */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
+                a. Nội dung câu hỏi
+              </h3>
+              <div className="field">
+                <label>Câu hỏi hiển thị trên màn hình <span style={{ color: "red" }}>*</span></label>
+                <textarea
+                  value={questionText}
+                  onChange={(event) => setQuestionText(event.target.value)}
+                  rows={2}
+                  placeholder="VD: Con hãy tự giới thiệu tên và tuổi của mình nhé."
+                />
+                {errors.questionText && <span className="error-msg">{errors.questionText}</span>}
+              </div>
+              <div className="field">
+                <label>Câu hỏi đọc bằng giọng nói (TTS) <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Để trống nếu giống câu hỏi hiển thị)</span></label>
+                <input
+                  value={questionAudioText}
+                  onChange={(event) => setQuestionAudioText(event.target.value)}
+                  placeholder="VD: Chào con, con hãy giới thiệu tên và tuổi của mình cho ta nghe nhé!"
+                />
+              </div>
             </div>
-            <div className="form-grid" style={{ marginTop: "16px" }}>
-              <label>
-                Từ khóa chấp nhận
-                <textarea value={acceptedKeywords} onChange={(event) => setAcceptedKeywords(event.target.value)} rows={4} placeholder="Mỗi dòng một từ khóa" />
-                {errors.acceptedKeywords && <span className="error-msg">{errors.acceptedKeywords}</span>}
-              </label>
-              <label>
-                Đáp án thay thế
-                <textarea value={alternativeAnswers} onChange={(event) => setAlternativeAnswers(event.target.value)} rows={4} placeholder="Mỗi dòng một đáp án" />
-              </label>
-              <label>
-                Skill tags
-                <textarea value={skillTags} onChange={(event) => setSkillTags(event.target.value)} rows={4} placeholder="greeting&#10;social_communication" />
-              </label>
+
+            {/* Section B: Đáp án & cách chấm */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
+                b. Đáp án & cách chấm điểm
+              </h3>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Cách chấm điểm <span style={{ color: "red" }}>*</span></label>
+                  <select value={evaluationType} onChange={(event) => setEvaluationType(event.target.value as AiConversationEvaluationType)}>
+                    {evaluationTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                  {errors.evaluationType && <span className="error-msg">{errors.evaluationType}</span>}
+                </div>
+                <div className="field">
+                  <label>Đáp án kỳ vọng <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Dành cho Semantic/Exact)</span></label>
+                  <input
+                    value={expectedAnswer}
+                    onChange={(event) => setExpectedAnswer(event.target.value)}
+                    placeholder="VD: Con tên là Nam, năm nay con 6 tuổi."
+                  />
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <div className="field">
+                  <label>
+                    Từ khóa chấp nhận <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng hoặc phẩy phân tách một từ khóa)</span>
+                  </label>
+                  <textarea
+                    value={acceptedKeywords}
+                    onChange={(event) => setAcceptedKeywords(event.target.value)}
+                    rows={3}
+                    placeholder="VD: tên là&#10;tuổi&#10;tuổi"
+                  />
+                  {errors.acceptedKeywords && <span className="error-msg">{errors.acceptedKeywords}</span>}
+                </div>
+                <div className="field">
+                  <label>
+                    Đáp án thay thế <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng hoặc phẩy phân tách một câu trả lời mẫu)</span>
+                  </label>
+                  <textarea
+                    value={alternativeAnswers}
+                    onChange={(event) => setAlternativeAnswers(event.target.value)}
+                    rows={3}
+                    placeholder="VD: Mình tên là Nam, mình 6 tuổi.&#10;Con tên Nam, con lên 6."
+                  />
+                </div>
+              </div>
             </div>
-            <div className="form-grid" style={{ marginTop: "16px" }}>
-              <label>
-                Gợi ý
-                <textarea value={hintText} onChange={(event) => setHintText(event.target.value)} rows={3} />
-              </label>
-              <label>
-                Feedback đúng
-                <textarea value={positiveFeedback} onChange={(event) => setPositiveFeedback(event.target.value)} rows={3} />
-              </label>
-              <label>
-                Feedback thử lại
-                <textarea value={retryFeedback} onChange={(event) => setRetryFeedback(event.target.value)} rows={3} />
-              </label>
+
+            {/* Section C: Phản hồi cho bé */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
+                c. Phản hồi của AI/Mascot dành cho bé
+              </h3>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Gợi ý khi nói (Hint)</label>
+                  <textarea
+                    value={hintText}
+                    onChange={(event) => setHintText(event.target.value)}
+                    rows={2}
+                    placeholder="VD: Con hãy trả lời bắt đầu bằng cụm từ: Con tên là..."
+                  />
+                </div>
+                <div className="field">
+                  <label>Lời khen khi trả lời đúng (Feedback tốt)</label>
+                  <textarea
+                    value={positiveFeedback}
+                    onChange={(event) => setPositiveFeedback(event.target.value)}
+                    rows={2}
+                    placeholder="VD: Giỏi lắm! Giọng con rất rõ ràng và đáng yêu."
+                  />
+                </div>
+                <div className="field">
+                  <label>Lời khích lệ khi bé cần thử lại</label>
+                  <textarea
+                    value={retryFeedback}
+                    onChange={(event) => setRetryFeedback(event.target.value)}
+                    rows={2}
+                    placeholder="VD: Gần được rồi con yêu. Con bấm mic nói lại tên và tuổi rõ hơn nhé!"
+                  />
+                </div>
+              </div>
             </div>
-            <label style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "16px" }}>
-              <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-              Đang hoạt động
-            </label>
+
+            {/* Section D: Cấu hình hệ thống */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
+                d. Cấu hình hệ thống
+              </h3>
+              <div className="form-grid">
+                <div className="field">
+                  <label>Độ khó</label>
+                  <select value={difficultyLevel} onChange={(event) => setDifficultyLevel(event.target.value)}>
+                    <option value="BEGINNER">Dễ (Beginner)</option>
+                    <option value="BASIC">Trung bình (Basic)</option>
+                    <option value="INTERMEDIATE">Khó (Intermediate)</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Số lần thử tối đa</label>
+                  <input type="number" min="1" value={maxAttempts} onChange={(event) => setMaxAttempts(event.target.value)} />
+                  {errors.maxAttempts && <span className="error-msg">{errors.maxAttempts}</span>}
+                </div>
+                <div className="field">
+                  <label>Thứ tự sắp xếp</label>
+                  <input type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
+                  {errors.sortOrder && <span className="error-msg">{errors.sortOrder}</span>}
+                </div>
+              </div>
+              <div className="field">
+                <label>
+                  Nhóm kỹ năng (Skill tags) <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng một tag)</span>
+                </label>
+                <textarea
+                  value={skillTags}
+                  onChange={(event) => setSkillTags(event.target.value)}
+                  rows={2}
+                  placeholder="VD: greeting&#10;social_skills"
+                />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                <ToggleSwitch
+                  id="questionActive"
+                  label={isActive ? "Câu hỏi đang bật (Áp dụng)" : "Câu hỏi đã tắt (Tạm ẩn)"}
+                  checked={isActive}
+                  onChange={setIsActive}
+                />
+              </div>
+            </div>
+
           </div>
           <div className="modal-footer">
             <button type="button" className="secondary" onClick={onCancel}>Hủy</button>
-            <button type="submit" disabled={saving}>{saving ? "Đang lưu..." : "Lưu"}</button>
+            <button type="submit" disabled={saving}>
+              {saving ? "Đang lưu..." : question ? "Cập nhật câu hỏi" : "Lưu câu hỏi"}
+            </button>
           </div>
         </form>
       </div>

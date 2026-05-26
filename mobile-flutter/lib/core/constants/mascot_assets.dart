@@ -15,7 +15,7 @@ class MascotAssets {
 
   // ── Reaction states ───────────────────────────────────────────────────────
   static const welcome =
-      'assets/images/mascot/reactions/mascot_welcome.png';
+      'assets/images/mascot/gifs/mascot_welcome.gif';
   static const letsStart =
       'assets/images/mascot/reactions/mascot_lets_start.png';
   static const correct =

@@ -82,21 +82,27 @@ export function AiConversationTopicListPage() {
     <div>
       <div className="toolbar">
         <div>
-          <h1>AI Conversations / Hội thoại cùng AI</h1>
+          <h1>Hội thoại cùng AI</h1>
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>
-            Quản lý chủ đề và câu hỏi để backend dùng làm nguồn dữ liệu chính cho phiên trò chuyện.
+            Quản lý chủ đề và câu hỏi dùng làm nguồn dữ liệu chính cho các phiên trò chuyện của trẻ.
           </p>
         </div>
-        <button onClick={openCreate}>+ Thêm chủ đề</button>
+        <button onClick={openCreate}>➕ Thêm chủ đề mới</button>
       </div>
 
-      <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+      <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center" }}>
         <input
           className="search-input"
           placeholder="Tìm theo tên, mã hoặc mô tả..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
+          style={{ flex: 1, margin: 0 }}
         />
+        {search && (
+          <button className="secondary" onClick={() => setSearch("")} style={{ height: "40px", margin: 0 }}>
+            Xóa tìm kiếm
+          </button>
+        )}
       </div>
 
       {error && <div className="panel" style={{ padding: "16px", color: "#b91c1c", marginBottom: "16px" }}>{error}</div>}
@@ -105,7 +111,7 @@ export function AiConversationTopicListPage() {
         <p>Đang tải danh sách chủ đề...</p>
       ) : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px" }}>
-          <p style={{ color: "var(--text-muted)" }}>Chưa có chủ đề hội thoại AI.</p>
+          <p style={{ color: "var(--text-muted)" }}>Chưa có chủ đề hội thoại nào.</p>
         </div>
       ) : (
         <>
@@ -115,7 +121,6 @@ export function AiConversationTopicListPage() {
               <thead>
                 <tr>
                   <th>Tên chủ đề</th>
-                  <th>Mã</th>
                   <th>Độ khó</th>
                   <th>Độ tuổi</th>
                   <th>Thời lượng</th>
@@ -128,21 +133,41 @@ export function AiConversationTopicListPage() {
                 {table.pagedItems.map((topic) => (
                   <tr key={topic.id}>
                     <td>
-                      <strong>{topic.title}</strong>
-                      <div style={{ color: "var(--text-muted)", fontSize: "12px", marginTop: "4px" }}>{topic.description || "Không có mô tả"}</div>
+                      <strong style={{ fontSize: "14px", color: "var(--text-main)" }}>{topic.title}</strong>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "4px" }}>
+                        <code style={{ fontSize: "11px", color: "var(--text-muted)", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                          Mã: {topic.code}
+                        </code>
+                      </div>
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px", marginTop: "6px" }}>
+                        {topic.description || "Không có mô tả"}
+                      </div>
                     </td>
-                    <td><code>{topic.code}</code></td>
-                    <td>{topic.difficultyLevel}</td>
+                    <td>{getDifficultyBadge(topic.difficultyLevel)}</td>
                     <td>{formatAgeRange(topic)}</td>
-                    <td>{topic.estimatedDurationSeconds}s</td>
-                    <td>{topic.isActive ? "Đang bật" : "Đang tắt"}</td>
+                    <td>{formatDuration(topic.estimatedDurationSeconds)}</td>
+                    <td>
+                      {topic.isActive ? (
+                        <span className="badge active">Đang bật</span>
+                      ) : (
+                        <span className="badge inactive">Đã tắt</span>
+                      )}
+                    </td>
                     <td>{topic.sortOrder}</td>
                     <td>
                       <div className="actions">
-                        <button className="secondary" onClick={() => navigate(`/ai-conversations/topics/${topic.id}/questions`)}>Câu hỏi</button>
-                        <button className="secondary" onClick={() => openEdit(topic)}>Sửa</button>
-                        <button className="secondary" onClick={() => toggleActive(topic)}>{topic.isActive ? "Tắt" : "Bật"}</button>
-                        <button className="danger" onClick={() => removeTopic(topic)}>Xóa</button>
+                        <button className="secondary" onClick={() => navigate(`/ai-conversations/topics/${topic.id}/questions`)}>
+                          Câu hỏi
+                        </button>
+                        <button className="secondary" onClick={() => openEdit(topic)}>
+                          Sửa
+                        </button>
+                        <button className="secondary" onClick={() => toggleActive(topic)}>
+                          {topic.isActive ? "Tắt" : "Bật lại"}
+                        </button>
+                        <button className="danger" onClick={() => removeTopic(topic)}>
+                          Xóa
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -164,9 +189,35 @@ export function AiConversationTopicListPage() {
   );
 }
 
+function getDifficultyBadge(level: string) {
+  switch (String(level).toUpperCase()) {
+    case "BEGINNER":
+    case "EASY":
+    case "1":
+      return <span className="badge blue">Dễ</span>;
+    case "BASIC":
+    case "MEDIUM":
+    case "2":
+      return <span className="badge yellow">Trung bình</span>;
+    case "INTERMEDIATE":
+    case "HARD":
+    case "3":
+      return <span className="badge orange">Khó</span>;
+    default:
+      return <span className="badge info">{level}</span>;
+  }
+}
+
+function formatDuration(seconds: number) {
+  if (seconds < 60) return `${seconds} giây`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs > 0 ? `${mins} phút ${secs} giây` : `${mins} phút`;
+}
+
 function formatAgeRange(topic: AiConversationTopic) {
   if (topic.ageRangeMin == null && topic.ageRangeMax == null) return "Không giới hạn";
-  if (topic.ageRangeMin == null) return `Đến ${topic.ageRangeMax}`;
-  if (topic.ageRangeMax == null) return `Từ ${topic.ageRangeMin}`;
-  return `${topic.ageRangeMin}-${topic.ageRangeMax}`;
+  if (topic.ageRangeMin == null) return `Đến ${topic.ageRangeMax} tuổi`;
+  if (topic.ageRangeMax == null) return `Từ ${topic.ageRangeMin} tuổi`;
+  return `${topic.ageRangeMin} - ${topic.ageRangeMax} tuổi`;
 }

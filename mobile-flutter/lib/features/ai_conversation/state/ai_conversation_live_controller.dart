@@ -95,10 +95,15 @@ class AiConversationLiveController extends ChangeNotifier {
         _activeService = _injectedLiveService;
       } else if (session!.isRealGeminiLive) {
         _activeService = GeminiLiveConversationService();
-      } else if (session!.mode == 'MOCK') {
-        _activeService = MockAiLiveConversationService();
       } else {
-        _activeService = DeviceSttTtsConversationService();
+        // Default to DeviceSttTtsConversationService for actual voice interaction.
+        // Mock service only if there is a debug config flag enabled.
+        const useMockService = bool.fromEnvironment('USE_MOCK_AI_CONVERSATION', defaultValue: false);
+        if (useMockService) {
+          _activeService = MockAiLiveConversationService();
+        } else {
+          _activeService = DeviceSttTtsConversationService();
+        }
       }
 
       // 3. Request permissions first
@@ -155,7 +160,7 @@ class AiConversationLiveController extends ChangeNotifier {
 
       // 7. Auto-speak the first question
       if (currentQuestion != null) {
-        final speakText = currentQuestion!.questionAudioText.isNotEmpty
+        final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
             ? currentQuestion!.questionAudioText
             : currentQuestion!.questionText;
         await _activeService.speak(speakText);
@@ -237,7 +242,12 @@ class AiConversationLiveController extends ChangeNotifier {
       notifyListeners();
 
       // AI speaks feedback
-      await _activeService.speak(lastResult!.aiFeedback);
+      final speakFeedback = lastResult!.aiFeedback.trim().isNotEmpty
+          ? lastResult!.aiFeedback
+          : (lastResult!.isGood
+              ? 'Con làm tốt lắm! Cùng trả lời câu tiếp theo nhé.'
+              : 'Con cố gắng lên nhé, cùng luyện tập thêm nào.');
+      await _activeService.speak(speakFeedback);
 
       // Move to next question
       currentIndex += 1;
@@ -247,7 +257,7 @@ class AiConversationLiveController extends ChangeNotifier {
         liveState = AiLiveState.childTurn;
         notifyListeners();
         // Auto-speak the next question
-        final speakText = currentQuestion!.questionAudioText.isNotEmpty
+        final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
             ? currentQuestion!.questionAudioText
             : currentQuestion!.questionText;
         await _activeService.speak(speakText);

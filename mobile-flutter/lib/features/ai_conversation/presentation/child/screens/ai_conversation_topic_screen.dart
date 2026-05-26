@@ -32,7 +32,18 @@ class _AiConversationTopicScreenState extends State<AiConversationTopicScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Hội thoại cùng AI')),
+    appBar: AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onPressed: () {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          } else {
+            context.go('/');
+          }
+        },
+      ),
+    ),
     body: AnimatedBuilder(
       animation: controller,
       builder: (context, _) {

@@ -96,22 +96,30 @@ export function AiConversationQuestionListPage() {
     <div>
       <div className="toolbar">
         <div>
-          <button className="secondary" onClick={() => navigate("/ai-conversations")} style={{ marginBottom: "10px" }}>← Quay lại chủ đề</button>
-          <h1>Câu hỏi: {topic?.title ?? "Hội thoại cùng AI"}</h1>
+          <button className="secondary" onClick={() => navigate("/ai-conversations")} style={{ marginBottom: "12px" }}>
+            ⬅️ Quay lại danh sách chủ đề
+          </button>
+          <h1>Câu hỏi thuộc chủ đề: {topic?.title ?? "Hội thoại cùng AI"}</h1>
           <p style={{ color: "var(--text-muted)", marginTop: "4px" }}>
-            Câu hỏi, đáp án, rule đánh giá, gợi ý và feedback được quản lý từ backend.
+            Thiết lập câu hỏi, đáp án mẫu, phương thức chấm điểm và các gợi ý hội thoại cho trẻ.
           </p>
         </div>
-        <button onClick={openCreate}>+ Thêm câu hỏi</button>
+        <button onClick={openCreate}>➕ Thêm câu hỏi mới</button>
       </div>
 
-      <div className="panel" style={{ padding: "16px", marginBottom: "16px" }}>
+      <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center" }}>
         <input
           className="search-input"
-          placeholder="Tìm theo câu hỏi, đáp án, từ khóa hoặc skill tag..."
+          placeholder="Tìm theo câu hỏi, đáp án, từ khóa hoặc kỹ năng..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
+          style={{ flex: 1, margin: 0 }}
         />
+        {search && (
+          <button className="secondary" onClick={() => setSearch("")} style={{ height: "40px", margin: 0 }}>
+            Xóa tìm kiếm
+          </button>
+        )}
       </div>
 
       {error && <div className="panel" style={{ padding: "16px", color: "#b91c1c", marginBottom: "16px" }}>{error}</div>}
@@ -120,7 +128,7 @@ export function AiConversationQuestionListPage() {
         <p>Đang tải danh sách câu hỏi...</p>
       ) : filtered.length === 0 ? (
         <div className="panel" style={{ textAlign: "center", padding: "40px" }}>
-          <p style={{ color: "var(--text-muted)" }}>Chủ đề này chưa có câu hỏi.</p>
+          <p style={{ color: "var(--text-muted)" }}>Chủ đề này chưa có câu hỏi nào.</p>
         </div>
       ) : (
         <>
@@ -130,10 +138,10 @@ export function AiConversationQuestionListPage() {
               <thead>
                 <tr>
                   <th>Câu hỏi</th>
-                  <th>Đáp án</th>
-                  <th>Kiểu đánh giá</th>
-                  <th>Từ khóa</th>
-                  <th>Skill tags</th>
+                  <th>Đáp án kỳ vọng</th>
+                  <th>Phương thức chấm</th>
+                  <th>Từ khóa chính</th>
+                  <th>Nhóm kỹ năng</th>
                   <th>Độ khó</th>
                   <th>Trạng thái</th>
                   <th>Thứ tự</th>
@@ -144,20 +152,69 @@ export function AiConversationQuestionListPage() {
                 {table.pagedItems.map((question) => (
                   <tr key={question.id}>
                     <td style={{ minWidth: "220px" }}>
-                      <strong>{question.questionText}</strong>
-                      {question.hintText && <div style={{ color: "var(--text-muted)", fontSize: "12px", marginTop: "4px" }}>Gợi ý: {question.hintText}</div>}
+                      <strong style={{ fontSize: "14px", color: "var(--text-main)" }}>{question.questionText}</strong>
+                      {question.questionAudioText && question.questionAudioText !== question.questionText && (
+                        <div style={{ color: "var(--text-muted)", fontSize: "11px", marginTop: "4px", fontStyle: "italic" }}>
+                          Giọng nói: {question.questionAudioText}
+                        </div>
+                      )}
+                      {question.hintText && (
+                        <div style={{ color: "#0369a1", background: "#f0f9ff", fontSize: "12px", marginTop: "6px", padding: "4px 8px", borderRadius: "4px", display: "inline-block" }}>
+                          💡 Gợi ý: {question.hintText}
+                        </div>
+                      )}
                     </td>
-                    <td>{question.expectedAnswer || "Không bắt buộc"}</td>
-                    <td><code>{question.evaluationType}</code></td>
-                    <td>{formatList(question.acceptedKeywords)}</td>
-                    <td>{formatList(question.skillTags)}</td>
-                    <td>{question.difficultyLevel}</td>
-                    <td>{question.isActive ? "Đang bật" : "Đang tắt"}</td>
+                    <td>
+                      {question.expectedAnswer ? (
+                        <span style={{ fontWeight: "500", color: "#0f172a" }}>{question.expectedAnswer}</span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "12px" }}>Không bắt buộc</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="badge blue">{getEvaluationLabel(question.evaluationType)}</span>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "200px" }}>
+                        {question.acceptedKeywords.length > 0 ? (
+                          question.acceptedKeywords.map((kw, i) => (
+                            <span key={i} className="badge info" style={{ textTransform: "none", fontSize: "11px" }}>
+                              {kw}
+                            </span>
+                          ))
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "160px" }}>
+                        {question.skillTags.length > 0 ? (
+                          question.skillTags.map((tag, i) => (
+                            <span key={i} className="badge purple" style={{ textTransform: "none", fontSize: "11px" }}>
+                              {tag}
+                            </span>
+                          ))
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>{getDifficultyBadge(question.difficultyLevel)}</td>
+                    <td>
+                      {question.isActive ? (
+                        <span className="badge active">Đang bật</span>
+                      ) : (
+                        <span className="badge inactive">Đã tắt</span>
+                      )}
+                    </td>
                     <td>{question.sortOrder}</td>
                     <td>
                       <div className="actions">
                         <button className="secondary" onClick={() => openEdit(question)}>Sửa</button>
-                        <button className="secondary" onClick={() => toggleActive(question)}>{question.isActive ? "Tắt" : "Bật"}</button>
+                        <button className="secondary" onClick={() => toggleActive(question)}>
+                          {question.isActive ? "Tắt" : "Bật lại"}
+                        </button>
                         <button className="danger" onClick={() => removeQuestion(question)}>Xóa</button>
                       </div>
                     </td>
@@ -180,7 +237,36 @@ export function AiConversationQuestionListPage() {
   );
 }
 
-function formatList(values: string[]) {
-  if (!values.length) return "Không có";
-  return values.slice(0, 3).join(", ") + (values.length > 3 ? ` +${values.length - 3}` : "");
+function getDifficultyBadge(level: string) {
+  switch (String(level).toUpperCase()) {
+    case "BEGINNER":
+    case "EASY":
+    case "1":
+      return <span className="badge blue">Dễ</span>;
+    case "BASIC":
+    case "MEDIUM":
+    case "2":
+      return <span className="badge yellow">Trung bình</span>;
+    case "INTERMEDIATE":
+    case "HARD":
+    case "3":
+      return <span className="badge orange">Khó</span>;
+    default:
+      return <span className="badge info">{level}</span>;
+  }
+}
+
+function getEvaluationLabel(type: string) {
+  switch (type) {
+    case "EXACT":
+      return "Khớp chính xác";
+    case "KEYWORD":
+      return "Theo từ khóa";
+    case "SEMANTIC":
+      return "Theo ngữ nghĩa";
+    case "OPEN_ENDED":
+      return "Câu hỏi mở";
+    default:
+      return type;
+  }
 }

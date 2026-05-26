@@ -68,8 +68,11 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
       await _tts.setLanguage('vi-VN');
       await _tts.setSpeechRate(0.48); // Slightly slower rate for children
       await _tts.setPitch(1.0); // Standard, clear pitch
+      await _tts.setVolume(1.0);
+      await _tts.awaitSpeakCompletion(true);
     } catch (e) {
       if (kDebugMode) {
+        print("[AI Conversation TTS] error: Failed to configure TTS: $e");
         debugPrint('Failed to configure TTS: $e');
       }
     }
@@ -205,11 +208,18 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
     _ttsCompleter = Completer<void>();
 
     try {
+      if (kDebugMode) {
+        print("[AI Conversation TTS] speaking: $text");
+      }
       await _tts.speak(text);
       // Wait up to 15 seconds for speaking to complete
       await _ttsCompleter!.future.timeout(const Duration(seconds: 15));
+      if (kDebugMode) {
+        print("[AI Conversation TTS] completed");
+      }
     } catch (e) {
       if (kDebugMode) {
+        print("[AI Conversation TTS] error: $e");
         debugPrint('TTS speak error or timeout: $e');
       }
     } finally {

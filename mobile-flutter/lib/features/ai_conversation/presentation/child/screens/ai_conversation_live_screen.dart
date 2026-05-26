@@ -133,6 +133,72 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
     context.go('/ai-conversations/sessions/$sessionId/summary');
   }
 
+  Future<void> _confirmExit() async {
+    // Safely stop STT listening before showing the dialog
+    await controller.stopListening();
+    
+    if (!mounted) return;
+    
+    final exit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Kết thúc nói chuyện',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          'Con muốn kết thúc phiên hội thoại này không? Kết quả nói chuyện của con sẽ được lưu lại nhé.',
+          style: TextStyle(fontSize: 15, color: Colors.black54),
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: BorderSide(color: Colors.grey[300]!),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Tiếp tục',
+                    style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(
+                    'Kết thúc',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (exit == true) {
+      await _complete();
+    }
+  }
+
   String _mascotMessage() {
     switch (controller.liveState) {
       case AiLiveState.preparing:
@@ -179,9 +245,20 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
         appBar: AppBar(
           title: const Text('Hội thoại cùng AI'),
           actions: [
-            TextButton(
-              onPressed: _complete,
-              child: const Text('Kết thúc'),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: TextButton.icon(
+                onPressed: _confirmExit,
+                icon: const Icon(Icons.exit_to_app_rounded, color: AppColors.orange, size: 20),
+                label: const Text(
+                  'Kết thúc',
+                  style: TextStyle(
+                    color: AppColors.orange,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -239,7 +316,7 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: _complete,
+                onPressed: _confirmExit,
                 child: const Text('Kết thúc phiên'),
               ),
             ],
@@ -333,7 +410,7 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
             label: 'Con muốn nghỉ',
             icon: Icons.stop_rounded,
             backgroundColor: AppColors.orange,
-            onPressed: _complete,
+            onPressed: _confirmExit,
           ),
         ],
       );
