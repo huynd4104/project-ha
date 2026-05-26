@@ -49,17 +49,26 @@ public class LearningService {
     }
 
     public Map<String, Object> learningPlan(UUID userId, UUID childId) {
+        return learningPlan(userId, childId, null);
+    }
+
+    public Map<String, Object> learningPlan(UUID userId, UUID childId, UUID pathId) {
         Map<String, Object> child = repo.child(userId, childId).orElseThrow(() -> new NotFoundException("Hồ sơ trẻ không thuộc tài khoản này."));
-        Object currentPathId = child.get("currentPathId");
-        if (currentPathId != null) {
-            UUID pathId = UUID.fromString(String.valueOf(currentPathId));
-            List<Map<String, Object>> lessons = repo.lessonsForPath(pathId);
+        UUID targetPathId = pathId;
+        if (targetPathId == null) {
+            Object currentPathId = child.get("currentPathId");
+            if (currentPathId != null) {
+                targetPathId = UUID.fromString(String.valueOf(currentPathId));
+            }
+        }
+        if (targetPathId != null) {
+            List<Map<String, Object>> lessons = repo.lessonsForPath(targetPathId);
             if (!lessons.isEmpty()) {
-                Map<String, Object> path = repo.path(pathId).orElse(null);
+                Map<String, Object> path = repo.path(targetPathId).orElse(null);
                 Map<String, Object> program = path == null || path.get("programId") == null
                     ? null
                     : repo.program(UUID.fromString(String.valueOf(path.get("programId")))).orElse(null);
-                return plan(lessons, path, program, false, repo.pathItems(pathId));
+                return plan(lessons, path, program, false, repo.pathItems(targetPathId));
             }
         }
         List<Map<String, Object>> paths = repo.publishedPaths();

@@ -14,7 +14,13 @@ class AppBottomNav extends StatelessWidget {
       selectedIndex: selectedIndex,
       indicatorColor: AppColors.primary.withValues(alpha: .16),
       onDestinationSelected: (index) {
-        final paths = ['/home', '/learning', '/scan', '/rewards', '/parent'];
+        final paths = [
+          '/home',
+          '/learning',
+          '/ai-conversations/topics',
+          '/rewards',
+          '/parent',
+        ];
         context.go(paths[index]);
       },
       destinations: const [
@@ -24,8 +30,8 @@ class AppBottomNav extends StatelessWidget {
           label: 'Lộ trình',
         ),
         NavigationDestination(
-          icon: Icon(Icons.qr_code_scanner_rounded),
-          label: 'Quét QR',
+          icon: Icon(Icons.psychology_rounded),
+          label: 'AI',
         ),
         NavigationDestination(
           icon: Icon(Icons.emoji_events_rounded),

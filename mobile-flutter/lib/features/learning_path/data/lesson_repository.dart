@@ -81,16 +81,18 @@ class LessonRepository {
 
   Future<LearningPlan> currentLearningPlan(
     String userId,
-    String childId,
-  ) async {
-    final data =
-        await _api.get('/api/children/$childId/learning-plan')
-            as Map<String, dynamic>;
+    String childId, {
+    String? pathId,
+  }) async {
+    final url = pathId != null
+        ? '/api/children/$childId/learning-plan?pathId=$pathId'
+        : '/api/children/$childId/learning-plan';
+    final data = await _api.get(url) as Map<String, dynamic>;
     return _planFromMap(data);
   }
 
-  Future<LearningPlan> currentLearningPlanForChild(ChildProfile child) =>
-      currentLearningPlan(child.userId, child.id);
+  Future<LearningPlan> currentLearningPlanForChild(ChildProfile child, {String? pathId}) =>
+      currentLearningPlan(child.userId, child.id, pathId: pathId);
 
   Future<Lesson> lessonForChild(
     String userId,

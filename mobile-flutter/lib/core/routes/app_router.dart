@@ -27,9 +27,10 @@ import '../../features/npcs/screens/npc_collection_screen.dart';
 import '../../features/npcs/screens/npc_detail_screen.dart';
 import '../../features/parent_dashboard/screens/parent_dashboard_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
-import '../../features/qr_unlock/screens/qr_scanner_screen.dart';
-import '../../features/learning_path/screens/path_selection_screen.dart';
+import '../../features/learning_path/screens/program_selection_screen.dart';
+import '../../features/learning_path/screens/program_paths_map_screen.dart';
 import '../../features/lessons/screens/activity_lesson_screen.dart';
+import '../../features/qr_unlock/screens/qr_scanner_screen.dart';
 import '../config/app_config.dart';
 import '../services/app_state.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -61,6 +62,13 @@ GoRouter buildRouter(AppState state) {
           !state.hasChild &&
           path != '/child-profile')
         return '/child-profile';
+      if (state.isAuthed && state.hasChild) {
+        final currentProgramId = state.activeChild?.currentProgramId;
+        final hasNoProgram = currentProgramId == null || currentProgramId.isEmpty;
+        if (hasNoProgram && (path.startsWith('/learning') || path.startsWith('/program-paths'))) {
+          return '/program-selection';
+        }
+      }
       return null;
     },
     routes: [
@@ -96,7 +104,10 @@ GoRouter buildRouter(AppState state) {
             path: '/learning',
             builder: (_, __) => const LearningPathScreen(),
           ),
-          GoRoute(path: '/scan', builder: (_, __) => const QRScannerScreen()),
+          GoRoute(
+            path: '/ai-conversations/topics',
+            builder: (_, __) => const AiConversationTopicScreen(),
+          ),
           GoRoute(path: '/rewards', builder: (_, __) => const RewardsScreen()),
           GoRoute(
             path: '/parent',
@@ -127,10 +138,7 @@ GoRouter buildRouter(AppState state) {
         path: '/lesson/:id/flashcard',
         builder: (_, s) => FlashcardScreen(lessonId: s.pathParameters['id']!),
       ),
-      GoRoute(
-        path: '/ai-conversations/topics',
-        builder: (_, __) => const AiConversationTopicScreen(),
-      ),
+
       GoRoute(
         path: '/ai-conversations/topics/:topicId/intro',
         builder: (_, s) =>
@@ -172,8 +180,18 @@ GoRouter buildRouter(AppState state) {
             ActivityLessonScreen(lessonId: s.pathParameters['id']!),
       ),
       GoRoute(
-        path: '/path-selection',
-        builder: (_, __) => const PathSelectionScreen(),
+        path: '/program-selection',
+        builder: (_, __) => const ProgramSelectionScreen(),
+      ),
+      GoRoute(
+        path: '/program-paths',
+        builder: (_, __) => const ProgramPathsMapScreen(),
+      ),
+      GoRoute(
+        path: '/learning-path/:pathId',
+        builder: (_, s) => LearningPathScreen(
+          pathId: s.pathParameters['pathId'],
+        ),
       ),
       GoRoute(
         path: '/result',
@@ -182,6 +200,10 @@ GoRouter buildRouter(AppState state) {
       GoRoute(
         path: '/unlock-success',
         builder: (_, s) => ResultScreen(extra: s.extra, unlockMode: true),
+      ),
+      GoRoute(
+        path: '/scan',
+        builder: (_, __) => const QRScannerScreen(),
       ),
     ],
     errorBuilder: (_, __) =>
@@ -195,7 +217,7 @@ class MainShell extends StatelessWidget {
 
   int _index(String path) {
     if (path.startsWith('/learning')) return 1;
-    if (path.startsWith('/scan')) return 2;
+    if (path.startsWith('/ai-conversations/topics')) return 2;
     if (path.startsWith('/rewards')) return 3;
     if (path.startsWith('/parent')) return 4;
     return 0;

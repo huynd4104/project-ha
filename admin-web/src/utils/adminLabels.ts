@@ -35,7 +35,6 @@ export const ACTIVITY_TYPE_LABELS: Record<string, string> = {
 export const UNLOCK_RULE_LABELS: Record<string, string> = {
   ALWAYS_OPEN: "Luôn mở",
   PREVIOUS_COMPLETED: "Hoàn thành bài trước",
-  MANUAL_UNLOCK: "Mở thủ công",
   PREMIUM_ONLY: "Chỉ dành cho Premium",
 };
 

@@ -105,7 +105,6 @@ export type PublishStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 export type UnlockRule =
   | "ALWAYS_OPEN"
   | "PREVIOUS_COMPLETED"
-  | "MANUAL_UNLOCK"
   | "PREMIUM_ONLY";
 
 export type DevelopmentCategory = {

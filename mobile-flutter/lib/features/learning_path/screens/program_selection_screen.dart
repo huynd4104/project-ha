@@ -7,25 +7,23 @@ import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
 import '../data/lesson_repository.dart';
-import '../data/path_recommendation_service.dart';
+import '../data/program_recommendation_service.dart';
 
-class PathSelectionScreen extends StatefulWidget {
-  const PathSelectionScreen({super.key});
+class ProgramSelectionScreen extends StatefulWidget {
+  const ProgramSelectionScreen({super.key});
 
   @override
-  State<PathSelectionScreen> createState() => _PathSelectionScreenState();
+  State<ProgramSelectionScreen> createState() => _ProgramSelectionScreenState();
 }
 
-class _PathSelectionScreenState extends State<PathSelectionScreen> {
+class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
   late Future<
     ({
       List<LearningPath> paths,
       List<Program> programs,
-      Map<LearningGoalKey, List<String>> goalSkillTags,
     })
   >
   _loadDataFuture;
-  String? _selectedPathId;
   String? _selectedProgramId;
   bool _isSaving = false;
 
@@ -39,51 +37,72 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
     ({
       List<LearningPath> paths,
       List<Program> programs,
-      Map<LearningGoalKey, List<String>> goalSkillTags,
     })
   >
   _loadData() async {
     final repo = LessonRepository();
     final programs = await repo.programs();
-    final paths = await repo.learningPaths()
-      ..sort((a, b) => a.title.compareTo(b.title));
-    final goalSkillTags = await repo.goalSkillTags();
-
-    return (paths: paths, programs: programs, goalSkillTags: goalSkillTags);
+    final paths = await repo.learningPaths();
+    return (paths: paths, programs: programs);
   }
 
-  Future<void> _saveSelection() async {
-    if (_selectedPathId == null || _selectedProgramId == null) return;
+  Future<void> _saveSelection(List<LearningPath> paths) async {
+    if (_selectedProgramId == null) return;
     setState(() => _isSaving = true);
     try {
       final appState = context.read<AppState>();
       final child = appState.activeChild;
       if (child == null) return;
 
+      // Find paths belonging to the selected program
+      final programPaths = paths.where((p) => p.programId == _selectedProgramId).toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+      if (programPaths.isEmpty) {
+        throw Exception('Chương trình này chưa cấu hình lộ trình học. Vui lòng chọn chương trình khác.');
+      }
+
+      // Check if child already has a path in this program to keep progress
+      String targetPathId = programPaths.first.id;
+      if (child.currentProgramId == _selectedProgramId && child.currentPathId != null) {
+        final hasPath = programPaths.any((p) => p.id == child.currentPathId);
+        if (hasPath) {
+          targetPathId = child.currentPathId!;
+        }
+      }
+
       // Call repository write
       await appState.childRepository.saveCurrentPath(
         child.id,
         _selectedProgramId!,
-        _selectedPathId!,
+        targetPathId,
       );
 
       // Update local state
-      appState.updateActiveChildPath(_selectedProgramId!, _selectedPathId!);
+      appState.updateActiveChildPath(_selectedProgramId!, targetPathId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đã cập nhật lộ trình học mới cho bé thành công!'),
+            content: Text('Đã cập nhật chương trình học mới cho bé thành công!'),
             backgroundColor: Color(0xFF10B981),
           ),
         );
-        context.pop();
+        try {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
+        } catch (e) {
+          context.go('/home');
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi khi cập nhật lộ trình: $e'),
+            content: Text('Lỗi khi cập nhật chương trình: $e'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -102,7 +121,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
 
     if (child == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Chọn lộ trình học')),
+        appBar: AppBar(title: const Text('Chọn chương trình học')),
         body: const Center(child: Text('Vui lòng chọn hồ sơ của bé trước.')),
       );
     }
@@ -111,7 +130,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'Lộ trình của ${child.name}',
+          'Chương trình của ${child.name}',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF1E293B),
@@ -129,7 +148,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Lỗi tải danh sách lộ trình: ${snapshot.error}',
+              message: 'Lỗi tải danh sách chương trình: ${snapshot.error}',
               onRetry: () {
                 setState(() {
                   _loadDataFuture = _loadData();
@@ -142,12 +161,12 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
           final programs = data.programs;
           final paths = data.paths;
 
-          if (paths.isEmpty) {
+          if (programs.isEmpty) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(24.0),
                 child: Text(
-                  'Hiện chưa có lộ trình nào được xuất bản. Vui lòng quay lại sau.',
+                  'Hiện chưa có chương trình nào được xuất bản. Vui lòng quay lại sau.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
@@ -156,39 +175,29 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
           }
 
           // Calculate recommendations
-          final recommendations = const PathRecommendationService().recommend(
+          final recommendations = const ProgramRecommendationService().recommend(
             child: child,
             programs: programs,
-            paths: paths,
-            goalSkillTags: data.goalSkillTags,
           );
 
-          // Build a map for easy lookup of programs
-          final programMap = {for (final p in programs) p.id: p};
-
-          // Combine and sort: paths that are recommended first (sorted by score descending), then the rest
-          final Map<String, int> pathScores = {
-            for (final r in recommendations) r.path.id: r.score,
+          final Map<String, int> programScores = {
+            for (final r in recommendations) r.program.id: r.score,
           };
 
-          final sortedPaths = List<LearningPath>.from(paths)
+          // Combine and sort: programs that are recommended first (sorted by score descending), then the rest
+          final sortedPrograms = List<Program>.from(programs)
             ..sort((a, b) {
-              final scoreA = pathScores[a.id] ?? -1;
-              final scoreB = pathScores[b.id] ?? -1;
+              final scoreA = programScores[a.id] ?? -1;
+              final scoreB = programScores[b.id] ?? -1;
               if (scoreA != scoreB) {
                 return scoreB.compareTo(scoreA); // High score first
               }
               return a.title.compareTo(b.title);
             });
 
-          // Pre-select active path if not selected yet
-          if (_selectedPathId == null && child.currentPathId != null) {
-            _selectedPathId = child.currentPathId;
-            final path = paths.firstWhere(
-              (p) => p.id == _selectedPathId,
-              orElse: () => paths.first,
-            );
-            _selectedProgramId = path.programId;
+          // Pre-select active program if not selected yet
+          if (_selectedProgramId == null && child.currentProgramId != null) {
+            _selectedProgramId = child.currentProgramId;
           }
 
           return Column(
@@ -201,7 +210,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Lựa chọn lộ trình học tối ưu',
+                      'Lựa chọn chương trình học tối ưu',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -210,7 +219,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Hệ thống tự động chấm điểm và gợi ý lộ trình dựa trên mục tiêu học, kỹ năng và mức hỗ trợ của bé.',
+                      'Hệ thống gợi ý chương trình học phù hợp nhất dựa trên mục tiêu học tập, kỹ năng và mức hỗ trợ của bé.',
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -222,28 +231,26 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                     horizontal: 16.0,
                     vertical: 12.0,
                   ),
-                  itemCount: sortedPaths.length,
+                  itemCount: sortedPrograms.length,
                   itemBuilder: (context, index) {
-                    final path = sortedPaths[index];
-                    final program = programMap[path.programId];
-                    final score = pathScores[path.id] ?? 0;
+                    final program = sortedPrograms[index];
+                    final score = programScores[program.id] ?? 0;
                     final isRecommended = recommendations.any(
-                      (r) => r.path.id == path.id && r.score > 0,
+                      (r) => r.program.id == program.id && r.score > 0,
                     );
-                    final isSelected = _selectedPathId == path.id;
-                    final isActivePath = child.currentPathId == path.id;
+                    final isSelected = _selectedProgramId == program.id;
+                    final isActiveProgram = child.currentProgramId == program.id;
 
-                    // Detect if this is the absolute top recommended path (highest score)
+                    // Detect if this is the absolute top recommended program (highest score)
                     final isTopRecommended =
                         isRecommended &&
                         (recommendations.isNotEmpty &&
-                            recommendations.first.path.id == path.id);
+                            recommendations.first.program.id == program.id);
 
                     return GestureDetector(
                       onTap: () {
                         setState(() {
-                          _selectedPathId = path.id;
-                          _selectedProgramId = path.programId;
+                          _selectedProgramId = program.id;
                         });
                       },
                       child: Container(
@@ -276,7 +283,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      path.title,
+                                      program.title,
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -343,20 +350,9 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                     ),
                                 ],
                               ),
-                              if (program != null) ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Chương trình: ${program.title}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[700],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
                               const SizedBox(height: 8),
                               Text(
-                                path.description,
+                                program.description,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey[600],
@@ -375,16 +371,14 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    program != null
-                                        ? 'Độ tuổi: ${program.targetAgeMin}-${program.targetAgeMax} tuổi'
-                                        : 'Độ tuổi: Mọi lứa tuổi',
+                                    'Độ tuổi: ${program.targetAgeMin}-${program.targetAgeMax} tuổi',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],
                                     ),
                                   ),
                                   const Spacer(),
-                                  if (isActivePath)
+                                  if (isActiveProgram)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
@@ -408,8 +402,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                     ),
                                 ],
                               ),
-                              if (program != null &&
-                                  program.skillTags.isNotEmpty) ...[
+                              if (program.skillTags.isNotEmpty) ...[
                                 const SizedBox(height: 10),
                                 Wrap(
                                   spacing: 6,
@@ -427,7 +420,7 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        '#$tag',
+                                        '#${skillLabel(tag)}',
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: Color(0xFF475569),
@@ -449,9 +442,9 @@ class _PathSelectionScreenState extends State<PathSelectionScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ElevatedButton(
-                    onPressed: _selectedPathId == null || _isSaving
+                    onPressed: _selectedProgramId == null || _isSaving
                         ? null
-                        : _saveSelection,
+                        : () => _saveSelection(paths),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0EA5E9),
                       minimumSize: const Size(double.infinity, 50),

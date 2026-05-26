@@ -14,7 +14,9 @@ import '../data/lesson_repository.dart';
 import '../widgets/learning_map.dart';
 
 class LearningPathScreen extends StatefulWidget {
-  const LearningPathScreen({super.key});
+  const LearningPathScreen({super.key, this.pathId});
+  final String? pathId;
+
   @override
   State<LearningPathScreen> createState() => _LearningPathScreenState();
 }
@@ -34,6 +36,7 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
     final plan = await repo.currentLearningPlan(
       state.appUser!.id,
       state.activeChild!.id,
+      pathId: widget.pathId,
     );
     final progress = await repo.progress(
       state.appUser!.id,
@@ -104,29 +107,48 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Lộ trình của bé',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.text,
+                          if (widget.pathId != null) ...[
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                              color: AppColors.text,
+                              onPressed: () {
+                                try {
+                                  if (context.canPop()) {
+                                    context.pop();
+                                  } else {
+                                    context.go('/program-paths');
+                                  }
+                                } catch (e) {
+                                  context.go('/program-paths');
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Chặng học của bé',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.text,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                value.plan.title,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.muted,
+                                const SizedBox(height: 2),
+                                Text(
+                                  value.plan.title.replaceAll('Lộ trình', 'Chặng').replaceAll('lộ trình', 'chặng'),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.muted,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           if (value.plan.usesLegacyFallback)
                             Container(

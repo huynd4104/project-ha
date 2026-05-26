@@ -5,7 +5,7 @@ import { ToggleSwitch } from "../components/ToggleSwitch";
 import { UNLOCK_RULE_LABELS, uiLabel } from "../utils/adminLabels";
 import type { Lesson, LearningPath, PathItem, Program, UnlockRule } from "../types/firebaseModels";
 
-const UNLOCK_RULES: UnlockRule[] = ["ALWAYS_OPEN", "PREVIOUS_COMPLETED", "MANUAL_UNLOCK", "PREMIUM_ONLY"];
+const UNLOCK_RULES: UnlockRule[] = ["ALWAYS_OPEN", "PREVIOUS_COMPLETED", "PREMIUM_ONLY"];
 const UNLOCK_LABELS = UNLOCK_RULE_LABELS;
 
 export function PathBuilderPage() {

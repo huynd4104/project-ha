@@ -349,15 +349,18 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                           color: const Color(0xFFF1F5F9).withOpacity(0.4),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: ActivityRendererRegistry.createDefault().build(
-                          context,
-                          activity,
-                          (selectedAnswer, result, score) => _handleAnswer(
-                            selectedAnswer,
-                            result,
-                            score,
+                        child: KeyedSubtree(
+                          key: ValueKey(activity.id),
+                          child: ActivityRendererRegistry.createDefault().build(
+                            context,
                             activity,
-                            lesson,
+                            (selectedAnswer, result, score) => _handleAnswer(
+                              selectedAnswer,
+                              result,
+                              score,
+                              activity,
+                              lesson,
+                            ),
                           ),
                         ),
                       ),

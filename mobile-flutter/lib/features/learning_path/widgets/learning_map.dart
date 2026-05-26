@@ -118,9 +118,6 @@ class LearningMap extends StatelessWidget {
       return isNext ? LessonNodeState.current : LessonNodeState.available;
     }
 
-    if (item.unlockRule == UnlockRule.manualUnlock) {
-      return LessonNodeState.locked;
-    }
 
     if (item.unlockRule == UnlockRule.alwaysOpen) {
       final isNext = _isFirstUncompletedIndex(index, completed);

@@ -36,7 +36,7 @@ enum AccessType { free, premium }
 
 enum PublishStatus { draft, published, archived }
 
-enum UnlockRule { alwaysOpen, previousCompleted, manualUnlock, premiumOnly }
+enum UnlockRule { alwaysOpen, previousCompleted, premiumOnly }
 
 enum ActivityType {
   listenAndChooseImage,

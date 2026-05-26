@@ -132,24 +132,76 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                   itemBuilder: (context, idx) {
                     final option = activity.options[idx];
                     final isSelected = _selectedOptionIndex == idx;
+                    final isOptionCorrect = option.isCorrect ||
+                        activity.correctAnswers.contains(option.id) ||
+                        activity.correctAnswers.contains(option.text);
+
+                    final showAsCorrect = _isAnswered && isOptionCorrect;
+                    final showAsIncorrect = _isAnswered && isSelected && !isOptionCorrect;
+                    final showAsSelectedBeforeAnswer = !_isAnswered && isSelected;
+
+                    final Color borderColor;
+                    if (showAsCorrect) {
+                      borderColor = AppColors.success;
+                    } else if (showAsIncorrect) {
+                      borderColor = AppColors.error;
+                    } else if (showAsSelectedBeforeAnswer) {
+                      borderColor = AppColors.primary;
+                    } else {
+                      borderColor = Colors.grey[200]!;
+                    }
+
+                    final double borderWidth = (isSelected || showAsCorrect) ? 3.5 : 2;
+
+                    final Color cardColor;
+                    if (showAsCorrect) {
+                      cardColor = const Color(0xFFEAFAF1); // Light success green
+                    } else if (showAsIncorrect) {
+                      cardColor = const Color(0xFFFDF2F2); // Light error red
+                    } else if (showAsSelectedBeforeAnswer) {
+                      cardColor = AppColors.cream;
+                    } else {
+                      cardColor = Colors.white;
+                    }
+
+                    final Color textColor;
+                    if (showAsCorrect) {
+                      textColor = AppColors.success;
+                    } else if (showAsIncorrect) {
+                      textColor = AppColors.error;
+                    } else if (showAsSelectedBeforeAnswer) {
+                      textColor = AppColors.primary;
+                    } else {
+                      textColor = AppColors.text;
+                    }
+
+                    final double opacity;
+                    if (!_isAnswered) {
+                      opacity = 1.0;
+                    } else {
+                      if (isSelected || isOptionCorrect) {
+                        opacity = 1.0;
+                      } else {
+                        opacity = 0.5;
+                      }
+                    }
+
                     return GestureDetector(
                       onTap: _isAnswered ? null : () => _submit(option, idx),
                       child: Opacity(
-                        opacity: _isAnswered && !isSelected ? 0.5 : 1.0,
+                        opacity: opacity,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: cardColor,
                             borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : Colors.grey[200]!,
-                              width: isSelected ? 3.5 : 2,
+                              color: borderColor,
+                              width: borderWidth,
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: isSelected
-                                    ? AppColors.primary.withOpacity(0.15)
+                                    ? borderColor.withOpacity(0.15)
                                     : Colors.black.withOpacity(0.03),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
@@ -185,10 +237,10 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                                 ),
                                 child: Text(
                                   option.text,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,
-                                    color: AppColors.text,
+                                    color: textColor,
                                   ),
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
@@ -207,15 +259,65 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                   itemBuilder: (context, idx) {
                     final option = activity.options[idx];
                     final isSelected = _selectedOptionIndex == idx;
+                    final isOptionCorrect = option.isCorrect ||
+                        activity.correctAnswers.contains(option.id) ||
+                        activity.correctAnswers.contains(option.text);
+
+                    final showAsCorrect = _isAnswered && isOptionCorrect;
+                    final showAsIncorrect = _isAnswered && isSelected && !isOptionCorrect;
+                    final showAsSelectedBeforeAnswer = !_isAnswered && isSelected;
+
+                    final Color borderColor;
+                    if (showAsCorrect) {
+                      borderColor = AppColors.success;
+                    } else if (showAsIncorrect) {
+                      borderColor = AppColors.error;
+                    } else if (showAsSelectedBeforeAnswer) {
+                      borderColor = AppColors.primary;
+                    } else {
+                      borderColor = Colors.grey[200]!;
+                    }
+
+                    final Color cardColor;
+                    if (showAsCorrect) {
+                      cardColor = const Color(0xFFEAFAF1); // Light success green
+                    } else if (showAsIncorrect) {
+                      cardColor = const Color(0xFFFDF2F2); // Light error red
+                    } else if (showAsSelectedBeforeAnswer) {
+                      cardColor = AppColors.cream;
+                    } else {
+                      cardColor = Colors.white;
+                    }
+
+                    final Color textColor;
+                    if (showAsCorrect) {
+                      textColor = AppColors.success;
+                    } else if (showAsIncorrect) {
+                      textColor = AppColors.error;
+                    } else if (showAsSelectedBeforeAnswer) {
+                      textColor = AppColors.primary;
+                    } else {
+                      textColor = AppColors.text;
+                    }
+
+                    final double opacity;
+                    if (!_isAnswered) {
+                      opacity = 1.0;
+                    } else {
+                      if (isSelected || isOptionCorrect) {
+                        opacity = 1.0;
+                      } else {
+                        opacity = 0.5;
+                      }
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 14.0),
                       child: Opacity(
-                        opacity: _isAnswered && !isSelected ? 0.5 : 1.0,
+                        opacity: opacity,
                         child: AppCard(
-                          borderColor: isSelected
-                              ? AppColors.primary
-                              : Colors.grey[200]!,
-                          color: isSelected ? AppColors.cream : Colors.white,
+                          borderColor: borderColor,
+                          color: cardColor,
                           onTap: _isAnswered
                               ? null
                               : () => _submit(option, idx),
@@ -229,9 +331,7 @@ class _ChoiceAnswerRendererState extends State<ChoiceAnswerRenderer> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.text,
+                                  color: textColor,
                                 ),
                               ),
                             ),

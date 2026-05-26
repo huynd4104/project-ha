@@ -42,7 +42,7 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hãy cùng cố gắng nào!',
+                        'Học cùng Minty!',
                         style: AppTextStyles.headline,
                       ),
                       if (child == null) ...[
@@ -208,13 +208,13 @@ class HomeScreen extends StatelessWidget {
                   value.progress,
                 );
 
-                // Nếu chưa chọn lộ trình
-                if (child.currentPathId == null ||
-                    child.currentPathId!.isEmpty) {
+                // Nếu chưa chọn chương trình học
+                if (child.currentProgramId == null ||
+                    child.currentProgramId!.isEmpty) {
                   return AppCard(
                     borderColor: AppColors.orange.withOpacity(.25),
                     color: const Color(0xFFFDF8F6),
-                    onTap: () => context.push('/path-selection'),
+                    onTap: () => context.push('/program-selection'),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -233,12 +233,12 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Đề xuất lộ trình học',
+                                    'Đề xuất chương trình học',
                                     style: AppTextStyles.title,
                                   ),
                                   const SizedBox(height: 2),
                                   const Text(
-                                    'Bé chưa chọn lộ trình học phù hợp.',
+                                    'Bé chưa chọn chương trình học phù hợp.',
                                     style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 13,
@@ -251,7 +251,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         const Text(
-                          'Nhấn vào đây để khám phá các lộ trình học phù hợp nhất cho bé!',
+                          'Nhấn vào đây để khám phá các chương trình học phù hợp nhất cho bé!',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -263,7 +263,7 @@ class HomeScreen extends StatelessWidget {
                           label: 'Khám phá ngay',
                           icon: Icons.chevron_right_rounded,
                           backgroundColor: AppColors.orange,
-                          onPressed: () => context.push('/path-selection'),
+                          onPressed: () => context.push('/program-selection'),
                         ),
                       ],
                     ),
@@ -312,7 +312,10 @@ class HomeScreen extends StatelessWidget {
                                   style: AppTextStyles.title,
                                 ),
                                 const SizedBox(height: 2),
-                                Text(pathName, style: AppTextStyles.muted),
+                                Text(
+                                  pathName.replaceAll('Lộ trình', 'Chặng').replaceAll('lộ trình', 'chặng'),
+                                  style: AppTextStyles.muted,
+                                ),
                               ],
                             ),
                           ),
@@ -321,7 +324,7 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 14),
                       if (isCompletedAll) ...[
                         const Text(
-                          'Bé đã hoàn thành xuất sắc tất cả bài học trong lộ trình này! 🎉',
+                          'Bé đã hoàn thành xuất sắc tất cả bài học trong chặng học này! 🎉',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -330,9 +333,9 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         AppButton(
-                          label: 'Chọn lộ trình mới',
+                          label: 'Chọn chương trình mới',
                           icon: Icons.explore_rounded,
-                          onPressed: () => context.push('/path-selection'),
+                          onPressed: () => context.push('/program-selection'),
                         ),
                       ] else if (nextLesson != null) ...[
                         Text(
@@ -406,14 +409,14 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ] else ...[
                         const Text(
-                          'Chưa có bài học nào trong lộ trình.',
+                          'Chưa có bài học nào trong chặng học.',
                           style: TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(height: 12),
                         AppButton(
-                          label: 'Chọn lộ trình khác',
+                          label: 'Chọn chương trình khác',
                           icon: Icons.explore_rounded,
-                          onPressed: () => context.push('/path-selection'),
+                          onPressed: () => context.push('/program-selection'),
                         ),
                       ],
                     ],
@@ -421,10 +424,7 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            if (child != null &&
-                (child.secondaryDifficulties.isEmpty ||
-                    child.interests.isEmpty ||
-                    child.learningGoals.isEmpty))
+            if (child != null && child.learningGoals.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 14),
                 child: AppCard(
@@ -455,7 +455,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Cập nhật sở thích & khó khăn của trẻ để nhận gợi ý lộ trình tối ưu hơn.',
+                              'Cập nhật sở thích & khó khăn của trẻ để nhận gợi ý chương trình tối ưu hơn.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF1E293B),
@@ -517,25 +517,18 @@ class HomeScreen extends StatelessWidget {
               onTap: () => context.push('/ai-conversations/topics'),
             ),
             _ActionCard(
-              title: 'Lộ trình học',
-              subtitle: 'Xem bản đồ bài học',
+              title: 'Bản đồ chặng học',
+              subtitle: 'Xem bản đồ các chặng học',
               icon: Icons.route_rounded,
               color: AppColors.sky,
-              onTap: () => context.go('/learning'),
+              onTap: () => context.push('/program-paths'),
             ),
             _ActionCard(
-              title: 'Đổi lộ trình học',
-              subtitle: 'Chọn lộ trình phù hợp cho bé',
+              title: 'Đổi chương trình học',
+              subtitle: 'Chọn chương trình phù hợp cho bé',
               icon: Icons.explore_rounded,
               color: AppColors.orange,
-              onTap: () => context.push('/path-selection'),
-            ),
-            _ActionCard(
-              title: 'Quét QR',
-              subtitle: 'Mở khóa bạn đồng hành',
-              icon: Icons.qr_code_scanner_rounded,
-              color: AppColors.primary,
-              onTap: () => context.go('/scan'),
+              onTap: () => context.push('/program-selection'),
             ),
             _ActionCard(
               title: 'Bộ sưu tập Mascot',
@@ -543,6 +536,13 @@ class HomeScreen extends StatelessWidget {
               icon: Icons.auto_awesome_rounded,
               color: AppColors.pink,
               onTap: () => context.push('/npcs'),
+            ),
+            _ActionCard(
+              title: 'Quét QR mở khóa',
+              subtitle: 'Quét mã mở khóa Mascot đồ chơi',
+              icon: Icons.qr_code_scanner_rounded,
+              color: AppColors.primary,
+              onTap: () => context.push('/scan'),
             ),
             _ActionCard(
               title: 'Phụ huynh',

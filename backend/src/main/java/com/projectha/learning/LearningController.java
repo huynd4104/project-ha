@@ -37,8 +37,12 @@ public class LearningController {
     }
 
     @GetMapping("/children/{childId}/learning-plan")
-    public Map<String, Object> plan(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable UUID childId) {
-        return service.learningPlan(principal.id(), childId);
+    public Map<String, Object> plan(
+        @AuthenticationPrincipal AuthPrincipal principal,
+        @PathVariable UUID childId,
+        @org.springframework.web.bind.annotation.RequestParam(required = false) UUID pathId
+    ) {
+        return service.learningPlan(principal.id(), childId, pathId);
     }
 
     @GetMapping("/children/{childId}/progress")
