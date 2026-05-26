@@ -345,15 +345,6 @@ class HomeScreen extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          nextLesson.description,
-                          style: AppTextStyles.caption.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
                         const SizedBox(height: 14),
                         AppButton(
                           label: 'Bắt đầu học',

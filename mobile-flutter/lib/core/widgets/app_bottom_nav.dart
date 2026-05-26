@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../services/sound_service.dart';
 import '../theme/app_colors.dart';
@@ -16,7 +15,7 @@ class AppBottomNav extends StatelessWidget {
       top: false,
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        height: 76,
+        height: 66,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -76,7 +75,7 @@ class AppBottomNav extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: isActive ? 12 : 0,
@@ -85,16 +84,6 @@ class AppBottomNav extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(1.5),
               ),
-            ),
-            const SizedBox(height: 2),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: GoogleFonts.nunito(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
-                color: isActive ? color : AppColors.muted,
-              ),
-              child: Text(info.label),
             ),
           ],
         ),

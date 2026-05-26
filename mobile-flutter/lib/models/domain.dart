@@ -182,10 +182,19 @@ extension CoLearningModeLabel on CoLearningMode {
 
 extension LearningLevelLabel on LearningLevel {
   String get apiValue => enumKey(this);
+  String get label => switch (this) {
+    LearningLevel.beginner => 'Mới bắt đầu',
+    LearningLevel.basic => 'Cơ bản',
+    LearningLevel.intermediate => 'Trung cấp',
+  };
 }
 
 extension AccessTypeLabel on AccessType {
   String get apiValue => enumKey(this);
+  String get label => switch (this) {
+    AccessType.free => 'Miễn phí',
+    AccessType.premium => 'Premium',
+  };
 }
 
 extension PublishStatusLabel on PublishStatus {

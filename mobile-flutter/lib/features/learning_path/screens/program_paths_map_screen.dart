@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -6,8 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
@@ -38,6 +36,14 @@ class _ProgramPathsMapScreenState extends State<ProgramPathsMapScreen> {
   void initState() {
     super.initState();
     _loadDataFuture = _loadData();
+  }
+
+  void _goBack(BuildContext context) {
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/home');
+    }
   }
 
   Future<
@@ -93,7 +99,23 @@ class _ProgramPathsMapScreenState extends State<ProgramPathsMapScreen> {
 
     if (child == null || child.currentProgramId == null || child.currentProgramId!.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Chương trình học của bé')),
+        appBar: AppBar(
+          title: const Text('Chương trình học của bé'),
+          leadingWidth: 64,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12.0),
+            child: Center(
+              child: AppIconButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                tooltip: 'Trở lại',
+                onPressed: () => _goBack(context),
+              ),
+            ),
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.text,
+          elevation: 0,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -145,7 +167,23 @@ class _ProgramPathsMapScreenState extends State<ProgramPathsMapScreen> {
 
           if (paths.isEmpty) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Chặng học')),
+              appBar: AppBar(
+                title: const Text('Chặng học'),
+                leadingWidth: 64,
+                leading: Padding(
+                  padding: const EdgeInsets.only(left: 12.0),
+                  child: Center(
+                    child: AppIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      tooltip: 'Trở lại',
+                      onPressed: () => _goBack(context),
+                    ),
+                  ),
+                ),
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.text,
+                elevation: 0,
+              ),
               body: const Center(
                 child: Text('Chương trình này chưa có chặng học nào được xuất bản.'),
               ),
@@ -189,6 +227,18 @@ class _ProgramPathsMapScreenState extends State<ProgramPathsMapScreen> {
                 expandedHeight: 140,
                 floating: false,
                 pinned: true,
+                automaticallyImplyLeading: false,
+                leadingWidth: 64,
+                leading: Padding(
+                  padding: const EdgeInsets.only(left: 12.0),
+                  child: Center(
+                    child: AppIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      tooltip: 'Trở lại',
+                      onPressed: () => _goBack(context),
+                    ),
+                  ),
+                ),
                 backgroundColor: AppColors.primary,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
