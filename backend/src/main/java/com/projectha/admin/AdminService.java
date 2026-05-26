@@ -39,7 +39,12 @@ public class AdminService {
     }
 
     public List<Map<String, Object>> list(String resource) {
-        return repo.list(resource, 200);
+        int limit = "audit-logs".equals(resource) || "transactions".equals(resource) ? 200 : 5000;
+        return repo.list(resource, limit);
+    }
+
+    public List<Map<String, Object>> listActivitiesByLesson(UUID lessonId) {
+        return repo.listActivitiesByLesson(lessonId);
     }
 
     public Map<String, Object> byId(String resource, UUID id) {

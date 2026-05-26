@@ -1,8 +1,13 @@
 import { httpClient } from "./httpClient";
 
 export const adminContentApi = {
-  async list(resourceName: string) {
-    const res = await httpClient.get(`/api/admin/${resourceName}`);
+  async list(resourceName: string, params?: Record<string, string>) {
+    let url = `/api/admin/${resourceName}`;
+    if (params) {
+      const q = new URLSearchParams(params).toString();
+      if (q) url += `?${q}`;
+    }
+    const res = await httpClient.get(url);
     return res.data;
   },
   async create(resourceName: string, data: any) {

@@ -219,19 +219,16 @@ export function ActivityBuilderPage() {
     if (!lessonId) { setActivities([]); return; }
     setLoadingActivities(true);
     try {
-      const res = await adminApi.list("/activities");
+      const res = await adminApi.list("/activities", { lessonId });
       const all = (res.data.data || []) as Activity[];
       const filtered = all.filter((a) => a.lessonId === lessonId);
       filtered.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
       setActivities(filtered);
 
-      const counts: Record<string, number> = {};
-      all.forEach((act) => {
-        if (act.lessonId) {
-          counts[act.lessonId] = (counts[act.lessonId] || 0) + 1;
-        }
-      });
-      setActivityCounts(counts);
+      setActivityCounts((prev) => ({
+        ...prev,
+        [lessonId]: filtered.length
+      }));
     } catch (e) { console.error(e); }
     finally { setLoadingActivities(false); }
   }
@@ -417,13 +414,19 @@ export function ActivityBuilderPage() {
 
   const saveActivityOrder = async () => {
     if (!selectedLessonId) return;
-    await Promise.all(draftActivities.map((activity, index) => (
-      adminApi.update("/activities", activity.id, { orderIndex: (index + 1) * 10 })
-    )));
-    setIsReorderingActivities(false);
-    setDraggingActivityId("");
-    showToast("Đã lưu thứ tự hoạt động.");
-    loadActivities(selectedLessonId);
+    try {
+      await Promise.all(draftActivities.map((activity, index) => (
+        adminApi.update("/activities", activity.id, { orderIndex: (index + 1) * 10 })
+      )));
+      setIsReorderingActivities(false);
+      setDraggingActivityId("");
+      showToast("Đã lưu thứ tự hoạt động.");
+    } catch (e: any) {
+      console.error(e);
+      showToast("Lỗi khi lưu thứ tự: " + (e.message || e));
+    } finally {
+      loadActivities(selectedLessonId);
+    }
   };
 
   const updateOption = (idx: number, field: keyof OptionItem, value: any) => {

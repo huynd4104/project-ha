@@ -139,6 +139,11 @@ public class AdminRepository {
         jdbc.update("DELETE FROM " + table + " WHERE id = ?", id);
     }
 
+    public List<Map<String, Object>> listActivitiesByLesson(UUID lessonId) {
+        return Db.rows(jdbc.queryForList("SELECT * FROM activities WHERE lesson_id = ? ORDER BY order_index ASC", lessonId));
+    }
+
+
     private String writable(String resource) {
         String table = table(resource);
         if (READ_ONLY.contains(table)) throw new IllegalArgumentException("Resource chỉ đọc.");

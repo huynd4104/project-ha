@@ -64,8 +64,14 @@ public class AdminController {
     }
 
     @GetMapping("/{resource}")
-    public List<Map<String, Object>> list(@PathVariable String resource) {
+    public List<Map<String, Object>> list(
+            @PathVariable String resource,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) UUID lessonId) {
+        System.out.println(">>> GET /api/admin/" + resource + " | lessonId: " + lessonId);
         if ("audit-logs".equals(resource)) return audit.list(200);
+        if ("activities".equals(resource) && lessonId != null) {
+            return admin.listActivitiesByLesson(lessonId);
+        }
         return admin.list(resource);
     }
 

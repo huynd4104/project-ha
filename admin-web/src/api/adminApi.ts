@@ -32,9 +32,9 @@ export const adminApi = {
     const res = await httpClient.get("/api/admin/dashboard");
     return { data: { data: res.data } };
   },
-  async list(path: string) {
+  async list(path: string, params?: Record<string, string>) {
     const resource = resolveCollection(path);
-    const data = await adminContentApi.list(resource);
+    const data = await adminContentApi.list(resource, params);
     if (resource === "lessons") {
       data.sort((a: any, b: any) => `${a.title ?? ""}`.localeCompare(`${b.title ?? ""}`));
     } else {
