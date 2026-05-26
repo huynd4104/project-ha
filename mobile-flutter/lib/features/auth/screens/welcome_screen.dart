@@ -95,7 +95,7 @@ class WelcomeScreen extends StatelessWidget {
             child: SafeArea(
               top: false,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+                padding: EdgeInsets.fromLTRB(22, 0, 22, isSmall ? 28 : 64),
                 child: _BottomPanel(isSmall: isSmall),
               ),
             ),
@@ -138,7 +138,7 @@ class _BottomPanel extends StatelessWidget {
           Text(
             'Chào mừng con đến\nvới hành trình học tập!',
             style: TextStyle(
-              fontSize: isSmall ? 22 : 26,
+              fontSize: isSmall ? 26 : 32,
               fontWeight: FontWeight.w900,
               color: AppColors.text,
               letterSpacing: -0.3,
@@ -150,10 +150,10 @@ class _BottomPanel extends StatelessWidget {
           const SizedBox(height: 8),
 
           // ── Subtitle ──────────────────────────────────────────────────
-          const Text(
+          Text(
             'Mình cùng học từng bước nhỏ nhé.',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: isSmall ? 16 : 18,
               fontWeight: FontWeight.w600,
               color: AppColors.muted,
             ),
