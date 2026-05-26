@@ -92,6 +92,7 @@ export function AiConversationTopicListPage() {
 
       <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center" }}>
         <input
+          type="text"
           className="search-input"
           placeholder="Tìm theo tên, mã hoặc mô tả..."
           value={search}

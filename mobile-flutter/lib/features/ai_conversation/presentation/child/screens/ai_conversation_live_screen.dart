@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/services/app_state.dart';
@@ -10,6 +11,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/loading_view.dart';
 import '../../../data/repositories/ai_conversation_repository.dart';
+import '../../../data/services/ai_conversation_permission_service.dart';
 import '../../../state/ai_conversation_live_controller.dart';
 import '../widgets/ai_conversation_feedback_bubble.dart';
 import '../widgets/ai_conversation_mascot_panel.dart';
@@ -203,11 +205,11 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
     switch (controller.liveState) {
       case AiLiveState.preparing:
       case AiLiveState.connecting:
-        return 'Chờ mình một chút nhé...';
+        return 'Mascot đang chuẩn bị...';
       case AiLiveState.aiSpeaking:
         return 'Con lắng nghe câu hỏi của mình nhé!';
       case AiLiveState.childTurn:
-        return 'Bé hãy bấm nút micro màu cam rồi trả lời nhé!';
+        return 'Con trả lời câu hỏi nhé.';
       case AiLiveState.listening:
         return 'Con cứ nói nhé, mình đang lắng nghe...';
       case AiLiveState.processing:
@@ -272,6 +274,9 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
             }
             if (controller.liveState == AiLiveState.error &&
                 controller.error != null) {
+              if (controller.isPermissionError) {
+                return _buildPermissionBlockerView();
+              }
               return _buildErrorView();
             }
             if (controller.liveState == AiLiveState.completed) {
@@ -288,6 +293,135 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
           },
         ),
       );
+
+  Widget _buildPermissionBlockerView() {
+    final micGranted = controller.micPermissionStatus.isGranted;
+    final speechGranted = controller.speechPermissionStatus.isGranted;
+    final isSttInitFailed = controller.isSttInitFailed;
+
+    final micPermanentlyDenied = controller.micPermissionStatus.isPermanentlyDenied;
+    final speechPermanentlyDenied = controller.speechPermissionStatus.isPermanentlyDenied;
+
+    bool showOpenSettings = false;
+    if (!micGranted && micPermanentlyDenied) {
+      showOpenSettings = true;
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS && !speechGranted && speechPermanentlyDenied) {
+      showOpenSettings = true;
+    }
+
+    String title = 'Cần quyền Micro';
+    String body = 'Ứng dụng cần quyền Micro để nghe con trả lời.\nCon hãy nhờ ba mẹ bật quyền Micro trong Cài đặt nhé.';
+    IconData icon = Icons.mic_off_rounded;
+
+    if (isSttInitFailed) {
+      title = 'Nhận diện giọng nói chưa sẵn sàng';
+      body = 'Ba mẹ hãy kiểm tra cài đặt Nhận diện giọng nói trên thiết bị rồi thử lại.';
+      icon = Icons.hearing_disabled_rounded;
+    } else if (!micGranted && !speechGranted) {
+      title = 'Cần quyền Micro và Nhận diện giọng nói';
+      body = 'Ứng dụng cần hai quyền này để bé có thể trả lời bằng giọng nói.\nCon hãy nhờ ba mẹ bật các quyền trong Cài đặt nhé.';
+      icon = Icons.security_rounded;
+    } else if (!micGranted) {
+      title = 'Cần quyền Micro';
+      body = 'Ứng dụng cần quyền Micro để nghe con trả lời.\nCon hãy nhờ ba mẹ bật quyền Micro trong Cài đặt nhé.';
+      icon = Icons.mic_off_rounded;
+    } else if (!speechGranted) {
+      title = 'Cần quyền Nhận diện giọng nói';
+      body = 'Ứng dụng cần quyền nhận diện giọng nói để chuyển lời bé nói thành chữ.\nCon hãy nhờ ba mẹ bật quyền Nhận diện giọng nói trong Cài đặt nhé.';
+      icon = Icons.record_voice_over_rounded;
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 72,
+                  color: AppColors.orange,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  body,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[700],
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                if (showOpenSettings && !isSttInitFailed) ...[
+                  AppButton(
+                    label: 'Mở cài đặt',
+                    icon: Icons.settings_rounded,
+                    onPressed: () async {
+                      await AiConversationPermissionService.openSettings();
+                    },
+                  ),
+                ] else ...[
+                  AppButton(
+                    label: 'Cho phép lại',
+                    icon: isSttInitFailed ? Icons.refresh_rounded : Icons.security_rounded,
+                    onPressed: () async {
+                      await _start();
+                    },
+                  ),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    context.go('/ai-conversations/topics');
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text('Quay lại'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    foregroundColor: AppColors.text,
+                    side: const BorderSide(color: AppColors.border, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Gợi ý cho Developer:\nNếu chưa thấy quyền Micro hoặc Nhận diện giọng nói trong Settings, hãy xóa app khỏi máy rồi cài lại bản mới để hệ thống hỏi quyền lại.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFC2410C),
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildErrorView() => Center(
         child: Padding(
@@ -311,7 +445,7 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
                 label: 'Thử lại',
                 icon: Icons.refresh_rounded,
                 onPressed: () {
-                  controller.retry();
+                  _start();
                 },
               ),
               const SizedBox(height: 12),
@@ -372,10 +506,15 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
               controller.isListening
                   ? 'Đang nghe con nói. Chạm để dừng.'
                   : controller.canTapMic
-                      ? 'Chạm vào micro màu cam để nói nhé!'
+                      ? 'Con bấm mic rồi trả lời nhé'
                       : controller.liveState == AiLiveState.aiSpeaking
-                          ? 'Con đang lắng nghe Mascot nói...'
-                          : '',
+                          ? 'Con nghe Mascot nói nhé'
+                          : controller.liveState == AiLiveState.preparing ||
+                                  controller.liveState == AiLiveState.connecting
+                              ? 'Mascot đang chuẩn bị...'
+                              : controller.liveState == AiLiveState.processing
+                                  ? 'Mascot đang suy nghĩ...'
+                                  : '',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey[600],
                   ),

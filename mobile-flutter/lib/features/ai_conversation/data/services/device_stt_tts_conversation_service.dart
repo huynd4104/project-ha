@@ -35,15 +35,24 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
       _transcriptController.stream;
 
   void _initTts() {
+    if (kDebugMode) {
+      print('[AI Conversation TTS] init started');
+    }
     _tts.setStartHandler(() {
       _statusController.add('AI đang nói');
     });
     _tts.setCompletionHandler(() {
+      if (kDebugMode) {
+        print('[AI Conversation TTS] completed');
+      }
       if (_ttsCompleter != null && !_ttsCompleter!.isCompleted) {
         _ttsCompleter!.complete();
       }
     });
     _tts.setErrorHandler((msg) {
+      if (kDebugMode) {
+        print('[AI Conversation TTS] error: $msg');
+      }
       if (_ttsCompleter != null && !_ttsCompleter!.isCompleted) {
         _ttsCompleter!.completeError(msg);
       }
@@ -100,7 +109,6 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
           if (kDebugMode) {
             debugPrint('STT error: ${error.errorMsg}');
           }
-          // If silent or no match error occurred, gently prompt the child to speak
           if (error.errorMsg.contains('no_match') || error.errorMsg.contains('speech_timeout')) {
             speak('Mình chưa nghe rõ con nói gì. Con bấm nút mic nói lại nhé.');
           } else {
@@ -115,13 +123,22 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
           }
         },
       );
+
+      if (kDebugMode) {
+        print('[AI STT] speech_to_text initialize = $_sttAvailable');
+      }
+
       if (!_sttAvailable) {
         _statusController.add('Thiết bị chưa hỗ trợ nhận diện giọng nói');
-        return;
+        throw StateError('speech_to_text_init_failed');
       }
 
       // Determine STT locale
       final locales = await _stt.locales();
+      if (kDebugMode) {
+        print('[AI STT] available locales = ${locales.map((l) => l.localeId).toList()}');
+      }
+
       final viLocale = locales.where(
         (l) => l.localeId.startsWith('vi'),
       );
@@ -212,8 +229,8 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
         print("[AI Conversation TTS] speaking: $text");
       }
       await _tts.speak(text);
-      // Wait up to 15 seconds for speaking to complete
-      await _ttsCompleter!.future.timeout(const Duration(seconds: 15));
+      // Wait up to 8 seconds for speaking to complete
+      await _ttsCompleter!.future.timeout(const Duration(seconds: 8));
       if (kDebugMode) {
         print("[AI Conversation TTS] completed");
       }

@@ -132,6 +132,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
               <div className="field">
                 <label>Câu hỏi đọc bằng giọng nói (TTS) <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Để trống nếu giống câu hỏi hiển thị)</span></label>
                 <input
+                  type="text"
                   value={questionAudioText}
                   onChange={(event) => setQuestionAudioText(event.target.value)}
                   placeholder="VD: Chào con, con hãy giới thiệu tên và tuổi của mình cho ta nghe nhé!"
@@ -155,6 +156,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
                 <div className="field">
                   <label>Đáp án kỳ vọng <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Dành cho Semantic/Exact)</span></label>
                   <input
+                    type="text"
                     value={expectedAnswer}
                     onChange={(event) => setExpectedAnswer(event.target.value)}
                     placeholder="VD: Con tên là Nam, năm nay con 6 tuổi."

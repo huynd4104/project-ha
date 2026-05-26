@@ -94,12 +94,12 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
               <div className="form-grid">
                 <div className="field">
                   <label>Mã chủ đề <span style={{ color: "red" }}>*</span></label>
-                  <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="VD: greeting" />
+                  <input type="text" value={code} onChange={(event) => setCode(event.target.value)} placeholder="VD: greeting" />
                   {errors.code && <span className="error-msg">{errors.code}</span>}
                 </div>
                 <div className="field">
                   <label>Tên chủ đề <span style={{ color: "red" }}>*</span></label>
-                  <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="VD: Chào hỏi và làm quen" />
+                  <input type="text" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="VD: Chào hỏi và làm quen" />
                   {errors.title && <span className="error-msg">{errors.title}</span>}
                 </div>
               </div>
@@ -135,7 +135,7 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
               <div className="form-grid">
                 <div className="field">
                   <label>Tên Icon</label>
-                  <input value={iconName} onChange={(event) => setIconName(event.target.value)} placeholder="VD: waving_hand" />
+                  <input type="text" value={iconName} onChange={(event) => setIconName(event.target.value)} placeholder="VD: waving_hand" />
                 </div>
                 <div className="field">
                   <label>Mascot biểu cảm</label>

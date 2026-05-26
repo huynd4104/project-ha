@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../data/models/ai_conversation_question.dart';
 import '../data/models/ai_conversation_session.dart';
 import '../data/models/ai_conversation_turn_result.dart';
 import '../data/models/transcript_result.dart';
 import '../data/repositories/ai_conversation_repository.dart';
+import '../data/services/ai_conversation_permission_service.dart';
 import '../data/services/ai_live_conversation_service.dart';
 import '../data/services/device_stt_tts_conversation_service.dart';
 import '../data/services/gemini_live_conversation_service.dart';
@@ -40,11 +42,16 @@ class AiConversationLiveController extends ChangeNotifier {
   AiConversationTurnResult? lastResult;
   AiLiveState liveState = AiLiveState.preparing;
   String? error;
+  bool isPermissionError = false;
+  bool isSttInitFailed = false;
+  PermissionStatus micPermissionStatus = PermissionStatus.denied;
+  PermissionStatus speechPermissionStatus = PermissionStatus.denied;
   bool loading = false;
   bool submitting = false;
   int currentIndex = 0;
   Timer? _silenceTimer;
   Timer? _childTurnReminderTimer;
+  Timer? _connectionTimeoutTimer;
   StreamSubscription<String>? _statusSub;
   StreamSubscription<TranscriptResult>? _transcriptSub;
 
@@ -72,6 +79,30 @@ class AiConversationLiveController extends ChangeNotifier {
       liveState == AiLiveState.listening ||
       liveState == AiLiveState.feedback;
 
+  void _startConnectionTimeout() {
+    _cancelConnectionTimeout();
+    _connectionTimeoutTimer = Timer(const Duration(seconds: 10), () {
+      if (liveState == AiLiveState.preparing || liveState == AiLiveState.connecting) {
+        if (kDebugMode) {
+          print('[AI Conversation State] Connection timeout after 10s');
+        }
+        error = 'Không kết nối được. Con bấm Thử lại để kết nối lại nhé.';
+        isPermissionError = false;
+        liveState = AiLiveState.error;
+        loading = false;
+        notifyListeners();
+        try {
+          _activeService.close();
+        } catch (_) {}
+      }
+    });
+  }
+
+  void _cancelConnectionTimeout() {
+    _connectionTimeoutTimer?.cancel();
+    _connectionTimeoutTimer = null;
+  }
+
   Future<void> start({
     required String userId,
     required String childId,
@@ -79,10 +110,47 @@ class AiConversationLiveController extends ChangeNotifier {
   }) async {
     loading = true;
     error = null;
+    isPermissionError = false;
+    isSttInitFailed = false;
     liveState = AiLiveState.preparing;
+    _cancelConnectionTimeout();
     notifyListeners();
+
     try {
-      // 1. Start session via backend to obtain config (mode/isRealGeminiLive)
+      // 1. Check & request Microphone permission first
+      micPermissionStatus = await AiConversationPermissionService.getMicrophoneStatus();
+      if (!micPermissionStatus.isGranted) {
+        micPermissionStatus = await AiConversationPermissionService.requestMicrophone();
+        if (!micPermissionStatus.isGranted) {
+          isPermissionError = true;
+          error = 'Cần quyền Micro';
+          liveState = AiLiveState.error;
+          loading = false;
+          notifyListeners();
+          return;
+        }
+      }
+
+      // 2. Check & request Speech Recognition permission (only on iOS)
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        speechPermissionStatus = await AiConversationPermissionService.getSpeechStatus();
+        if (!speechPermissionStatus.isGranted) {
+          speechPermissionStatus = await AiConversationPermissionService.requestSpeech();
+          if (!speechPermissionStatus.isGranted) {
+            isPermissionError = true;
+            error = 'Cần quyền Nhận diện giọng nói';
+            liveState = AiLiveState.error;
+            loading = false;
+            notifyListeners();
+            return;
+          }
+        }
+      }
+
+      // Log the final missing status for debugging
+      await AiConversationPermissionService.getMissingPermission();
+
+      // 3. Start session via backend to obtain config
       session = await _repository.startSession(
         userId: userId,
         childId: childId,
@@ -90,43 +158,42 @@ class AiConversationLiveController extends ChangeNotifier {
       );
       questions = session!.questions;
 
-      // 2. Select appropriate service dynamically
+      // 4. Select appropriate service dynamically
       if (_injectedLiveService != null) {
         _activeService = _injectedLiveService;
       } else if (session!.isRealGeminiLive) {
         _activeService = GeminiLiveConversationService();
+        if (kDebugMode) {
+          print('[AI Conversation Service] using GeminiLiveConversationService');
+        }
       } else {
-        // Default to DeviceSttTtsConversationService for actual voice interaction.
-        // Mock service only if there is a debug config flag enabled.
         const useMockService = bool.fromEnvironment('USE_MOCK_AI_CONVERSATION', defaultValue: false);
         if (useMockService) {
           _activeService = MockAiLiveConversationService();
+          if (kDebugMode) {
+            print('[AI Conversation Service] using MockAiLiveConversationService');
+          }
         } else {
           _activeService = DeviceSttTtsConversationService();
+          if (kDebugMode) {
+            print('[AI Conversation Service] using DeviceSttTtsConversationService');
+          }
         }
       }
 
-      // 3. Request permissions first
-      final hasPermission = await _activeService.requestMicPermission();
-      if (!hasPermission) {
-        error =
-            'Mình cần quyền micro và nhận diện giọng nói để nghe con nói nhé. '
-            'Bạn hãy vào Cài đặt để cho phép.';
-        liveState = AiLiveState.error;
-        loading = false;
-        notifyListeners();
-        return;
-      }
-
-      // 4. Listen to status changes
+      // 5. Start connection timeout timer and transition to connecting
       liveState = AiLiveState.connecting;
+      _startConnectionTimeout();
       notifyListeners();
 
       _statusSub = _activeService.statusStream.listen((value) {
+        final oldState = liveState;
         if (value == 'AI đang nói') {
+          _cancelConnectionTimeout();
           liveState = AiLiveState.aiSpeaking;
           _cancelChildTurnReminder();
         } else if (value == 'Con trả lời nhé') {
+          _cancelConnectionTimeout();
           if (liveState == AiLiveState.aiSpeaking) {
             liveState = AiLiveState.childTurn;
             _startChildTurnReminder();
@@ -145,31 +212,48 @@ class AiConversationLiveController extends ChangeNotifier {
           liveState = AiLiveState.completed;
           _cancelChildTurnReminder();
         }
+
+        if (kDebugMode && oldState != liveState) {
+          print('[AI Conversation State] ${oldState.name} -> ${liveState.name}');
+        }
         notifyListeners();
       });
 
-      // 5. Listen to transcripts — auto-submit to backend
+      // 6. Listen to transcripts
       _transcriptSub = _activeService.transcriptStream.listen((result) {
         if (result.isNotEmpty) {
           _handleTranscript(result.text);
         }
       });
 
-      // 6. Connect the active service
+      // 7. Connect the active service
       await _activeService.connect(session!);
 
-      // 7. Auto-speak the first question
+      // 8. Auto-speak the first question
       if (currentQuestion != null) {
         final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
             ? currentQuestion!.questionAudioText
             : currentQuestion!.questionText;
+        
+        // Before speaking, transition state to aiSpeaking
+        liveState = AiLiveState.aiSpeaking;
+        _cancelConnectionTimeout();
+        notifyListeners();
+
         await _activeService.speak(speakText);
         liveState = AiLiveState.childTurn;
         notifyListeners();
         _startChildTurnReminder();
       }
     } catch (e) {
-      error = _friendlyError(e);
+      _cancelConnectionTimeout();
+      final msg = e.toString();
+      if (msg.contains('speech_to_text_init_failed')) {
+        isSttInitFailed = true;
+        error = 'Nhận diện giọng nói chưa sẵn sàng';
+      } else {
+        error = _friendlyError(e);
+      }
       liveState = AiLiveState.error;
     } finally {
       loading = false;
@@ -338,6 +422,7 @@ class AiConversationLiveController extends ChangeNotifier {
   Future<void> close() async {
     _cancelSilenceTimer();
     _cancelChildTurnReminder();
+    _cancelConnectionTimeout();
     _statusSub?.cancel();
     _transcriptSub?.cancel();
     if (session != null) {
@@ -349,6 +434,7 @@ class AiConversationLiveController extends ChangeNotifier {
   void dispose() {
     _cancelSilenceTimer();
     _cancelChildTurnReminder();
+    _cancelConnectionTimeout();
     _statusSub?.cancel();
     _transcriptSub?.cancel();
     super.dispose();
