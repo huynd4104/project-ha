@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../core/services/app_state.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,7 +12,6 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../models/models.dart';
-import '../../../core/api/api_client.dart';
 
 class ChildProfileScreen extends StatefulWidget {
   const ChildProfileScreen({super.key});
@@ -33,7 +32,9 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
   CoLearningMode coLearningMode = CoLearningMode.parentChildTogether;
   bool loading = false;
   String? avatarUrl;
+  String? avatarObjectKey;
   bool uploadingPhoto = false;
+  XFile? _pickedLocalFile;
 
   @override
   void initState() {
@@ -50,6 +51,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
       coLearningMode = child.coLearningMode;
       note.text = child.note;
       avatarUrl = child.avatarUrl;
+      avatarObjectKey = child.avatarObjectKey;
     }
   }
 
@@ -63,6 +65,9 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
   }
 
   Future<void> _pickAndUploadPhoto() async {
+    final state = context.read<AppState>();
+    final child = state.activeChild;
+
     final picker = ImagePicker();
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -95,67 +100,30 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
 
     if (image == null) return;
 
+    if (child == null) {
+      setState(() {
+        _pickedLocalFile = image;
+      });
+      return;
+    }
+
     setState(() => uploadingPhoto = true);
 
     try {
       final fileBytes = await image.readAsBytes();
       final fileName = image.name;
-      final contentType = fileName.endsWith('.png') ? 'image/png' : 'image/jpeg';
-      final sizeBytes = fileBytes.length;
 
-      // 1. Request presigned upload URL
-      final presignRes = await ApiClient.instance.post('/api/media/presign-upload', {
-        'fileName': fileName,
-        'contentType': contentType,
-        'sizeBytes': sizeBytes,
-      }) as Map<String, dynamic>;
-
-      final uploadUrl = presignRes['uploadUrl'] as String?;
-      final mediaFile = presignRes['mediaFile'] as Map?;
-      
-      if (uploadUrl == null || uploadUrl.isEmpty || mediaFile == null) {
-        throw Exception('Không nhận được URL upload từ server.');
-      }
-
-      // 2. Upload to Cloudflare R2
-      final Map<String, String> uploadHeaders = {};
-      if (presignRes['headers'] != null) {
-        (presignRes['headers'] as Map).forEach((k, v) {
-          uploadHeaders[k.toString()] = v.toString();
-        });
-      } else {
-        uploadHeaders['Content-Type'] = contentType;
-      }
-
-      final uploadResponse = await http.put(
-        Uri.parse(uploadUrl),
-        headers: uploadHeaders,
-        body: fileBytes,
+      final response = await state.childRepository.uploadAvatar(
+        child.id,
+        fileBytes,
+        fileName,
       );
 
-      if (uploadResponse.statusCode < 200 || uploadResponse.statusCode >= 300) {
-        throw Exception(
-            'Tải ảnh lên R2 thất bại: ${uploadResponse.statusCode} - ${uploadResponse.body}');
-      }
-
-      // 3. Complete upload
-      final completeRes = await ApiClient.instance.post('/api/media/complete-upload', {
-        'mediaFileId': mediaFile['id'],
-        'metadata': {
-          'originalName': fileName,
-          'sizeBytes': sizeBytes,
-        }
-      }) as Map<String, dynamic>;
-
-      final publicUrl = completeRes['publicUrl'] as String?;
-      if (publicUrl == null || publicUrl.isEmpty) {
-        throw Exception('Không nhận được URL công khai.');
-      }
-
       setState(() {
-        avatarUrl = publicUrl;
+        avatarUrl = response['avatarUrl'] as String?;
+        avatarObjectKey = response['avatarObjectKey'] as String?;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tải ảnh lên thành công!')),
@@ -179,38 +147,59 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     final state = context.read<AppState>();
     setState(() => loading = true);
     final child = state.activeChild;
-    if (child == null) {
-      await state.childRepository.create(
-        state.appUser!.id,
-        name.text,
-        int.parse(age.text),
-        gender,
-        note.text,
-        primaryDifficulty: primaryDifficulty,
-        learningGoals: learningGoals.toList(),
-        supportLevel: supportLevel,
-        dailyDurationMinutes: int.parse(dailyDuration.text),
-        coLearningMode: coLearningMode,
-        avatarUrl: avatarUrl,
-      );
-    } else {
-      await state.childRepository.update(
-        child.copyWith(
-          name: name.text,
-          age: int.parse(age.text),
-          gender: gender,
-          note: note.text,
+    try {
+      if (child == null) {
+        final newChild = await state.childRepository.create(
+          state.appUser!.id,
+          name.text,
+          int.parse(age.text),
+          gender,
+          note.text,
           primaryDifficulty: primaryDifficulty,
           learningGoals: learningGoals.toList(),
           supportLevel: supportLevel,
           dailyDurationMinutes: int.parse(dailyDuration.text),
           coLearningMode: coLearningMode,
-          avatarUrl: avatarUrl,
-        ),
-      );
+        );
+
+        if (_pickedLocalFile != null) {
+          final fileBytes = await _pickedLocalFile!.readAsBytes();
+          await state.childRepository.uploadAvatar(
+            newChild.id,
+            fileBytes,
+            _pickedLocalFile!.name,
+          );
+        }
+      } else {
+        await state.childRepository.update(
+          child.copyWith(
+            name: name.text,
+            age: int.parse(age.text),
+            gender: gender,
+            note: note.text,
+            primaryDifficulty: primaryDifficulty,
+            learningGoals: learningGoals.toList(),
+            supportLevel: supportLevel,
+            dailyDurationMinutes: int.parse(dailyDuration.text),
+            coLearningMode: coLearningMode,
+            avatarUrl: avatarUrl,
+            avatarObjectKey: avatarObjectKey,
+          ),
+        );
+      }
+      await state.refresh();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi lưu hồ sơ: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
-    await state.refresh();
-    if (mounted) context.go('/home');
   }
 
   Widget _buildGenderSelector() {
@@ -507,10 +496,12 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
                 CircleAvatar(
                   radius: 54,
                   backgroundColor: Colors.grey.shade200,
-                  backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                      ? NetworkImage(avatarUrl!)
-                      : null,
-                  child: avatarUrl == null || avatarUrl!.isEmpty
+                  backgroundImage: _pickedLocalFile != null
+                      ? FileImage(File(_pickedLocalFile!.path))
+                      : (avatarUrl != null && avatarUrl!.isNotEmpty
+                          ? NetworkImage(avatarUrl!)
+                          : null) as ImageProvider?,
+                  child: (_pickedLocalFile == null && (avatarUrl == null || avatarUrl!.isEmpty))
                       ? const Icon(
                           Icons.child_care_rounded,
                           size: 54,

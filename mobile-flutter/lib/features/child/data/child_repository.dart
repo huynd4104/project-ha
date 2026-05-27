@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../models/child_profile.dart';
 import '../../../models/domain.dart';
@@ -28,6 +32,7 @@ class ChildRepository {
     int dailyDurationMinutes = 5,
     CoLearningMode coLearningMode = CoLearningMode.parentChildTogether,
     String? avatarUrl,
+    String? avatarObjectKey,
   }) async {
     final data = await _api.post('/api/children', {
       'displayName': name.trim(),
@@ -44,12 +49,58 @@ class ChildRepository {
       'interests': <String>[],
       'accessibilityPreferences': <String, dynamic>{},
       'avatarUrl': avatarUrl ?? '',
+      'avatarObjectKey': avatarObjectKey ?? '',
     }) as Map<String, dynamic>;
     return ChildProfile.fromMap('${data['id']}', data);
   }
 
   Future<void> update(ChildProfile child) async {
     await _api.put('/api/children/${child.id}', child.toMap());
+  }
+
+  Future<Map<String, dynamic>> uploadAvatar(
+    String childId,
+    List<int> fileBytes,
+    String fileName,
+  ) async {
+    final uri = Uri.parse('${_api.baseUrl}/api/children/$childId/avatar');
+    final request = http.MultipartRequest('POST', uri);
+
+    final session = _api.session;
+    if (session?.accessToken.isNotEmpty == true) {
+      request.headers['Authorization'] = 'Bearer ${session!.accessToken}';
+    }
+
+    final contentType = fileName.endsWith('.png')
+        ? 'image/png'
+        : fileName.endsWith('.webp')
+            ? 'image/webp'
+            : 'image/jpeg';
+
+    final multipartFile = http.MultipartFile.fromBytes(
+      'file',
+      fileBytes,
+      filename: fileName,
+      contentType: MediaType.parse(contentType),
+    );
+
+    request.files.add(multipartFile);
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      String errMsg = 'Tải ảnh thất bại: ${response.statusCode}';
+      try {
+        final bodyJson = jsonDecode(response.body);
+        if (bodyJson is Map && bodyJson['message'] != null) {
+          errMsg = bodyJson['message'];
+        }
+      } catch (_) {}
+      throw Exception(errMsg);
+    }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<void> saveCurrentPath(

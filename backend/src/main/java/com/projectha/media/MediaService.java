@@ -8,8 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -90,6 +93,38 @@ public class MediaService {
             System.err.println("Lỗi khi xóa file trên R2: " + e.getMessage());
         }
         repo.delete(id, userId);
+    }
+
+    public Map<String, String> uploadDirect(String key, byte[] bytes, String contentType) {
+        if (endpoint.isBlank() || accessKey.isBlank() || secretKey.isBlank() || bucket.isBlank()) {
+            throw new IllegalStateException("Cấu hình R2 Storage không đầy đủ.");
+        }
+        try (S3Client s3 = s3Client()) {
+            s3.putObject(
+                PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(contentType)
+                    .build(),
+                RequestBody.fromBytes(bytes)
+            );
+            String publicUrl = publicBaseUrl.isBlank() ? "" : publicBaseUrl.replaceAll("/$", "") + "/" + key;
+            return Map.of("objectKey", key, "publicUrl", publicUrl);
+        }
+    }
+
+    public void deleteDirect(String key) {
+        if (key == null || key.isBlank()) return;
+        if (!endpoint.isBlank() && !accessKey.isBlank() && !secretKey.isBlank() && !bucket.isBlank()) {
+            try (S3Client s3 = s3Client()) {
+                s3.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build());
+            } catch (Exception e) {
+                System.err.println("Lỗi khi xóa file direct trên R2: " + e.getMessage());
+            }
+        }
     }
 
     private S3Presigner presigner() {
