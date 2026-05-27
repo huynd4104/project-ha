@@ -1756,4 +1756,80 @@ ON CONFLICT (code) DO UPDATE SET
   expires_at = EXCLUDED.expires_at,
   updated_at = now();
 
+-- Seed NFC tags
+INSERT INTO nfc_tags (
+  id, tag_uid, display_name, tag_type, target_type, target_id, payload_value, spoken_text, description, is_active
+) VALUES
+  ('a0a0a0a0-0000-0000-0000-000000000001', 'NFC_ANSWER_UMBRELLA', 'Thẻ Đáp Án Cái Ô', 'ANSWER', 'RAW_VALUE', NULL, 'umbrella', 'Cái ô', 'Thẻ NFC đáp án cái ô', true),
+  ('a0a0a0a0-0000-0000-0000-000000000002', 'NFC_ANSWER_BALL', 'Thẻ Đáp Án Quả Bóng', 'ANSWER', 'RAW_VALUE', NULL, 'ball', 'Quả bóng', 'Thẻ NFC đáp án quả bóng', true),
+  ('a0a0a0a0-0000-0000-0000-000000000003', 'NFC_ANSWER_SPOON', 'Thẻ Đáp Án Cái Thìa', 'ANSWER', 'RAW_VALUE', NULL, 'spoon', 'Cái thìa', 'Thẻ NFC đáp án cái thìa', true),
+  ('a0a0a0a0-0000-0000-0000-000000000004', 'NFC_ANSWER_SOCKS', 'Thẻ Đáp Án Đôi Tất', 'ANSWER', 'RAW_VALUE', NULL, 'socks', 'Đôi tất', 'Thẻ NFC đáp án đôi tất', true),
+  ('a0a0a0a0-0000-0000-0000-000000000005', 'NFC_FLASHCARD_APPLE', 'Thẻ Học Quả Táo', 'FLASHCARD', 'RAW_VALUE', NULL, 'apple', 'Quả táo chín đỏ', 'Thẻ NFC flashcard quả táo', true),
+  ('a0a0a0a0-0000-0000-0000-000000000006', 'NFC_FLASHCARD_CAT', 'Thẻ Học Con Mèo', 'FLASHCARD', 'RAW_VALUE', NULL, 'cat', 'Con mèo kêu meo meo', 'Thẻ NFC flashcard con mèo', true),
+  -- Number Tags
+  ('a0a0a0a0-0000-0000-0000-000000000100', 'NFC_NUMBER_0', 'Thẻ Số 0', 'NUMBER', 'RAW_VALUE', NULL, '0', 'Đây là số không.', 'Thẻ NFC số 0', true),
+  ('a0a0a0a0-0000-0000-0000-000000000101', 'NFC_NUMBER_1', 'Thẻ Số 1', 'NUMBER', 'RAW_VALUE', NULL, '1', 'Đây là số một.', 'Thẻ NFC số 1', true),
+  ('a0a0a0a0-0000-0000-0000-000000000102', 'NFC_NUMBER_2', 'Thẻ Số 2', 'NUMBER', 'RAW_VALUE', NULL, '2', 'Đây là số hai.', 'Thẻ NFC số 2', true),
+  ('a0a0a0a0-0000-0000-0000-000000000103', 'NFC_NUMBER_3', 'Thẻ Số 3', 'NUMBER', 'RAW_VALUE', NULL, '3', 'Đây là số ba.', 'Thẻ NFC số 3', true),
+  ('a0a0a0a0-0000-0000-0000-000000000104', 'NFC_NUMBER_4', 'Thẻ Số 4', 'NUMBER', 'RAW_VALUE', NULL, '4', 'Đây là số bốn.', 'Thẻ NFC số 4', true),
+  ('a0a0a0a0-0000-0000-0000-000000000105', 'NFC_NUMBER_5', 'Thẻ Số 5', 'NUMBER', 'RAW_VALUE', NULL, '5', 'Đây là số năm.', 'Thẻ NFC số 5', true),
+  ('a0a0a0a0-0000-0000-0000-000000000106', 'NFC_NUMBER_6', 'Thẻ Số 6', 'NUMBER', 'RAW_VALUE', NULL, '6', 'Đây là số sáu.', 'Thẻ NFC số 6', true),
+  ('a0a0a0a0-0000-0000-0000-000000000107', 'NFC_NUMBER_7', 'Thẻ Số 7', 'NUMBER', 'RAW_VALUE', NULL, '7', 'Đây là số bảy.', 'Thẻ NFC số 7', true),
+  ('a0a0a0a0-0000-0000-0000-000000000108', 'NFC_NUMBER_8', 'Thẻ Số 8', 'NUMBER', 'RAW_VALUE', NULL, '8', 'Đây là số tám.', 'Thẻ NFC số 8', true),
+  ('a0a0a0a0-0000-0000-0000-000000000109', 'NFC_NUMBER_9', 'Thẻ Số 9', 'NUMBER', 'RAW_VALUE', NULL, '9', 'Đây là số chín.', 'Thẻ NFC số 9', true),
+  ('a0a0a0a0-0000-0000-0000-000000000110', 'NFC_NUMBER_10', 'Thẻ Số 10', 'NUMBER', 'RAW_VALUE', NULL, '10', 'Đây là số mười.', 'Thẻ NFC số 10', true),
+  -- Shape Tags
+  ('a0a0a0a0-0000-0000-0000-000000000201', 'NFC_SHAPE_CIRCLE', 'Thẻ Hình Tròn', 'SHAPE', 'RAW_VALUE', NULL, 'CIRCLE', 'Đây là hình tròn.', 'Thẻ NFC hình tròn', true),
+  ('a0a0a0a0-0000-0000-0000-000000000202', 'NFC_SHAPE_SQUARE', 'Thẻ Hình Vuông', 'SHAPE', 'RAW_VALUE', NULL, 'SQUARE', 'Đây là hình vuông.', 'Thẻ NFC hình vuông', true),
+  ('a0a0a0a0-0000-0000-0000-000000000203', 'NFC_SHAPE_TRIANGLE', 'Thẻ Hình Tam Giác', 'SHAPE', 'RAW_VALUE', NULL, 'TRIANGLE', 'Đây là hình tam giác.', 'Thẻ NFC hình tam giác', true),
+  ('a0a0a0a0-0000-0000-0000-000000000204', 'NFC_SHAPE_RECTANGLE', 'Thẻ Hình Chữ Nhật', 'SHAPE', 'RAW_VALUE', NULL, 'RECTANGLE', 'Đây là hình chữ nhật.', 'Thẻ NFC hình chữ nhật', true),
+  ('a0a0a0a0-0000-0000-0000-000000000205', 'NFC_SHAPE_STAR', 'Thẻ Hình Sao', 'SHAPE', 'RAW_VALUE', NULL, 'STAR', 'Đây là hình sao.', 'Thẻ NFC hình sao', true),
+  ('a0a0a0a0-0000-0000-0000-000000000206', 'NFC_SHAPE_HEART', 'Thẻ Hình Trái Tim', 'SHAPE', 'RAW_VALUE', NULL, 'HEART', 'Đây là hình trái tim.', 'Thẻ NFC hình trái tim', true),
+  ('a0a0a0a0-0000-0000-0000-000000000207', 'NFC_SHAPE_OVAL', 'Thẻ Hình Bầu Dục', 'SHAPE', 'RAW_VALUE', NULL, 'OVAL', 'Đây là hình bầu dục.', 'Thẻ NFC hình bầu dục', true)
+ON CONFLICT (tag_uid) DO UPDATE SET
+  display_name = EXCLUDED.display_name,
+  tag_type = EXCLUDED.tag_type,
+  target_type = EXCLUDED.target_type,
+  target_id = EXCLUDED.target_id,
+  payload_value = EXCLUDED.payload_value,
+  spoken_text = EXCLUDED.spoken_text,
+  description = EXCLUDED.description,
+  is_active = EXCLUDED.is_active,
+  updated_at = now();
+
+-- Technology: Numbers
+INSERT INTO number_items (id, number_value, title, is_active) VALUES
+  ('b0b0b0b0-0000-0000-0000-000000000000', 0, 'Số không', true),
+  ('b0b0b0b0-0000-0000-0000-000000000001', 1, 'Số một', true),
+  ('b0b0b0b0-0000-0000-0000-000000000002', 2, 'Số hai', true),
+  ('b0b0b0b0-0000-0000-0000-000000000003', 3, 'Số ba', true),
+  ('b0b0b0b0-0000-0000-0000-000000000004', 4, 'Số bốn', true),
+  ('b0b0b0b0-0000-0000-0000-000000000005', 5, 'Số năm', true),
+  ('b0b0b0b0-0000-0000-0000-000000000006', 6, 'Số sáu', true),
+  ('b0b0b0b0-0000-0000-0000-000000000007', 7, 'Số bảy', true),
+  ('b0b0b0b0-0000-0000-0000-000000000008', 8, 'Số tám', true),
+  ('b0b0b0b0-0000-0000-0000-000000000009', 9, 'Số chín', true),
+  ('b0b0b0b0-0000-0000-0000-000000000010', 10, 'Số mười', true)
+ON CONFLICT (number_value) DO NOTHING;
+
+INSERT INTO number_counting_questions (id, question_text, correct_number, success_feedback, failure_feedback, is_active) VALUES
+  ('b1b1b1b1-0000-0000-0000-000000000001', 'Bé hãy tìm và chạm thẻ số 1 nào!', 1, 'Chính xác! Đây là số 1.', 'Chưa đúng rồi, bé tìm lại số 1 nhé.', true),
+  ('b1b1b1b1-0000-0000-0000-000000000002', 'Đố bé biết có mấy quả táo trên màn hình?', 3, 'Giỏi quá! Có 3 quả táo.', 'Bé đếm lại xem có mấy quả táo nào.', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Technology: Shapes
+INSERT INTO shape_items (id, shape_name, is_active) VALUES
+  ('c0c0c0c0-0000-0000-0000-000000000001', 'Hình tròn', true),
+  ('c0c0c0c0-0000-0000-0000-000000000002', 'Hình vuông', true),
+  ('c0c0c0c0-0000-0000-0000-000000000003', 'Hình tam giác', true),
+  ('c0c0c0c0-0000-0000-0000-000000000004', 'Hình chữ nhật', true),
+  ('c0c0c0c0-0000-0000-0000-000000000005', 'Hình sao', true),
+  ('c0c0c0c0-0000-0000-0000-000000000006', 'Hình trái tim', true),
+  ('c0c0c0c0-0000-0000-0000-000000000007', 'Hình bầu dục', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO shape_recognition_questions (id, question_text, correct_shape_code, success_feedback, failure_feedback, is_active) VALUES
+  ('c1c1c1c1-0000-0000-0000-000000000001', 'Bé hãy tìm hình tròn nào!', 'CIRCLE', 'Đúng rồi! Đây là hình tròn.', 'Đây chưa phải hình tròn, bé tìm lại nhé.', true)
+ON CONFLICT (id) DO NOTHING;
+
 COMMIT;

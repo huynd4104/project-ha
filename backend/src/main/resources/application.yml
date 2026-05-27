@@ -11,6 +11,7 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+    repair-on-migrate: true
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}

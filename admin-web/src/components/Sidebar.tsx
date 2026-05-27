@@ -37,8 +37,16 @@ const groups: NavGroup[] = [
       { to: "/learning-paths-v2", label: "Lộ trình học", icon: "path" },
       { to: "/lessons-v2", label: "Bài học", icon: "lesson" },
       { to: "/activity-builder", label: "Hoạt động trong bài học", icon: "activity" },
-      { to: "/ai-conversations", label: "Hội thoại cùng AI", icon: "activity" },
       { to: "/path-builder", label: "Sắp xếp bài học vào lộ trình", icon: "sort" }
+    ]
+  },
+  {
+    title: "Công nghệ", icon: "qr", defaultOpen: true,
+    items: [
+      { to: "/ai-conversations", label: "Hội thoại cùng AI", icon: "activity" },
+      { to: "/nfc-tags", label: "Quản lý thẻ NFC", icon: "qr" },
+      { to: "/technology/numbers", label: "Bộ số", icon: "activity" },
+      { to: "/technology/shapes", label: "Bộ hình", icon: "activity" }
     ]
   },
   {

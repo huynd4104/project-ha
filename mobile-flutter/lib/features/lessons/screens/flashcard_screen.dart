@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
 import '../../../core/services/sound_service.dart';
+import '../../../core/services/nfc_service.dart';
+import '../../../core/services/tts_service.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_image.dart';
@@ -11,9 +14,9 @@ import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
 import '../../learning_path/data/lesson_repository.dart';
-import '../widgets/audio_button.dart';
 import '../widgets/lesson_header.dart';
 import '../widgets/mascot_message_bubble.dart';
+import '../widgets/nfc_tts_mixin.dart';
 
 class FlashcardScreen extends StatefulWidget {
   const FlashcardScreen({super.key, required this.lessonId});
@@ -22,16 +25,35 @@ class FlashcardScreen extends StatefulWidget {
   State<FlashcardScreen> createState() => _FlashcardScreenState();
 }
 
-class _FlashcardScreenState extends State<FlashcardScreen> {
+class _FlashcardScreenState extends State<FlashcardScreen> with NfcTtsMixin<FlashcardScreen> {
   final repo = LessonRepository();
   late Future<({Lesson lesson, List<Flashcard> cards})> data;
   int index = 0;
+  int? _lastSpokenIndex;
   bool back = false;
 
   @override
   void initState() {
     super.initState();
     data = load();
+  }
+
+  @override
+  void onNfcTagScanned(NfcResolvedTag tag) {
+    data.then((value) {
+      if (index >= value.cards.length) return;
+      final card = value.cards[index];
+      
+      // Auto flip to back on scan
+      setState(() => back = true);
+
+      // Speak tag spoken text, back text, or front text
+      final textToSpeak = (tag.spokenText != null && tag.spokenText!.isNotEmpty)
+          ? tag.spokenText!
+          : (card.backText.isNotEmpty ? card.backText : card.frontText);
+          
+      TtsService.instance.speak(textToSpeak);
+    });
   }
 
   Future<({Lesson lesson, List<Flashcard> cards})> load() async {
@@ -60,12 +82,15 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
-  Future<void> playAudio(String? audioUrl) async {
-    final played = await SoundService.instance.playUrl(audioUrl);
-    if (!played && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Audio chưa sẵn sàng cho thẻ này.')),
-      );
+  void handleCardTap(Flashcard card) {
+    setState(() {
+      back = !back;
+    });
+    // Speak based on target face
+    if (back) {
+      TtsService.instance.speakFlashcardBack(card.backText);
+    } else {
+      TtsService.instance.speakFlashcardFront(card.frontText);
     }
   }
 
@@ -82,6 +107,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         );
       }
       final card = value.cards[index];
+
+      // Auto speak front text when new flashcard is loaded
+      if (_lastSpokenIndex != index) {
+        _lastSpokenIndex = index;
+        Future.microtask(() => TtsService.instance.speakFlashcardFront(card.frontText));
+      }
+
       return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) {
@@ -97,6 +129,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 activityLabel: 'Thẻ ${index + 1}/${value.cards.length}',
                 onBack: confirmExit,
               ),
+              buildNfcIndicator(context),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(18),
@@ -107,7 +140,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     ),
                     const SizedBox(height: 18),
                     GestureDetector(
-                      onTap: () => setState(() => back = !back),
+                      onTap: () => handleCardTap(card),
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 240),
                         child: AppCard(
@@ -122,6 +155,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                                     imageUrl: card.imageUrl!,
                                     height: 120,
                                   ),
+                                const SizedBox(height: 16),
                                 Text(
                                   back ? card.backText : card.frontText,
                                   textAlign: TextAlign.center,
@@ -130,14 +164,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
-                                if ((card.audioUrl ?? '').isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  AudioButton(
-                                    label: 'Phát audio',
-                                    onPressed: () => playAudio(card.audioUrl),
-                                  ),
-                                ],
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 24),
                                 Text(back ? 'Mặt sau' : 'Chạm để lật thẻ'),
                               ],
                             ),

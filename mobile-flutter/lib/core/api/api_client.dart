@@ -130,10 +130,17 @@ class ApiClient {
 
   dynamic _decode(http.Response response) {
     dynamic data;
+    final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
     if (response.body.isNotEmpty) {
-      data = jsonDecode(utf8.decode(response.bodyBytes));
+      try {
+        data = jsonDecode(utf8.decode(response.bodyBytes));
+      } catch (e) {
+        if (isSuccess) {
+          rethrow;
+        }
+      }
     }
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (!isSuccess) {
       final message = data is Map
           ? '${data['message'] ?? data['error'] ?? 'Lỗi kết nối server.'}'
           : 'Lỗi kết nối server (${response.statusCode}).';

@@ -280,20 +280,6 @@ export function FlashcardsPage() {
                       </div>
                     </div>
 
-                    <div className="field">
-                      <label>File phát âm (Tùy chọn)</label>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          type="text"
-                          placeholder="Chọn link phát âm từ thư viện"
-                          value={audioUrl}
-                          onChange={(e) => setAudioUrl(e.target.value)}
-                          style={{ flex: 1 }}
-                        />
-                        <button type="button" className="secondary" onClick={() => setShowMediaPicker("audio")}>Thư viện</button>
-                      </div>
-                    </div>
-
                   </div>
 
                   {/* Flip Card Preview Panel */}
@@ -342,16 +328,6 @@ export function FlashcardsPage() {
           type="IMAGE"
           currentValue={imageUrl}
           onSelect={(url) => setImageUrl(url)}
-          onClose={() => setShowMediaPicker(null)}
-        />
-      )}
-
-      {showMediaPicker === "audio" && (
-        <MediaPicker
-          category="FLASHCARD"
-          type="AUDIO"
-          currentValue={audioUrl}
-          onSelect={(url) => setAudioUrl(url)}
           onClose={() => setShowMediaPicker(null)}
         />
       )}

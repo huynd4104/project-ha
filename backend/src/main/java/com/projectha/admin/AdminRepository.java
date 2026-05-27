@@ -34,7 +34,14 @@ public class AdminRepository {
         Map.entry("learning-goals", "learning_goals"),
         Map.entry("skills", "skills"),
         Map.entry("transactions", "transactions"),
-        Map.entry("media-assets", "media_assets")
+        Map.entry("media-assets", "media_assets"),
+        Map.entry("nfc-tags", "nfc_tags"),
+        Map.entry("number-items", "number_items"),
+        Map.entry("number-examples", "number_examples"),
+        Map.entry("number-counting-questions", "number_counting_questions"),
+        Map.entry("shape-items", "shape_items"),
+        Map.entry("shape-examples", "shape_examples"),
+        Map.entry("shape-recognition-questions", "shape_recognition_questions")
     );
 
     private static final Set<String> READ_ONLY = Set.of("audit_logs");

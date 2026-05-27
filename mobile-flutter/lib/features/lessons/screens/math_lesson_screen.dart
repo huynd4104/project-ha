@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
 import '../../../core/services/sound_service.dart';
+import '../../../core/services/nfc_service.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_image.dart';
@@ -15,6 +17,7 @@ import '../widgets/answer_option_card.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/lesson_header.dart';
 import '../widgets/mascot_message_bubble.dart';
+import '../widgets/nfc_tts_mixin.dart';
 
 class MathLessonScreen extends StatefulWidget {
   const MathLessonScreen({super.key, required this.lessonId});
@@ -23,16 +26,78 @@ class MathLessonScreen extends StatefulWidget {
   State<MathLessonScreen> createState() => _MathLessonScreenState();
 }
 
-class _MathLessonScreenState extends State<MathLessonScreen> {
+class _MathLessonScreenState extends State<MathLessonScreen> with NfcTtsMixin<MathLessonScreen> {
   final repo = LessonRepository();
   late Future<({Lesson lesson, List<MathQuestion> items})> data;
   int index = 0;
+  int? _lastSpokenIndex;
   final answers = <String, String>{};
 
   @override
   void initState() {
     super.initState();
     data = load();
+  }
+
+  @override
+  void onNfcTagScanned(NfcResolvedTag tag) {
+    if (tag.tagType != 'ANSWER') return;
+    
+    data.then((value) {
+      if (index >= value.items.length) return;
+      final q = value.items[index];
+      
+      String? matchedOption;
+      for (final entry in q.options.entries) {
+        if (entry.value.trim().isEmpty) continue;
+        if (tag.targetId == entry.key ||
+            tag.payloadValue?.toLowerCase() == entry.key.toLowerCase() ||
+            tag.payloadValue?.toLowerCase() == entry.value.toLowerCase()) {
+          matchedOption = entry.key;
+          break;
+        }
+      }
+      
+      if (matchedOption != null) {
+        handleAnswerSelected(value.items, q, matchedOption);
+      }
+    });
+  }
+
+  void handleAnswerSelected(List<MathQuestion> items, MathQuestion q, String selectedOption) {
+    setState(() => answers[q.id] = selectedOption);
+    
+    final correct = selectedOption == q.correctOption;
+    SoundService.instance.play(correct ? 'correct' : 'wrong');
+    
+    speakEvaluationFeedback(
+      correct,
+      explanation: q.explanation,
+    );
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => GestureDetector(
+        onTap: () => speakExplanation(q.explanation.isNotEmpty ? q.explanation : (correct ? 'Con làm tốt lắm!' : 'Mình thử lại nhé.')),
+        child: FeedbackSheet(
+          correct: correct,
+          message: q.explanation.isEmpty
+              ? (correct ? 'Con làm tốt lắm!' : 'Mình thử lại nhé.')
+              : q.explanation,
+          onContinue: () {
+            Navigator.pop(context);
+            if (!correct) return;
+            if (index == items.length - 1) {
+              finish(null, items);
+            } else {
+              setState(() {
+                index++;
+              });
+            }
+          },
+        ),
+      ),
+    );
   }
 
   Future<({Lesson lesson, List<MathQuestion> items})> load() async {
@@ -45,12 +110,15 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
     return (lesson: lesson, items: await repo.mathQuestions(widget.lessonId));
   }
 
-  Future<void> finish(Lesson lesson, List<MathQuestion> items) async {
+  Future<void> finish(Lesson? lesson, List<MathQuestion> items) async {
     final state = context.read<AppState>();
+    
+    // Find lesson object
+    final resolvedLesson = lesson ?? (await data).lesson;
     final result = await repo.submitChoiceLesson(
       userId: state.appUser!.id,
       childId: state.activeChild!.id,
-      lesson: lesson,
+      lesson: resolvedLesson,
       items: items,
       answers: answers,
     );
@@ -88,6 +156,13 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
         );
       final q = items[index];
       final selected = answers[q.id];
+
+      // Auto speak question text when question is loaded/changed
+      if (_lastSpokenIndex != index) {
+        _lastSpokenIndex = index;
+        Future.microtask(() => speakQuestion(q.questionText));
+      }
+
       return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) {
@@ -104,6 +179,7 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
                 onBack: confirmExit,
                 onHelp: () => SoundService.instance.play('tap'),
               ),
+              buildNfcIndicator(context),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(18),
@@ -113,26 +189,29 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
                       message: 'Con chọn đáp án phù hợp nhé.',
                     ),
                     const SizedBox(height: 16),
-                    AppCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            q.questionText,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          if ((q.imageUrl ?? '').isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: AppImage(
-                                imageUrl: q.imageUrl!,
-                                height: 150,
+                    GestureDetector(
+                      onTap: () => handleQuestionTap(q.questionText),
+                      child: AppCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              q.questionText,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                        ],
+                            if ((q.imageUrl ?? '').isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: AppImage(
+                                  imageUrl: q.imageUrl!,
+                                  height: 150,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -144,8 +223,7 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
                           state: selected == entry.key
                               ? AnswerOptionState.selected
                               : AnswerOptionState.normal,
-                          onTap: () =>
-                              setState(() => answers[q.id] = entry.key),
+                          onTap: () => handleAnswerSelected(items, q, entry.key),
                         ),
                   ],
                 ),
@@ -160,32 +238,7 @@ class _MathLessonScreenState extends State<MathLessonScreen> {
                 icon: Icons.check_rounded,
                 onPressed: selected == null
                     ? null
-                    : () {
-                        final correct = selected == q.correctOption;
-                        SoundService.instance.play(
-                          correct ? 'correct' : 'wrong',
-                        );
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (_) => FeedbackSheet(
-                            correct: correct,
-                            message: q.explanation.isEmpty
-                                ? (correct
-                                      ? 'Con làm tốt lắm!'
-                                      : 'Mình thử lại nhé.')
-                                : q.explanation,
-                            onContinue: () {
-                              Navigator.pop(context);
-                              if (!correct) return;
-                              if (index == items.length - 1) {
-                                finish(value.lesson, items);
-                              } else {
-                                setState(() => index++);
-                              }
-                            },
-                          ),
-                        );
-                      },
+                    : () => handleAnswerSelected(items, q, selected),
               ),
             ),
           ),

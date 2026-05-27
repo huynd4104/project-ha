@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
+import '../../../core/services/nfc_service.dart';
 import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
@@ -12,6 +14,7 @@ import '../activity/activity_renderer_registry.dart';
 import '../widgets/feedback_panel.dart';
 import '../widgets/lesson_progress_bar.dart';
 import '../widgets/mascot_message_bubble.dart';
+import '../widgets/nfc_tts_mixin.dart';
 
 class ActivityLessonScreen extends StatefulWidget {
   const ActivityLessonScreen({super.key, required this.lessonId});
@@ -22,11 +25,12 @@ class ActivityLessonScreen extends StatefulWidget {
   State<ActivityLessonScreen> createState() => _ActivityLessonScreenState();
 }
 
-class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
+class _ActivityLessonScreenState extends State<ActivityLessonScreen> with NfcTtsMixin<ActivityLessonScreen> {
   final _lessonRepo = LessonRepository();
   late Future<({Lesson lesson, List<Activity> activities})> _dataFuture;
 
   int _currentIndex = 0;
+  int? _lastSpokenIndex;
   DateTime _activityStartTime = DateTime.now();
 
   // Track attempts results
@@ -45,6 +49,61 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
     super.initState();
     _dataFuture = _loadData();
     _activityStartTime = DateTime.now();
+  }
+
+  @override
+  void onNfcTagScanned(NfcResolvedTag tag) {
+    _dataFuture.then((value) {
+      if (_currentIndex >= value.activities.length) return;
+      final activity = value.activities[_currentIndex];
+      final lesson = value.lesson;
+
+      // 1. Try to match option IDs or text (Choice types)
+      ActivityOption? matchedOption;
+      for (final option in activity.options) {
+        if (tag.targetId == option.id ||
+            tag.payloadValue?.toLowerCase() == option.id.toLowerCase() ||
+            tag.payloadValue?.toLowerCase() == option.text.toLowerCase()) {
+          matchedOption = option;
+          break;
+        }
+      }
+
+      if (matchedOption != null) {
+        final isCorrect = matchedOption.isCorrect ||
+            activity.correctAnswers.contains(matchedOption.id) ||
+            activity.correctAnswers.contains(matchedOption.text);
+        _handleAnswer(
+          matchedOption.text,
+          isCorrect ? 'correct' : 'wrong',
+          isCorrect ? 10.0 : 0.0,
+          activity,
+          lesson,
+        );
+        return;
+      }
+
+      // 2. Direct payload comparison
+      if (tag.payloadValue != null && tag.payloadValue!.isNotEmpty) {
+        final rawVal = tag.payloadValue!.trim().toLowerCase();
+        bool isCorrect = false;
+        for (final ans in activity.correctAnswers) {
+          if (ans.trim().toLowerCase() == rawVal) {
+            isCorrect = true;
+            break;
+          }
+        }
+
+        final result = isCorrect ? 'correct' : 'wrong';
+        _handleAnswer(
+          tag.payloadValue!,
+          result,
+          isCorrect ? 10.0 : 0.0,
+          activity,
+          lesson,
+        );
+      }
+    });
   }
 
   Future<({Lesson lesson, List<Activity> activities})> _loadData() async {
@@ -140,6 +199,12 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
           ? npc.dialogueTemplates.wrong
           : 'Không sao đâu, lần sau sẽ tốt hơn!';
     }
+
+    speakEvaluationFeedback(
+      result == 'correct' || result == 'done',
+      customFeedback: feedbackMsg,
+      explanation: activity.prompt,
+    );
 
     setState(() {
       _feedbackMessage = feedbackMsg;
@@ -274,6 +339,12 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
               : 'Chào con! Mình cùng hoàn thành bài học này nhé.';
         }
 
+        // Auto speak prompt when activity changes
+        if (_lastSpokenIndex != _currentIndex) {
+          _lastSpokenIndex = _currentIndex;
+          Future.microtask(() => speakQuestion(activity.prompt));
+        }
+
         if (_isCompletingLesson) {
           return const Scaffold(
             body: Center(
@@ -325,15 +396,21 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                     ),
                   ),
 
+                  // NFC State indicator
+                  buildNfcIndicator(context),
+
                   // 2. NPC & Message Bubble
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 8.0,
-                    ),
-                    child: MascotMessageBubble(
-                      npc: lesson.npc,
-                      message: bubbleMessage,
+                  GestureDetector(
+                    onTap: () => handleQuestionTap(bubbleMessage),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 8.0,
+                      ),
+                      child: MascotMessageBubble(
+                        npc: lesson.npc,
+                        message: bubbleMessage,
+                      ),
                     ),
                   ),
 
@@ -351,15 +428,18 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
                         ),
                         child: KeyedSubtree(
                           key: ValueKey(activity.id),
-                          child: ActivityRendererRegistry.createDefault().build(
-                            context,
-                            activity,
-                            (selectedAnswer, result, score) => _handleAnswer(
-                              selectedAnswer,
-                              result,
-                              score,
+                          child: GestureDetector(
+                            onTap: () => handleQuestionTap(activity.prompt),
+                            child: ActivityRendererRegistry.createDefault().build(
+                              context,
                               activity,
-                              lesson,
+                              (selectedAnswer, result, score) => _handleAnswer(
+                                selectedAnswer,
+                                result,
+                                score,
+                                activity,
+                                lesson,
+                              ),
                             ),
                           ),
                         ),
@@ -371,13 +451,16 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> {
 
                   // 4. Bottom Feedback Panel
                   if (_showFeedback)
-                    FeedbackPanel(
-                      type: _feedbackType,
-                      message: _feedbackMessage,
-                      ctaLabel: _currentIndex == activities.length - 1
-                          ? 'Hoàn thành bài'
-                          : 'Tiếp tục',
-                      onPressed: () => _nextActivity(activities, lesson),
+                    GestureDetector(
+                      onTap: () => speakExplanation(_feedbackMessage),
+                      child: FeedbackPanel(
+                        type: _feedbackType,
+                        message: _feedbackMessage,
+                        ctaLabel: _currentIndex == activities.length - 1
+                            ? 'Hoàn thành bài'
+                            : 'Tiếp tục',
+                        onPressed: () => _nextActivity(activities, lesson),
+                      ),
                     ),
                 ],
               ),

@@ -21,6 +21,13 @@ END $$;
 
 TRUNCATE TABLE
   activation_redemptions,
+  nfc_tags,
+  number_examples,
+  number_items,
+  number_counting_questions,
+  shape_examples,
+  shape_items,
+  shape_recognition_questions,
   voice_usage_logs,
   user_unlocked_npcs,
   activity_attempts,

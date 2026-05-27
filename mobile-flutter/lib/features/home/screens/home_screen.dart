@@ -20,6 +20,7 @@ import '../../lessons/widgets/mascot_message_bubble.dart';
 import '../../../core/utils/access_check.dart';
 import '../../../core/utils/parent_gate.dart';
 import '../../parent_dashboard/screens/paywall_screen.dart';
+import '../../technology/presentation/screens/technology_selection_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -510,6 +511,16 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 6),
             Text('Đi nhanh', style: AppTextStyles.title),
             const SizedBox(height: 10),
+            _ActionCard(
+              title: 'Công nghệ học tập',
+              subtitle: 'Học bộ số và hình khối bằng NFC',
+              icon: Icons.lightbulb_rounded,
+              color: Colors.orange,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TechnologySelectionScreen()),
+              ),
+            ),
             _ActionCard(
               title: 'Hội thoại cùng AI',
               subtitle: 'Chọn chủ đề và luyện nói 3 phút',

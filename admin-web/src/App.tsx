@@ -36,6 +36,9 @@ import { ActivityBuilderPage } from "./pages/ActivityBuilderPage";
 import { NPCsPageV2 } from "./pages/NPCsPageV2";
 import { ActivationCodesPage } from "./pages/ActivationCodesPage";
 import { PremiumPage } from "./pages/PremiumPage";
+import { NfcTagsPage } from "./pages/NfcTagsPage";
+import { NumbersManagementPage } from "./pages/technology/NumbersManagementPage";
+import { ShapesManagementPage } from "./pages/technology/ShapesManagementPage";
 
 export default function App() {
   return (
@@ -82,6 +85,9 @@ export default function App() {
         <Route path="/ai-conversations" element={<AiConversationTopicListPage />} />
         <Route path="/ai-conversations/topics/:topicId/questions" element={<AiConversationQuestionListPage />} />
         <Route path="/flashcards" element={<FlashcardsPage />} />
+        <Route path="/nfc-tags" element={<NfcTagsPage />} />
+        <Route path="/technology/numbers" element={<NumbersManagementPage />} />
+        <Route path="/technology/shapes" element={<ShapesManagementPage />} />
 
         <Route path="/change-password" element={<ChangePasswordPage />} />
       </Route>

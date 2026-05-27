@@ -23,7 +23,8 @@ const pathToCollection: Record<string, string> = {
   "/progress": "progress",
   "/badges": "badges",
   "/daily-missions": "daily-missions",
-  "/transactions": "transactions"
+  "/transactions": "transactions",
+  "/nfc-tags": "nfc-tags"
 };
 
 export const adminApi = {
