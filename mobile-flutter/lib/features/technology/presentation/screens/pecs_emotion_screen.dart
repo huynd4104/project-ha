@@ -4,9 +4,17 @@ import '../../../../core/services/tts_service.dart';
 import '../../../../core/utils/nfc_value_normalizer.dart';
 import '../../../lessons/widgets/nfc_tts_mixin.dart';
 import '../../data/technology_repository.dart';
+import 'pecs_nfc_deep_link_utils.dart';
 
 class PecsEmotionScreen extends StatefulWidget {
-  const PecsEmotionScreen({super.key});
+  const PecsEmotionScreen({
+    super.key,
+    this.initialNfcPayload,
+    this.isDeepLinkAnswer = false,
+  });
+
+  final String? initialNfcPayload;
+  final bool isDeepLinkAnswer;
 
   @override
   State<PecsEmotionScreen> createState() => _PecsEmotionScreenState();
@@ -17,16 +25,30 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
   List<Map<String, dynamic>> _items = [];
   Map<String, dynamic>? _selectedCard;
   bool _isLoading = true;
+  bool _isResolvingDeepLink = false;
+  String? _statusMessage;
+  bool _hasHandledInitialDeepLinkAudio = false;
 
   final String _openingQuestion = 'Hôm nay bạn cảm thấy như thế nào?';
+
+  bool get _hasDeepLinkAnswer =>
+      widget.isDeepLinkAnswer &&
+      (widget.initialNfcPayload?.trim().isNotEmpty ?? false);
+
+  @override
+  bool get enableNfcListening => !_hasDeepLinkAnswer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _speakOpening();
-    });
+    if (_hasDeepLinkAnswer) {
+      _resolveInitialDeepLink();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _speakOpening();
+      });
+    }
   }
 
   Future<void> _loadData() async {
@@ -50,10 +72,138 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
     TtsService.instance.speak(_openingQuestion);
   }
 
+  Future<void> _resolveInitialDeepLink() async {
+    final payload = widget.initialNfcPayload?.trim();
+    if (payload == null || payload.isEmpty) return;
+
+    logPecsDeepLinkDebug(
+      screenName: 'PecsEmotion',
+      stage: 'start',
+      payload: payload,
+      mode: widget.isDeepLinkAnswer ? 'answer' : 'normal',
+    );
+
+    if (mounted) {
+      setState(() {
+        _isResolvingDeepLink = true;
+        _statusMessage = null;
+      });
+    }
+
+    try {
+      final resolvedData = await resolveNfcPayload(payload);
+      final tagType = resolvedData['tagType']?.toString().trim().toUpperCase();
+      final category = resolvedPecsCategory(resolvedData);
+      final metadata = resolvedData['metadata'];
+      final metadataMap = metadata is Map
+          ? Map<String, dynamic>.from(metadata)
+          : <String, dynamic>{};
+      final spokenText = resolvedData['spokenText']?.toString() ??
+          metadataMap['spokenText']?.toString() ??
+          '';
+
+      logPecsDeepLinkDebug(
+        screenName: 'PecsEmotion',
+        stage: 'resolved',
+        payload: payload,
+        mode: widget.isDeepLinkAnswer ? 'answer' : 'normal',
+        resolvedCategory: category,
+        spokenText: spokenText,
+        willSpeak: true,
+      );
+
+      if (tagType != 'PECS' || category != 'EMOTION') {
+        final message = 'Thẻ này chưa phù hợp với hoạt động cảm xúc.';
+        logPecsDeepLinkDebug(
+          screenName: 'PecsEmotion',
+          stage: 'validation-failed',
+          payload: payload,
+          mode: widget.isDeepLinkAnswer ? 'answer' : 'normal',
+          resolvedCategory: category,
+          spokenText: message,
+          willSpeak: true,
+          note: 'wrong-category',
+        );
+        if (!mounted) return;
+        setState(() {
+          _selectedCard = null;
+          _statusMessage = message;
+        });
+        _queueInitialDeepLinkSpeech(message, note: 'wrong-category');
+        return;
+      }
+
+      final card = buildPecsResolvedCard(resolvedData);
+      if (!mounted) return;
+      setState(() {
+        _selectedCard = card;
+        _statusMessage = null;
+      });
+      _queueInitialDeepLinkSpeech(
+        card['spokenText']?.toString() ?? '',
+        note: 'answer-mode-result',
+      );
+    } catch (_) {
+      const message = 'Không thể đọc thẻ NFC này. Hãy thử lại.';
+      logPecsDeepLinkDebug(
+        screenName: 'PecsEmotion',
+        stage: 'error',
+        payload: payload,
+        mode: widget.isDeepLinkAnswer ? 'answer' : 'normal',
+        spokenText: message,
+        willSpeak: true,
+      );
+      if (!mounted) return;
+      setState(() {
+        _selectedCard = null;
+        _statusMessage = message;
+      });
+      _queueInitialDeepLinkSpeech(message, note: 'error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResolvingDeepLink = false;
+        });
+      }
+    }
+  }
+
   void _onCardSelected(Map<String, dynamic> card) {
-    setState(() => _selectedCard = card);
+    setState(() {
+      _selectedCard = card;
+      _statusMessage = null;
+    });
     final text = card['spokenText'] ?? card['title'] ?? '';
     TtsService.instance.speak(text);
+  }
+
+  void _queueInitialDeepLinkSpeech(String text, {required String note}) {
+    if (text.trim().isEmpty || _hasHandledInitialDeepLinkAudio) return;
+
+    logPecsDeepLinkDebug(
+      screenName: 'PecsEmotion',
+      stage: 'schedule-speak',
+      payload: widget.initialNfcPayload?.trim() ?? '',
+      mode: widget.isDeepLinkAnswer ? 'answer' : 'normal',
+      spokenText: text,
+      willSpeak: true,
+      note: note,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasHandledInitialDeepLinkAudio) return;
+      _hasHandledInitialDeepLinkAudio = true;
+      logPecsDeepLinkDebug(
+        screenName: 'PecsEmotion',
+        stage: 'speak-now',
+        payload: widget.initialNfcPayload?.trim() ?? '',
+        mode: widget.isDeepLinkAnswer ? 'answer' : 'normal',
+        spokenText: text,
+        willSpeak: true,
+        note: note,
+      );
+      TtsService.instance.speak(text);
+    });
   }
 
   Map<String, dynamic>? _resolvePecsCard(NfcResolvedTag tag) {
@@ -123,12 +273,16 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
 
   @override
   Widget build(BuildContext context) {
+    final navButton = buildPecsNavigationButton(context);
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leadingWidth: 56,
+        leading: navButton,
         title: const Text('Cảm xúc của con'),
         centerTitle: true,
       ),
-      body: _isLoading
+      body: (_isLoading || _isResolvingDeepLink) && _selectedCard == null && _statusMessage == null
           ? const Center(child: CircularProgressIndicator())
           : Container(
               decoration: BoxDecoration(
@@ -186,7 +340,9 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
                       child: Padding(
                         padding: const EdgeInsets.all(24.0),
                         child: _selectedCard == null
-                            ? _buildInstructionView()
+                            ? (_statusMessage != null
+                                ? _buildStatusView(_statusMessage!)
+                                : _buildInstructionView())
                             : _buildSelectedCardView(),
                       ),
                     ),
@@ -223,6 +379,29 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
           style: TextStyle(
             fontSize: 15,
             color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusView(String message) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.info_outline_rounded,
+          size: 100,
+          color: Colors.orange.shade300,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.orange.shade800,
           ),
         ),
       ],

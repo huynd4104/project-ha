@@ -32,6 +32,9 @@ import '../../features/learning_path/screens/program_selection_screen.dart';
 import '../../features/learning_path/screens/program_paths_map_screen.dart';
 import '../../features/lessons/screens/activity_lesson_screen.dart';
 import '../../features/qr_unlock/screens/qr_scanner_screen.dart';
+import '../../features/technology/presentation/screens/pecs_daily_activity_screen.dart';
+import '../../features/technology/presentation/screens/pecs_emotion_screen.dart';
+import '../../features/technology/presentation/screens/pecs_non_topic_screen.dart';
 import '../config/app_config.dart';
 import '../services/app_state.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -47,7 +50,31 @@ String? _normalizeNfcDeepLink(Uri uri) {
     return '/nfc';
   }
 
+  final targetRoute = _nfcDeepLinkTargetRoute(uri.queryParameters['target']);
+  if (targetRoute != null) {
+    return Uri(
+      path: targetRoute,
+      queryParameters: {
+        'payload': payload,
+        'mode': 'answer',
+      },
+    ).toString();
+  }
+
   return Uri(path: '/nfc', queryParameters: {'payload': payload}).toString();
+}
+
+String? _nfcDeepLinkTargetRoute(String? target) {
+  switch (target?.trim().toLowerCase()) {
+    case 'pecs_emotion':
+      return '/technology/pecs/emotions';
+    case 'pecs_daily':
+      return '/technology/pecs/daily';
+    case 'pecs_non_topic':
+      return '/technology/pecs/non-topic';
+    default:
+      return null;
+  }
 }
 
 String? _extractNfcPayload(Uri uri) {
@@ -62,6 +89,14 @@ String? _extractNfcPayload(Uri uri) {
   }
 
   return null;
+}
+
+bool _isDeepLinkAnswerMode(Uri uri) {
+  final payload = _extractNfcPayload(uri);
+  if (payload == null || payload.isEmpty) return false;
+
+  final mode = uri.queryParameters['mode']?.trim().toLowerCase();
+  return mode == null || mode.isEmpty || mode == 'answer';
 }
 
 bool _isNfcRoute(String path) => path == '/nfc' || path.startsWith('/nfc/');
@@ -255,6 +290,27 @@ GoRouter buildRouter(AppState state) {
           final queryPayload = state.uri.queryParameters['payload'];
           return NfcDeepLinkResultScreen(payloadUri: queryPayload ?? pathPayload);
         },
+      ),
+      GoRoute(
+        path: '/technology/pecs/emotions',
+        builder: (_, state) => PecsEmotionScreen(
+          initialNfcPayload: state.uri.queryParameters['payload']?.trim(),
+          isDeepLinkAnswer: _isDeepLinkAnswerMode(state.uri),
+        ),
+      ),
+      GoRoute(
+        path: '/technology/pecs/daily',
+        builder: (_, state) => PecsDailyActivityScreen(
+          initialNfcPayload: state.uri.queryParameters['payload']?.trim(),
+          isDeepLinkAnswer: _isDeepLinkAnswerMode(state.uri),
+        ),
+      ),
+      GoRoute(
+        path: '/technology/pecs/non-topic',
+        builder: (_, state) => PecsNonTopicScreen(
+          initialNfcPayload: state.uri.queryParameters['payload']?.trim(),
+          isDeepLinkAnswer: _isDeepLinkAnswerMode(state.uri),
+        ),
       ),
     ],
     errorBuilder: (_, __) =>

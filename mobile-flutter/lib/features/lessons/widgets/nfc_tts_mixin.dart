@@ -6,22 +6,30 @@ import '../../../core/services/tts_service.dart';
 
 mixin NfcTtsMixin<T extends StatefulWidget> on State<T> {
   StreamSubscription<NfcResolvedTag>? _nfcTagSubscription;
+  bool _startedListening = false;
+
+  bool get enableNfcListening => true;
 
   @override
   void initState() {
     super.initState();
-    NfcService.instance.startListening();
-    _nfcTagSubscription = NfcService.instance.tagStream.listen((tag) {
-      if (mounted) {
-        onNfcTagScanned(tag);
-      }
-    });
+    if (enableNfcListening) {
+      _startedListening = true;
+      NfcService.instance.startListening();
+      _nfcTagSubscription = NfcService.instance.tagStream.listen((tag) {
+        if (mounted) {
+          onNfcTagScanned(tag);
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
     _nfcTagSubscription?.cancel();
-    NfcService.instance.stopListening();
+    if (_startedListening) {
+      NfcService.instance.stopListening();
+    }
     TtsService.instance.stop();
     super.dispose();
   }
@@ -71,6 +79,34 @@ mixin NfcTtsMixin<T extends StatefulWidget> on State<T> {
 
   /// Renders a child-friendly NFC state indicator with debug Mock option.
   Widget buildNfcIndicator(BuildContext context) {
+    if (!enableNfcListening) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.teal.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.teal.shade200, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.link_rounded, size: 20, color: Colors.teal.shade900),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Đang hiển thị kết quả từ thẻ NFC',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.teal.shade900,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return StreamBuilder<NfcState>(
       stream: NfcService.instance.stateStream,
       initialData: NfcState.ready,

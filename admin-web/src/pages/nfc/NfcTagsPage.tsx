@@ -146,6 +146,25 @@ const PECS_CATEGORY_LABELS: Record<PecsCategory, string> = {
 };
 
 const PECS_CATEGORY_OPTIONS = Object.keys(PECS_CATEGORY_LABELS) as PecsCategory[];
+const PECS_DEEP_LINK_TARGETS: Record<PecsCategory, string> = {
+  EMOTION: "pecs_emotion",
+  DAILY_ACTIVITY: "pecs_daily",
+  NON_TOPIC: "pecs_non_topic",
+};
+
+const buildNfcUri = (
+  payloadValue: string,
+  tagType?: BusinessType,
+  pecsCategory?: PecsCategory | null,
+) => {
+  if (!payloadValue) return "";
+
+  if (tagType === "PECS" && pecsCategory) {
+    return `projectha://nfc/${payloadValue}?target=${PECS_DEEP_LINK_TARGETS[pecsCategory]}&mode=answer`;
+  }
+
+  return `projectha://nfc/${payloadValue}`;
+};
 
 const TAG_TYPE_LABELS: Record<string, string> = {
   ANSWER: "Đáp án",
@@ -275,6 +294,12 @@ export function NfcTagsPage() {
   const [shapeItems, setShapeItems] = useState<ShapeItemSource[]>([]);
   const [shapeExamples, setShapeExamples] = useState<ShapeExampleSource[]>([]);
   const [pecsCards, setPecsCards] = useState<PecsCardSource[]>([]);
+
+  const getPecsCategoryForTag = (item: NfcTagRecord): PecsCategory | null => {
+    if (item.tagType !== "PECS" || !item.targetId) return null;
+    const pecsCard = pecsCards.find((card) => card.id === item.targetId);
+    return pecsCard?.category ?? null;
+  };
 
   // Search filter states for steps
   const [flashcardSearch, setFlashcardSearch] = useState("");
@@ -690,6 +715,20 @@ export function NfcTagsPage() {
   };
 
   const guidedPreview = buildGuidedPreview();
+  const guidedPreviewUri = guidedPreview
+    ? buildNfcUri(
+        guidedPreview.payloadValue,
+        guidedPreview.tagType,
+        guidedPreview.tagType === "PECS" ? guidedDraft.pecsCategory : null
+      )
+    : "";
+  const editingRecommendedUri = editingItem
+    ? buildNfcUri(
+        editingItem.payloadValue || "",
+        editingItem.tagType,
+        getPecsCategoryForTag(editingItem)
+      )
+    : "";
   const answerQuestion = getQuestionForLibrary(guidedDraft.questionId, guidedDraft.questionLibrary, mathQuestions, lessons);
   const answerOptions = answerQuestion ? getQuestionAnswerOptions(answerQuestion) : [];
   const selectedFlashcard = flashcards.find((item) => item.id === guidedDraft.flashcardId);
@@ -767,15 +806,24 @@ export function NfcTagsPage() {
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            {(() => {
+                              const recommendedUri = item.payloadValue
+                                ? buildNfcUri(item.payloadValue, item.tagType, getPecsCategoryForTag(item))
+                                : "";
+
+                              return (
                             <code style={{ background: "#ecfdf5", color: "#065f46", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold", fontFamily: "monospace", fontSize: "13px" }}>
-                              projectha://nfc/{item.payloadValue || "—"}
+                              {recommendedUri || "—"}
                             </code>
+                              );
+                            })()}
                             {item.payloadValue && (
                               <button
                                 type="button"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(`projectha://nfc/${item.payloadValue}`);
-                                  alert("Đã copy URI: projectha://nfc/" + item.payloadValue);
+                                  const recommendedUri = buildNfcUri(item.payloadValue || "", item.tagType, getPecsCategoryForTag(item));
+                                  navigator.clipboard.writeText(recommendedUri);
+                                  alert("Đã copy URI: " + recommendedUri);
                                 }}
                                 style={{ border: "none", background: "none", cursor: "pointer", padding: "2px 4px", fontSize: "14px" }}
                                 title="Copy URI"
@@ -1273,14 +1321,13 @@ export function NfcTagsPage() {
                 <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Nội dung ghi NFC đề xuất (Custom URL / URI):</div>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <code style={{ flex: 1, background: "rgba(255,255,255,0.08)", padding: "8px 12px", borderRadius: "6px", fontSize: "14px", fontWeight: "bold", fontFamily: "monospace", color: "#34d399", overflowX: "auto" }}>
-                    projectha://nfc/{guidedPreview.payloadValue}
+                    {guidedPreviewUri}
                   </code>
                   <button
                     type="button"
                     onClick={() => {
-                      const fullUri = `projectha://nfc/${guidedPreview.payloadValue}`;
-                      navigator.clipboard.writeText(fullUri);
-                      alert("Đã copy URI đề xuất: " + fullUri);
+                      navigator.clipboard.writeText(guidedPreviewUri);
+                      alert("Đã copy URI đề xuất: " + guidedPreviewUri);
                     }}
                     style={{ background: "#3b82f6", color: "white", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}
                   >
@@ -1410,14 +1457,14 @@ export function NfcTagsPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                       <code style={{ flex: 1, background: "var(--bg-main)", color: "#065f46", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", fontSize: "14px", fontFamily: "monospace", fontWeight: "bold", overflowX: "auto" }}>
-                        projectha://nfc/{editingItem.payloadValue || "—"}
+                        {editingRecommendedUri || "—"}
                       </code>
                       {editingItem.payloadValue && (
                         <button
                           type="button"
                           onClick={() => {
-                            navigator.clipboard.writeText(`projectha://nfc/${editingItem.payloadValue}`);
-                            alert("Đã copy URI: projectha://nfc/" + editingItem.payloadValue);
+                            navigator.clipboard.writeText(editingRecommendedUri);
+                            alert("Đã copy URI: " + editingRecommendedUri);
                           }}
                           style={{ padding: "8px 14px", fontSize: "13px" }}
                         >
