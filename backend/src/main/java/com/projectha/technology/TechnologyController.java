@@ -34,4 +34,9 @@ public class TechnologyController {
     public Map<String, Object> shapeRecognitionQuestions() {
         return Map.of("questions", service.shapeRecognitionQuestions());
     }
+
+    @GetMapping("/pecs")
+    public Map<String, Object> pecs(@org.springframework.web.bind.annotation.RequestParam(required = false) String category) {
+        return Map.of("items", service.pecs(category));
+    }
 }

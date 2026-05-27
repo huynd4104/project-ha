@@ -21,6 +21,7 @@ END $$;
 
 TRUNCATE TABLE
   activation_redemptions,
+  pecs_cards,
   nfc_tags,
   number_examples,
   number_items,

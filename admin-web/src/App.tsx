@@ -39,6 +39,7 @@ import { PremiumPage } from "./pages/PremiumPage";
 import { NfcTagsPage } from "./pages/NfcTagsPage";
 import { NumbersManagementPage } from "./pages/technology/NumbersManagementPage";
 import { ShapesManagementPage } from "./pages/technology/ShapesManagementPage";
+import { PecsManagementPage } from "./pages/technology/PecsManagementPage";
 
 export default function App() {
   return (
@@ -88,6 +89,7 @@ export default function App() {
         <Route path="/nfc-tags" element={<NfcTagsPage />} />
         <Route path="/technology/numbers" element={<NumbersManagementPage />} />
         <Route path="/technology/shapes" element={<ShapesManagementPage />} />
+        <Route path="/technology/pecs" element={<PecsManagementPage />} />
 
         <Route path="/change-password" element={<ChangePasswordPage />} />
       </Route>

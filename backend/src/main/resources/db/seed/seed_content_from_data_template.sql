@@ -1832,4 +1832,56 @@ INSERT INTO shape_recognition_questions (id, question_text, correct_shape_code, 
   ('c1c1c1c1-0000-0000-0000-000000000001', 'Bé hãy tìm hình tròn nào!', 'CIRCLE', 'Đúng rồi! Đây là hình tròn.', 'Đây chưa phải hình tròn, bé tìm lại nhé.', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- PECS NFC Tags
+INSERT INTO nfc_tags (id, tag_uid, display_name, tag_type, target_type, payload_value, spoken_text, is_active) VALUES
+  ('a0f0f0f0-0000-0000-0000-000000000001', 'pecs_uid_happy', 'Thẻ cảm xúc: Vui', 'PECS', 'RAW_VALUE', 'pecs_emotion_happy', 'Hôm nay con cảm thấy vui.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000002', 'pecs_uid_sad', 'Thẻ cảm xúc: Buồn', 'PECS', 'RAW_VALUE', 'pecs_emotion_sad', 'Hôm nay con cảm thấy buồn.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000003', 'pecs_uid_angry', 'Thẻ cảm xúc: Tức giận', 'PECS', 'RAW_VALUE', 'pecs_emotion_angry', 'Hôm nay con đang tức giận.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000004', 'pecs_uid_scared', 'Thẻ cảm xúc: Sợ hãi', 'PECS', 'RAW_VALUE', 'pecs_emotion_scared', 'Hôm nay con cảm thấy sợ.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000005', 'pecs_uid_tired', 'Thẻ cảm xúc: Mệt', 'PECS', 'RAW_VALUE', 'pecs_emotion_tired', 'Hôm nay con thấy mệt.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000006', 'pecs_uid_calm', 'Thẻ cảm xúc: Bình tĩnh', 'PECS', 'RAW_VALUE', 'pecs_emotion_calm', 'Hôm nay con cảm thấy bình tĩnh.', true),
+
+  ('b0f0f0f0-0000-0000-0000-000000000001', 'pecs_uid_eat', 'Thẻ hoạt động: Ăn cơm', 'PECS', 'RAW_VALUE', 'pecs_daily_eat', 'Hôm nay con đã ăn cơm.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000002', 'pecs_uid_drink', 'Thẻ hoạt động: Uống nước', 'PECS', 'RAW_VALUE', 'pecs_daily_drink', 'Hôm nay con đã uống nước.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000003', 'pecs_uid_sleep', 'Thẻ hoạt động: Đi ngủ', 'PECS', 'RAW_VALUE', 'pecs_daily_sleep', 'Hôm nay con đã đi ngủ.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000004', 'pecs_uid_school', 'Thẻ hoạt động: Đi học', 'PECS', 'RAW_VALUE', 'pecs_daily_school', 'Hôm nay con đã đi học.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000005', 'pecs_uid_brush', 'Thẻ hoạt động: Đánh răng', 'PECS', 'RAW_VALUE', 'pecs_daily_brush_teeth', 'Hôm nay con đã đánh răng.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000006', 'pecs_uid_wash', 'Thẻ hoạt động: Rửa tay', 'PECS', 'RAW_VALUE', 'pecs_daily_wash_hands', 'Hôm nay con đã rửa tay.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000007', 'pecs_uid_toilet', 'Thẻ hoạt động: Đi vệ sinh', 'PECS', 'RAW_VALUE', 'pecs_daily_toilet', 'Hôm nay con đã đi vệ sinh.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000008', 'pecs_uid_play', 'Thẻ hoạt động: Chơi đồ chơi', 'PECS', 'RAW_VALUE', 'pecs_daily_play', 'Hôm nay con đã chơi đồ chơi.', true),
+
+  ('c0f0f0f0-0000-0000-0000-000000000001', 'pecs_uid_nt_drink', 'Thẻ nhu cầu: Uống nước', 'PECS', 'RAW_VALUE', 'pecs_non_topic_drink', 'Con muốn uống nước.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000002', 'pecs_uid_nt_rest', 'Thẻ nhu cầu: Nghỉ', 'PECS', 'RAW_VALUE', 'pecs_non_topic_rest', 'Con muốn nghỉ.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000003', 'pecs_uid_nt_help', 'Thẻ nhu cầu: Cần giúp đỡ', 'PECS', 'RAW_VALUE', 'pecs_non_topic_help', 'Con cần giúp đỡ.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000004', 'pecs_uid_nt_pain', 'Thẻ nhu cầu: Con đau', 'PECS', 'RAW_VALUE', 'pecs_non_topic_pain', 'Con đau.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000005', 'pecs_uid_nt_play', 'Thẻ nhu cầu: Muốn chơi', 'PECS', 'RAW_VALUE', 'pecs_non_topic_play', 'Con muốn chơi.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000006', 'pecs_uid_nt_toilet', 'Thẻ nhu cầu: Đi vệ sinh', 'PECS', 'RAW_VALUE', 'pecs_non_topic_toilet', 'Con muốn đi vệ sinh.', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- PECS Cards
+INSERT INTO pecs_cards (id, category, title, spoken_text, image_url, nfc_tag_id, is_active) VALUES
+  ('a0a0a0a0-0000-0000-0000-000000000001', 'EMOTION', 'Vui', 'Hôm nay con cảm thấy vui.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f600.svg', 'a0f0f0f0-0000-0000-0000-000000000001', true),
+  ('a0a0a0a0-0000-0000-0000-000000000002', 'EMOTION', 'Buồn', 'Hôm nay con cảm thấy buồn.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f622.svg', 'a0f0f0f0-0000-0000-0000-000000000002', true),
+  ('a0a0a0a0-0000-0000-0000-000000000003', 'EMOTION', 'Tức giận', 'Hôm nay con đang tức giận.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f621.svg', 'a0f0f0f0-0000-0000-0000-000000000003', true),
+  ('a0a0a0a0-0000-0000-0000-000000000004', 'EMOTION', 'Sợ hãi', 'Hôm nay con cảm thấy sợ.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f628.svg', 'a0f0f0f0-0000-0000-0000-000000000004', true),
+  ('a0a0a0a0-0000-0000-0000-000000000005', 'EMOTION', 'Mệt', 'Hôm nay con thấy mệt.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f912.svg', 'a0f0f0f0-0000-0000-0000-000000000005', true),
+  ('a0a0a0a0-0000-0000-0000-000000000006', 'EMOTION', 'Bình tĩnh', 'Hôm nay con cảm thấy bình tĩnh.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f60c.svg', 'a0f0f0f0-0000-0000-0000-000000000006', true),
+
+  ('b0b0b0b0-0000-0000-0000-000000000001', 'DAILY_ACTIVITY', 'Ăn cơm', 'Hôm nay con đã ăn cơm.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f35a.svg', 'b0f0f0f0-0000-0000-0000-000000000001', true),
+  ('b0b0b0b0-0000-0000-0000-000000000002', 'DAILY_ACTIVITY', 'Uống nước', 'Hôm nay con đã uống nước.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f964.svg', 'b0f0f0f0-0000-0000-0000-000000000002', true),
+  ('b0b0b0b0-0000-0000-0000-000000000003', 'DAILY_ACTIVITY', 'Đi ngủ', 'Hôm nay con đã đi ngủ.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f6cc.svg', 'b0f0f0f0-0000-0000-0000-000000000003', true),
+  ('b0b0b0b0-0000-0000-0000-000000000004', 'DAILY_ACTIVITY', 'Đi học', 'Hôm nay con đã đi học.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3eb.svg', 'b0f0f0f0-0000-0000-0000-000000000004', true),
+  ('b0b0b0b0-0000-0000-0000-000000000005', 'DAILY_ACTIVITY', 'Đánh răng', 'Hôm nay con đã đánh răng.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f9a5.svg', 'b0f0f0f0-0000-0000-0000-000000000005', true),
+  ('b0b0b0b0-0000-0000-0000-000000000006', 'DAILY_ACTIVITY', 'Rửa tay', 'Hôm nay con đã rửa tay.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f9fc.svg', 'b0f0f0f0-0000-0000-0000-000000000006', true),
+  ('b0b0b0b0-0000-0000-0000-000000000007', 'DAILY_ACTIVITY', 'Đi vệ sinh', 'Hôm nay con đã đi vệ sinh.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f6bd.svg', 'b0f0f0f0-0000-0000-0000-000000000007', true),
+  ('b0b0b0b0-0000-0000-0000-000000000008', 'DAILY_ACTIVITY', 'Chơi đồ chơi', 'Hôm nay con đã chơi đồ chơi.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f9e9.svg', 'b0f0f0f0-0000-0000-0000-000000000008', true),
+
+  ('c0b0c0b0-0000-0000-0000-000000000001', 'NON_TOPIC', 'Uống nước', 'Con muốn uống nước.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f964.svg', 'c0f0f0f0-0000-0000-0000-000000000001', true),
+  ('c0b0c0b0-0000-0000-0000-000000000002', 'NON_TOPIC', 'Nghỉ', 'Con muốn nghỉ.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f6cf.svg', 'c0f0f0f0-0000-0000-0000-000000000002', true),
+  ('c0b0c0b0-0000-0000-0000-000000000003', 'NON_TOPIC', 'Cần giúp đỡ', 'Con cần giúp đỡ.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f64f.svg', 'c0f0f0f0-0000-0000-0000-000000000003', true),
+  ('c0b0c0b0-0000-0000-0000-000000000004', 'NON_TOPIC', 'Con đau', 'Con đau.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f915.svg', 'c0f0f0f0-0000-0000-0000-000000000004', true),
+  ('c0b0c0b0-0000-0000-0000-000000000005', 'NON_TOPIC', 'Muốn chơi', 'Con muốn chơi.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f388.svg', 'c0f0f0f0-0000-0000-0000-000000000005', true),
+  ('c0b0c0b0-0000-0000-0000-000000000006', 'NON_TOPIC', 'Đi vệ sinh', 'Con muốn đi vệ sinh.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f6bd.svg', 'c0f0f0f0-0000-0000-0000-000000000006', true)
+ON CONFLICT (id) DO NOTHING;
+
 COMMIT;

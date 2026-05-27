@@ -41,7 +41,8 @@ public class AdminRepository {
         Map.entry("number-counting-questions", "number_counting_questions"),
         Map.entry("shape-items", "shape_items"),
         Map.entry("shape-examples", "shape_examples"),
-        Map.entry("shape-recognition-questions", "shape_recognition_questions")
+        Map.entry("shape-recognition-questions", "shape_recognition_questions"),
+        Map.entry("pecs-cards", "pecs_cards")
     );
 
     private static final Set<String> READ_ONLY = Set.of("audit_logs");

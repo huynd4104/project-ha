@@ -3,6 +3,7 @@ import 'number_recognition_screen.dart';
 import 'number_counting_screen.dart';
 import 'shape_intro_screen.dart';
 import 'shape_recognition_screen.dart';
+import 'pecs_selection_screen.dart';
 
 class TechnologySelectionScreen extends StatelessWidget {
   const TechnologySelectionScreen({super.key});
@@ -78,6 +79,25 @@ class TechnologySelectionScreen extends StatelessWidget {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const ShapeRecognitionScreen()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            _buildSection(
+              context,
+              title: 'PECS - GIAO TIẾP HÌNH ẢNH',
+              icon: Icons.contactless_rounded,
+              color: Colors.teal,
+              items: [
+                _buildItem(
+                  context,
+                  label: 'Giao tiếp PECS',
+                  subtitle: 'Giao tiếp bằng cách chạm thẻ hình ảnh',
+                  icon: Icons.chat_bubble_rounded,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PecsSelectionScreen()),
                   ),
                 ),
               ],

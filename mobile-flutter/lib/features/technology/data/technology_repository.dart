@@ -58,4 +58,10 @@ class TechnologyRepository {
       };
     }).toList();
   }
+
+  Future<List<Map<String, dynamic>>> getPecsCards({String? category}) async {
+    final path = category != null ? '/api/technology/pecs?category=$category' : '/api/technology/pecs';
+    final response = await _api.get(path);
+    return _extractList(response, 'items');
+  }
 }

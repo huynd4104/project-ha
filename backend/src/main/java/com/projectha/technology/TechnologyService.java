@@ -74,4 +74,17 @@ public class TechnologyService {
             "SELECT * FROM shape_recognition_questions WHERE is_active = true ORDER BY created_at ASC"
         ));
     }
+
+    public List<Map<String, Object>> pecs(String category) {
+        if (category != null && !category.isBlank()) {
+            return Db.rows(jdbc.queryForList(
+                "SELECT * FROM pecs_cards WHERE is_active = true AND category = ? ORDER BY category ASC, title ASC",
+                category
+            ));
+        } else {
+            return Db.rows(jdbc.queryForList(
+                "SELECT * FROM pecs_cards WHERE is_active = true ORDER BY category ASC, title ASC"
+            ));
+        }
+    }
 }

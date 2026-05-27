@@ -47,7 +47,9 @@ public class NfcTagService {
         data.put("payloadValue", tag.get("payloadValue"));
         data.put("displayName", tag.get("displayName"));
         data.put("spokenText", tag.get("spokenText"));
-        data.put("metadata", new HashMap<>());
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("tagId", tag.get("id"));
+        data.put("metadata", metadata);
 
         return responseMap(true, "RESOLVED", "Nhận dạng thẻ thành công.", data);
     }
