@@ -23,7 +23,15 @@ public class NfcTagService {
     public Map<String, Object> resolveTag(String payload, String tagUid) {
         List<Map<String, Object>> rows = null;
         if (payload != null && !payload.isBlank()) {
-            rows = jdbc.queryForList("SELECT * FROM nfc_tags WHERE payload_value = ?", payload);
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("PHA_[A-Z0-9_]+");
+            java.util.regex.Matcher matcher = pattern.matcher(payload);
+            String extractedPayload = null;
+            if (matcher.find()) {
+                extractedPayload = matcher.group();
+            }
+            if (extractedPayload != null && !extractedPayload.isBlank()) {
+                rows = jdbc.queryForList("SELECT * FROM nfc_tags WHERE payload_value = ?", extractedPayload);
+            }
         }
 
         if ((rows == null || rows.isEmpty()) && tagUid != null && !tagUid.isBlank()) {

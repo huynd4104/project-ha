@@ -1892,4 +1892,21 @@ INSERT INTO pecs_cards (id, category, title, spoken_text, image_url, nfc_tag_id,
   ('c0b0c0b0-0000-0000-0000-000000000006', 'NON_TOPIC', 'Đi vệ sinh', 'Con muốn đi vệ sinh.', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f6bd.svg', 'c0f0f0f0-0000-0000-0000-000000000006', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- Technology: Number Examples
+INSERT INTO number_examples (id, number_item_id, example_text, image_url, is_active) VALUES
+  ('d0d0d0d0-0000-0000-0000-000000000001', 'b0b0b0b0-0000-0000-0000-000000000001', 'một chú chó', 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=128', true),
+  ('d0d0d0d0-0000-0000-0000-000000000002', 'b0b0b0b0-0000-0000-0000-000000000002', 'hai chú mèo', 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=128', true),
+  ('d0d0d0d0-0000-0000-0000-000000000003', 'b0b0b0b0-0000-0000-0000-000000000003', 'ba quả táo', 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=128', true),
+  ('d0d0d0d0-0000-0000-0000-000000000004', 'b0b0b0b0-0000-0000-0000-000000000004', 'bốn chiếc bút', 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=128', true),
+  ('d0d0d0d0-0000-0000-0000-000000000005', 'b0b0b0b0-0000-0000-0000-000000000005', 'năm bông hoa', 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=128', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Technology: Shape Examples
+INSERT INTO shape_examples (id, shape_item_id, example_text, image_url, is_active) VALUES
+  ('e0e0e0e0-0000-0000-0000-000000000001', 'c0c0c0c0-0000-0000-0000-000000000001', 'bánh xe hình tròn', 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=128', true),
+  ('e0e0e0e0-0000-0000-0000-000000000002', 'c0c0c0c0-0000-0000-0000-000000000001', 'đồng hồ hình tròn', 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=128', true),
+  ('e0e0e0e0-0000-0000-0000-000000000003', 'c0c0c0c0-0000-0000-0000-000000000002', 'hộp quà hình vuông', 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=128', true),
+  ('e0e0e0e0-0000-0000-0000-000000000004', 'c0c0c0c0-0000-0000-0000-000000000003', 'miếng pizza hình tam giác', 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=128', true)
+ON CONFLICT (id) DO NOTHING;
+
 COMMIT;

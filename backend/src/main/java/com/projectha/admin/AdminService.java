@@ -115,6 +115,25 @@ public class AdminService {
                 throw new com.projectha.common.BadRequestException("Nội dung ghi vào thẻ (payload_value) '" + payloadValue + "' đã tồn tại.");
             }
         }
+
+        // Auto-fill displayName if empty or not provided
+        String displayName = null;
+        if (payload.containsKey("displayName")) {
+            Object val = payload.get("displayName");
+            displayName = val != null ? String.valueOf(val).trim() : null;
+        }
+        if (displayName == null || displayName.isEmpty()) {
+            String spokenText = null;
+            if (payload.containsKey("spokenText")) {
+                Object val = payload.get("spokenText");
+                spokenText = val != null ? String.valueOf(val).trim() : null;
+            }
+            if (spokenText != null && !spokenText.isEmpty()) {
+                payload.put("displayName", spokenText);
+            } else {
+                payload.put("displayName", payloadValue);
+            }
+        }
     }
 
     public void delete(UUID actor, String resource, UUID id) {

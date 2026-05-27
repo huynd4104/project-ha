@@ -9,7 +9,6 @@ type QuestionLibrary = "MATH" | "THINKING" | "SPELLING" | "RHYME";
 type NumberSubtype = "CARD" | "EXAMPLE";
 type ShapeSubtype = "CARD" | "EXAMPLE";
 type PecsCategory = "EMOTION" | "DAILY_ACTIVITY" | "NON_TOPIC";
-type ManualTargetType = "ANSWER_OPTION" | "ANSWER_VALUE" | "FLASHCARD" | "RAW_VALUE";
 type TabName = "LIST" | "GUIDED";
 
 interface NfcTagRecord {
@@ -189,6 +188,66 @@ const EMPTY_GUIDED_DRAFT: GuidedDraft = {
   pecsCardId: "",
 };
 
+const CARD_BG = "var(--bg-card, #ffffff)";
+const TEXT_MAIN = "var(--text-main, #1e293b)";
+const TEXT_MUTED = "var(--text-muted, #64748b)";
+const PRIMARY_COLOR = "var(--primary, #2563eb)";
+const PRIMARY_LIGHT = "rgba(37, 99, 235, 0.08)";
+const BORDER = "var(--border, #e2e8f0)";
+
+const getSelectableCardStyle = (isSelected: boolean): React.CSSProperties => ({
+  padding: "16px 12px",
+  borderRadius: "12px",
+  border: isSelected ? `2px solid ${PRIMARY_COLOR}` : `1.5px solid ${BORDER}`,
+  background: isSelected ? PRIMARY_LIGHT : CARD_BG,
+  color: isSelected ? PRIMARY_COLOR : TEXT_MAIN,
+  cursor: "pointer",
+  textAlign: "center",
+  transition: "all 0.2s ease",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "8px",
+  boxShadow: isSelected ? "var(--shadow-sm)" : "none",
+});
+
+const getOptionButtonStyle = (isSelected: boolean): React.CSSProperties => ({
+  flex: 1,
+  padding: "10px",
+  borderRadius: "8px",
+  border: isSelected ? `2px solid ${PRIMARY_COLOR}` : `1.5px solid ${BORDER}`,
+  background: isSelected ? PRIMARY_LIGHT : CARD_BG,
+  color: isSelected ? PRIMARY_COLOR : TEXT_MAIN,
+  cursor: "pointer",
+  fontWeight: 600,
+  transition: "all 0.15s ease",
+});
+
+const getGridItemStyle = (isSelected: boolean, isNumber: boolean = false): React.CSSProperties => ({
+  padding: isNumber ? "10px 4px" : "10px 8px",
+  borderRadius: "8px",
+  border: isSelected ? `2px solid ${PRIMARY_COLOR}` : `1px solid ${BORDER}`,
+  background: isSelected ? PRIMARY_LIGHT : CARD_BG,
+  fontWeight: isNumber ? 700 : 600,
+  fontSize: isNumber ? "15px" : "13px",
+  cursor: "pointer",
+  color: isSelected ? PRIMARY_COLOR : TEXT_MAIN,
+  transition: "all 0.15s ease",
+  textAlign: "center",
+});
+
+const getListRowStyle = (isSelected: boolean): React.CSSProperties => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  padding: "10px 14px",
+  borderBottom: `1px solid ${BORDER}`,
+  background: isSelected ? PRIMARY_LIGHT : CARD_BG,
+  cursor: "pointer",
+  color: isSelected ? PRIMARY_COLOR : TEXT_MAIN,
+  transition: "all 0.15s ease",
+});
+
 export function NfcTagsPage() {
   const [activeTab, setActiveTab] = useState<TabName>("LIST");
   const [items, setItems] = useState<NfcTagRecord[]>([]);
@@ -198,7 +257,7 @@ export function NfcTagsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   // Edit states
   const [editingItem, setEditingItem] = useState<NfcTagRecord | null>(null);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -265,7 +324,6 @@ export function NfcTagsPage() {
       const q = search.toLowerCase();
       result = result.filter(
         (item) =>
-          item.displayName.toLowerCase().includes(q) ||
           (item.payloadValue ?? "").toLowerCase().includes(q) ||
           (item.spokenText ?? "").toLowerCase().includes(q) ||
           (item.description ?? "").toLowerCase().includes(q) ||
@@ -284,18 +342,17 @@ export function NfcTagsPage() {
     filtered,
     [
       { value: "tagType", label: "Loại thẻ", getValue: (item) => TAG_TYPE_LABELS[item.tagType] || item.tagType },
-      { value: "displayName", label: "Tên hiển thị", getValue: (item) => item.displayName },
       { value: "spokenText", label: "Nội dung đọc", getValue: (item) => item.spokenText || "" },
       { value: "payloadValue", label: "Nội dung ghi vào thẻ", getValue: (item) => item.payloadValue || "" },
       { value: "description", label: "Nguồn nội dung", getValue: (item) => item.description || "" },
       { value: "status", label: "Trạng thái", getValue: (item) => item.isActive },
     ],
-    "displayName"
+    "payloadValue"
   );
 
   const openGuidedEdit = (item: NfcTagRecord) => {
     setEditingItem(item);
-    setEditDisplayName(item.displayName);
+    setEditDisplayName(item.displayName || "");
     setEditSpokenText(item.spokenText || "");
     setEditDescription(item.description || "");
     setEditIsActive(item.isActive);
@@ -312,7 +369,6 @@ export function NfcTagsPage() {
     // Attempt to map back database values to guided draft
     const type = editingItem.tagType;
     const targetId = editingItem.targetId || "";
-    const targetType = editingItem.targetType;
 
     const nextDraft = { ...EMPTY_GUIDED_DRAFT, businessType: type, isActive: editingItem.isActive };
 
@@ -381,15 +437,10 @@ export function NfcTagsPage() {
     event.preventDefault();
     if (!editingItem) return;
 
-    if (!editDisplayName.trim()) {
-      setErrors({ displayName: "Tên hiển thị không được để trống." });
-      return;
-    }
-
     setSaving(true);
     try {
       await adminApi.update("/nfc-tags", editingItem.id, {
-        displayName: editDisplayName.trim(),
+        displayName: editSpokenText.trim() ? editSpokenText.trim() : (editingItem.payloadValue || ""),
         spokenText: editSpokenText.trim(),
         description: editDescription.trim(),
         isActive: editIsActive,
@@ -648,166 +699,13 @@ export function NfcTagsPage() {
   const selectedShapeExample = shapeExamples.find((item) => item.id === guidedDraft.shapeExampleId);
   const selectedPecsCard = pecsCards.find((item) => item.id === guidedDraft.pecsCardId);
 
-  return (
-    <div style={{ padding: "8px 0" }}>
-      <div className="toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <div>
-          <h1 style={{ fontSize: "28px", fontWeight: 700, background: "linear-gradient(135deg, #1e3a8a, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            Quản lý thẻ NFC
-          </h1>
-          <p style={{ color: "var(--text-muted)", marginTop: "4px", fontSize: "14px" }}>
-            Các thẻ NFC sẽ lưu nội dung logic độc lập (NDEF payload) thay thế cho mã UID vật lý.
-          </p>
-        </div>
-      </div>
-
-      <div className="tab-nav" style={{ display: "flex", gap: "12px", borderBottom: "1px solid var(--border)", marginBottom: "24px" }}>
-        <button
-          className={`tab-btn ${activeTab === "LIST" ? "active" : ""}`}
-          onClick={() => setActiveTab("LIST")}
-          style={{ padding: "12px 16px", fontSize: "15px", borderBottom: activeTab === "LIST" ? "2px solid var(--primary)" : "none", fontWeight: 600, background: "none", cursor: "pointer", color: activeTab === "LIST" ? "var(--primary)" : "var(--text-muted)" }}
-        >
-          🗂️ Danh sách thẻ
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "GUIDED" ? "active" : ""}`}
-          onClick={() => setActiveTab("GUIDED")}
-          style={{ padding: "12px 16px", fontSize: "15px", borderBottom: activeTab === "GUIDED" ? "2px solid var(--primary)" : "none", fontWeight: 600, background: "none", cursor: "pointer", color: activeTab === "GUIDED" ? "var(--primary)" : "var(--text-muted)" }}
-        >
-          🧩 Tạo thẻ theo nội dung
-        </button>
-      </div>
-
-      {activeTab === "LIST" && renderListView()}
-      {activeTab === "GUIDED" && renderGuidedView()}
-
-      {/* Modern Clean Edit Modal */}
-      {editingItem && (
-        <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
-          <div className="modal-content" style={{ background: "white", padding: "24px", borderRadius: "16px", width: "640px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", maxHeight: "90vh", overflowY: "auto" }}>
-            <div className="modal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: "14px", marginBottom: "20px" }}>
-              <h2 style={{ margin: 0, fontSize: "20px" }}>Cập nhật thẻ NFC</h2>
-              <button style={{ border: "none", background: "none", fontSize: "24px", cursor: "pointer" }} onClick={() => setEditingItem(null)}>&times;</button>
-            </div>
-            
-            <form onSubmit={handleEditSubmit}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <div className="field" style={{ flex: 1 }}>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Loại thẻ</label>
-                    <input type="text" readOnly value={TAG_TYPE_LABELS[editingItem.tagType] || editingItem.tagType} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "#f8fafc" }} />
-                  </div>
-                  <div className="field" style={{ flex: 1 }}>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Nội dung ghi vào thẻ</label>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input type="text" readOnly value={editingItem.payloadValue || "—"} style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "#f8fafc", fontFamily: "monospace", fontWeight: "bold" }} />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (editingItem.payloadValue) {
-                            navigator.clipboard.writeText(editingItem.payloadValue);
-                            alert("Đã copy: " + editingItem.payloadValue);
-                          }
-                        }}
-                        style={{ padding: "8px 12px", borderRadius: "8px", cursor: "pointer", border: "1px solid var(--border)" }}
-                      >
-                        📋
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Tên hiển thị *</label>
-                  <input
-                    type="text"
-                    value={editDisplayName}
-                    onChange={(e) => setEditDisplayName(e.target.value)}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)" }}
-                    required
-                  />
-                  {errors.displayName && <span className="error-msg" style={{ color: "red", fontSize: "13px" }}>{errors.displayName}</span>}
-                </div>
-
-                <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Nội dung phát âm (TTS) khi quét thẻ</label>
-                  <textarea
-                    value={editSpokenText}
-                    onChange={(e) => setEditSpokenText(e.target.value)}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", minHeight: "80px" }}
-                  />
-                </div>
-
-                <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Mô tả / Ghi chú</label>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", minHeight: "60px" }}
-                  />
-                </div>
-
-                <div className="field" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <label style={{ fontWeight: 600 }}>Trạng thái hoạt động</label>
-                  <ToggleSwitch id="edit-active" label="" checked={editIsActive} onChange={setEditIsActive} />
-                </div>
-
-                <div style={{ marginTop: "12px", border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowTechInfo(!showTechInfo)}
-                    style={{ width: "100%", padding: "10px 14px", textAlign: "left", background: "#f8fafc", border: "none", cursor: "pointer", display: "flex", justifyContent: "space-between", fontWeight: 600 }}
-                  >
-                    <span>🛠️ Thông tin kỹ thuật</span>
-                    <span>{showTechInfo ? "▲" : "▼"}</span>
-                  </button>
-                  {showTechInfo && (
-                    <div style={{ padding: "14px", borderTop: "1px solid #e2e8f0", background: "#fafafa", fontSize: "14px", display: "grid", gap: "8px" }}>
-                      <div><strong>UID vật lý cũ:</strong> <code>{editingItem.tagUid || "— (Chỉ lưu logic)"}</code></div>
-                      <div><strong>Target Type:</strong> <code>{editingItem.targetType}</code></div>
-                      <div><strong>Target ID:</strong> <code>{editingItem.targetId || "—"}</code></div>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: "flex", gap: "12px", background: "#fffbeb", border: "1px solid #fef3c7", padding: "14px", borderRadius: "10px", marginTop: "12px" }}>
-                  <div style={{ fontSize: "20px" }}>⚠️</div>
-                  <div>
-                    <strong style={{ display: "block", color: "#b45309", marginBottom: "4px" }}>Muốn đổi nội dung liên kết?</strong>
-                    <span style={{ fontSize: "13px", color: "#78350f" }}>
-                      Để thay đổi liên kết logic sang đối tượng khác, bạn cần chọn lại nội dung. Việc này có thể đổi mã payload ghi thẻ.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleSelectNewContent}
-                      style={{ display: "block", marginTop: "8px", background: "#f59e0b", color: "white", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}
-                    >
-                      🔄 Chọn lại nội dung
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-footer" style={{ borderTop: "1px solid var(--border)", paddingTop: "14px", marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-                <button type="button" className="secondary" onClick={() => setEditingItem(null)} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: "none", cursor: "pointer" }}>Hủy</button>
-                <button type="submit" disabled={saving} style={{ padding: "8px 16px", borderRadius: "8px", background: "var(--primary)", color: "white", border: "none", cursor: "pointer", fontWeight: 600 }}>
-                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   function renderListView() {
     return (
       <>
         <div className="panel" style={{ padding: "16px", marginBottom: "16px", display: "flex", gap: "12px", flexWrap: "wrap", background: "#f8fafc", borderRadius: "12px", border: "1px solid var(--border)" }}>
           <input
             type="text"
-            placeholder="Tìm theo tên thẻ, nội dung đọc, nội dung ghi vào thẻ…"
+            placeholder="Tìm theo nội dung đọc, nội dung ghi vào thẻ, nguồn nội dung…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="search-input"
@@ -843,7 +741,6 @@ export function NfcTagsPage() {
                 <thead>
                   <tr style={{ background: "#f8fafc" }}>
                     <th style={{ padding: "14px" }}>Loại thẻ</th>
-                    <th>Tên hiển thị</th>
                     <th>Nội dung đọc</th>
                     <th>Nội dung ghi vào thẻ</th>
                     <th>Nguồn nội dung</th>
@@ -866,24 +763,37 @@ export function NfcTagsPage() {
                           {BUSINESS_TYPE_LABELS[item.tagType] || item.tagType}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 600 }}>{item.displayName}</td>
                       <td style={{ color: "var(--text-muted)", fontSize: "14px" }}>{item.spokenText || "—"}</td>
                       <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <code style={{ background: "#ecfdf5", color: "#065f46", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold", fontFamily: "monospace", fontSize: "13px" }}>
-                            {item.payloadValue || "—"}
-                          </code>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <code style={{ background: "#ecfdf5", color: "#065f46", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold", fontFamily: "monospace", fontSize: "13px" }}>
+                              projectha://nfc/{item.payloadValue || "—"}
+                            </code>
+                            {item.payloadValue && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`projectha://nfc/${item.payloadValue}`);
+                                  alert("Đã copy URI: projectha://nfc/" + item.payloadValue);
+                                }}
+                                style={{ border: "none", background: "none", cursor: "pointer", padding: "2px 4px", fontSize: "14px" }}
+                                title="Copy URI"
+                              >
+                                📋
+                              </button>
+                            )}
+                          </div>
                           {item.payloadValue && (
                             <button
                               type="button"
                               onClick={() => {
                                 navigator.clipboard.writeText(item.payloadValue || "");
-                                alert("Đã copy: " + item.payloadValue);
+                                alert("Đã copy payload nội bộ: " + item.payloadValue);
                               }}
-                              style={{ border: "none", background: "none", cursor: "pointer", padding: "2px 4px", fontSize: "14px" }}
-                              title="Copy Payload"
+                              style={{ border: "none", background: "none", color: "#3b82f6", cursor: "pointer", padding: "2px 4px", fontSize: "11px", textAlign: "left", width: "fit-content" }}
                             >
-                              📋
+                              Copy payload nội bộ ({item.payloadValue})
                             </button>
                           )}
                         </div>
@@ -923,11 +833,11 @@ export function NfcTagsPage() {
     return (
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "24px" }}>
         {/* Left column - guided content choosing form */}
-        <div className="panel" style={{ padding: "20px", border: "1px solid var(--border)", borderRadius: "12px", background: "white", display: "flex", flexDirection: "column", gap: "20px" }}>
-          
+        <div className="panel" style={{ padding: "20px", border: "1px solid var(--border)", borderRadius: "12px", background: "var(--surface, white)", display: "flex", flexDirection: "column", gap: "20px" }}>
+
           {/* Step 1: Choose Tag Type */}
           <div>
-            <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", color: "var(--text)" }}>
               <span style={{ background: "var(--primary)", color: "white", borderRadius: "50%", width: "24px", height: "24px", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "13px" }}>1</span>
               Chọn loại thẻ NFC
             </h3>
@@ -939,24 +849,12 @@ export function NfcTagsPage() {
                     key={type}
                     type="button"
                     onClick={() => handleGuidedTypeChange(type)}
-                    style={{
-                      padding: "16px 12px",
-                      borderRadius: "10px",
-                      border: isSelected ? "2px solid var(--primary)" : "1.5px solid var(--border)",
-                      background: isSelected ? "rgba(59,130,246,0.05)" : "white",
-                      cursor: "pointer",
-                      textAlign: "center",
-                      transition: "all 0.2s",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "8px"
-                    }}
+                    style={getSelectableCardStyle(isSelected)}
                   >
                     <span style={{ fontSize: "24px" }}>
                       {type === "ANSWER" ? "📝" : type === "FLASHCARD" ? "🎴" : type === "NUMBER" ? "🔢" : type === "SHAPE" ? "📐" : "💬"}
                     </span>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: isSelected ? "var(--primary)" : "var(--text-main)" }}>
+                    <span style={{ fontSize: "14px", fontWeight: 600 }}>
                       {BUSINESS_TYPE_LABELS[type]}
                     </span>
                   </button>
@@ -969,7 +867,7 @@ export function NfcTagsPage() {
 
           {/* Step 2: Choose Content Detail */}
           <div>
-            <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px", color: "var(--text)" }}>
               <span style={{ background: "var(--primary)", color: "white", borderRadius: "50%", width: "24px", height: "24px", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "13px" }}>2</span>
               Chọn nội dung liên kết
             </h3>
@@ -978,7 +876,7 @@ export function NfcTagsPage() {
             {guidedDraft.businessType === "ANSWER" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn thư viện câu hỏi *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn thư viện câu hỏi *</label>
                   <select
                     value={guidedDraft.questionLibrary}
                     onChange={(event) =>
@@ -989,7 +887,7 @@ export function NfcTagsPage() {
                         answerKey: "",
                       }))
                     }
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface, white)", color: "var(--text)" }}
                   >
                     {QUESTION_LIBRARY_OPTIONS.map((library) => (
                       <option key={library} value={library}>
@@ -1000,14 +898,14 @@ export function NfcTagsPage() {
                 </div>
 
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn câu hỏi nguồn *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn câu hỏi nguồn *</label>
                   <div style={{ marginBottom: "8px" }}>
                     <input
                       type="text"
                       placeholder="Tìm nhanh câu hỏi..."
                       value={questionSearch}
                       onChange={(e) => setQuestionSearch(e.target.value)}
-                      style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)", fontSize: "14px" }}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)", fontSize: "14px", background: "var(--surface, white)", color: "var(--text)" }}
                     />
                   </div>
                   <select
@@ -1019,7 +917,7 @@ export function NfcTagsPage() {
                         answerKey: "",
                       }))
                     }
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", maxHeight: "160px" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", maxHeight: "160px", background: "var(--surface, white)", color: "var(--text)" }}
                   >
                     <option value="">-- Chọn câu hỏi --</option>
                     {getQuestionsForLibrary(guidedDraft.questionLibrary, mathQuestions, lessons)
@@ -1033,7 +931,7 @@ export function NfcTagsPage() {
                 </div>
 
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn một đáp án *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn một đáp án *</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                     {answerOptions.length === 0 ? (
                       <div style={{ color: "var(--text-muted)", fontSize: "14px", gridColumn: "span 2" }}>Chọn câu hỏi ở trên để tải các lựa chọn đáp án.</div>
@@ -1047,12 +945,13 @@ export function NfcTagsPage() {
                             textAlign: "left",
                             borderRadius: "10px",
                             border: guidedDraft.answerKey === option.key ? "2px solid var(--primary)" : "1.5px solid var(--border)",
-                            background: guidedDraft.answerKey === option.key ? "rgba(59,130,246,0.05)" : "white",
+                            background: guidedDraft.answerKey === option.key ? "var(--primary-light)" : "var(--bg-card)",
                             padding: "12px",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            color: "var(--text-main)"
                           }}
                         >
-                          <div style={{ fontWeight: 700, color: "var(--primary)" }}>Option {option.key}</div>
+                          <div style={{ fontWeight: 700, color: "var(--primary)" }}>Lựa chọn {option.key}</div>
                           <div style={{ marginTop: "4px", fontSize: "14px" }}>{option.text}</div>
                         </button>
                       ))
@@ -1071,7 +970,7 @@ export function NfcTagsPage() {
                     placeholder="Tìm flashcard theo mặt trước/mặt sau..."
                     value={flashcardSearch}
                     onChange={(e) => setFlashcardSearch(e.target.value)}
-                    style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)" }}
+                    style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-main)" }}
                   />
                 </div>
                 <div style={{ maxHeight: "250px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px" }}>
@@ -1083,24 +982,16 @@ export function NfcTagsPage() {
                         <div
                           key={card.id}
                           onClick={() => setGuidedDraft(curr => ({ ...curr, flashcardId: card.id }))}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                            padding: "10px 14px",
-                            borderBottom: "1px solid var(--border)",
-                            background: isSelected ? "rgba(59,130,246,0.04)" : "white",
-                            cursor: "pointer"
-                          }}
+                          style={getListRowStyle(isSelected)}
                         >
                           {card.imageUrl ? (
-                            <img src={card.imageUrl} alt="" style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "4px", background: "#f8fafc" }} />
+                            <img src={card.imageUrl} alt="" style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "4px", background: "var(--border)" }} />
                           ) : (
-                            <div style={{ width: "40px", height: "40px", background: "#f1f5f9", borderRadius: "4px", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "16px" }}>🎴</div>
+                            <div style={{ width: "40px", height: "40px", background: "var(--border)", borderRadius: "4px", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "16px" }}>🎴</div>
                           )}
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600 }}>{card.frontText}</div>
-                            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>{card.backText}</div>
+                            <div style={{ fontWeight: 600 }}>Mặt trước: {card.frontText}</div>
+                            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>Mặt sau: {card.backText}</div>
                           </div>
                           {isSelected && <span style={{ color: "var(--primary)", fontWeight: "bold" }}>✓ Selected</span>}
                         </div>
@@ -1114,22 +1005,14 @@ export function NfcTagsPage() {
             {guidedDraft.businessType === "NUMBER" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn kiểu thẻ số *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn kiểu thẻ số *</label>
                   <div style={{ display: "flex", gap: "10px" }}>
                     {(["CARD", "EXAMPLE"] as NumberSubtype[]).map((st) => (
                       <button
                         key={st}
                         type="button"
                         onClick={() => setGuidedDraft(curr => ({ ...curr, numberSubtype: st, numberItemId: "", numberExampleId: "" }))}
-                        style={{
-                          flex: 1,
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: guidedDraft.numberSubtype === st ? "2px solid var(--primary)" : "1px solid var(--border)",
-                          background: guidedDraft.numberSubtype === st ? "rgba(59,130,246,0.04)" : "white",
-                          cursor: "pointer",
-                          fontWeight: 600
-                        }}
+                        style={getOptionButtonStyle(guidedDraft.numberSubtype === st)}
                       >
                         {st === "CARD" ? "🔢 Thẻ số gốc (0-10)" : "🍎 Thẻ ví dụ đếm số"}
                       </button>
@@ -1138,7 +1021,7 @@ export function NfcTagsPage() {
                 </div>
 
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn số liên kết *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Chọn số liên kết *</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px" }}>
                     {numberItems.map((n) => {
                       const isSelected = guidedDraft.numberItemId === n.id;
@@ -1147,15 +1030,7 @@ export function NfcTagsPage() {
                           key={n.id}
                           type="button"
                           onClick={() => setGuidedDraft(curr => ({ ...curr, numberItemId: n.id, numberExampleId: "" }))}
-                          style={{
-                            padding: "10px 4px",
-                            borderRadius: "8px",
-                            border: isSelected ? "2px solid var(--primary)" : "1px solid var(--border)",
-                            background: isSelected ? "rgba(59,130,246,0.05)" : "white",
-                            fontWeight: 700,
-                            fontSize: "15px",
-                            cursor: "pointer"
-                          }}
+                          style={getGridItemStyle(isSelected, true)}
                         >
                           {n.numberValue}
                         </button>
@@ -1166,36 +1041,42 @@ export function NfcTagsPage() {
 
                 {guidedDraft.numberSubtype === "EXAMPLE" && selectedNumberItem && (
                   <div className="field">
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn hình ảnh ví dụ liên kết *</label>
-                    <div style={{ display: "grid", gap: "8px", maxHeight: "180px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px" }}>
-                      {numberExamples
-                        .filter(e => e.numberItemId === selectedNumberItem.id)
-                        .map(ex => {
-                          const isSelected = guidedDraft.numberExampleId === ex.id;
+                    <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Chọn hình ảnh ví dụ liên kết *</label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {(() => {
+                        const filteredExamples = numberExamples.filter(e => e.numberItemId === selectedNumberItem.id);
+                        if (filteredExamples.length === 0) {
                           return (
-                            <div
-                              key={ex.id}
-                              onClick={() => setGuidedDraft(curr => ({ ...curr, numberExampleId: ex.id }))}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                                padding: "8px",
-                                borderRadius: "6px",
-                                background: isSelected ? "rgba(59,130,246,0.05)" : "white",
-                                cursor: "pointer",
-                                border: isSelected ? "1.5px solid var(--primary)" : "1px solid transparent"
-                              }}
-                            >
-                              {ex.imageUrl ? (
-                                <img src={ex.imageUrl} alt="" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "4px" }} />
-                              ) : (
-                                <div style={{ width: "32px", height: "32px", background: "#f1f5f9", borderRadius: "4px" }} />
-                              )}
-                              <span style={{ fontSize: "14px" }}>{ex.exampleText}</span>
+                            <div style={{ padding: "16px", color: "var(--text-muted)", fontSize: "14px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: "8px", background: "var(--bg-card)" }}>
+                              Chưa có ví dụ nào cho mục này. Hãy thêm ví dụ ở trang Bộ số trước.
                             </div>
                           );
-                        })}
+                        }
+                        return (
+                          <div style={{ display: "grid", gap: "8px", maxHeight: "180px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px" }}>
+                            {filteredExamples.map(ex => {
+                              const isSelected = guidedDraft.numberExampleId === ex.id;
+                              return (
+                                <div
+                                  key={ex.id}
+                                  onClick={() => setGuidedDraft(curr => ({ ...curr, numberExampleId: ex.id }))}
+                                  style={getListRowStyle(isSelected)}
+                                >
+                                  {ex.imageUrl ? (
+                                    <img src={ex.imageUrl} alt="" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "4px" }} />
+                                  ) : (
+                                    <div style={{ width: "32px", height: "32px", background: "var(--border)", borderRadius: "4px" }} />
+                                  )}
+                                  <div style={{ display: "flex", flexDirection: "column" }}>
+                                    <span style={{ fontSize: "14px", fontWeight: 600 }}>{ex.exampleText}</span>
+                                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Số cha: {selectedNumberItem.numberValue}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
@@ -1206,31 +1087,23 @@ export function NfcTagsPage() {
             {guidedDraft.businessType === "SHAPE" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn kiểu thẻ hình học *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn kiểu thẻ hình học *</label>
                   <div style={{ display: "flex", gap: "10px" }}>
                     {(["CARD", "EXAMPLE"] as ShapeSubtype[]).map((st) => (
                       <button
                         key={st}
                         type="button"
                         onClick={() => setGuidedDraft(curr => ({ ...curr, shapeSubtype: st, shapeItemId: "", shapeExampleId: "" }))}
-                        style={{
-                          flex: 1,
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: guidedDraft.shapeSubtype === st ? "2px solid var(--primary)" : "1px solid var(--border)",
-                          background: guidedDraft.shapeSubtype === st ? "rgba(59,130,246,0.04)" : "white",
-                          cursor: "pointer",
-                          fontWeight: 600
-                        }}
+                        style={getOptionButtonStyle(guidedDraft.shapeSubtype === st)}
                       >
-                        {st === "CARD" ? "📐 Thẻ hình gốc" : "🏠 Thẻ vật thể hình học"}
+                        {st === "CARD" ? "📐 Thẻ hình gốc" : "🏠 Thẻ vật thể hình học / Ví dụ hình"}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn hình học gốc *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Chọn hình học gốc *</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
                     {shapeItems.map((s) => {
                       const isSelected = guidedDraft.shapeItemId === s.id;
@@ -1239,15 +1112,7 @@ export function NfcTagsPage() {
                           key={s.id}
                           type="button"
                           onClick={() => setGuidedDraft(curr => ({ ...curr, shapeItemId: s.id, shapeExampleId: "" }))}
-                          style={{
-                            padding: "10px 4px",
-                            borderRadius: "8px",
-                            border: isSelected ? "2px solid var(--primary)" : "1px solid var(--border)",
-                            background: isSelected ? "rgba(59,130,246,0.05)" : "white",
-                            fontWeight: 600,
-                            fontSize: "13px",
-                            cursor: "pointer"
-                          }}
+                          style={getGridItemStyle(isSelected)}
                         >
                           {formatShapeDisplayName(s.shapeName)}
                         </button>
@@ -1258,36 +1123,42 @@ export function NfcTagsPage() {
 
                 {guidedDraft.shapeSubtype === "EXAMPLE" && selectedShapeItem && (
                   <div className="field">
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn ví dụ hình ảnh liên kết *</label>
-                    <div style={{ display: "grid", gap: "8px", maxHeight: "180px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px" }}>
-                      {shapeExamples
-                        .filter(e => e.shapeItemId === selectedShapeItem.id)
-                        .map(ex => {
-                          const isSelected = guidedDraft.shapeExampleId === ex.id;
+                    <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Chọn ví dụ hình ảnh liên kết *</label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {(() => {
+                        const filteredExamples = shapeExamples.filter(e => e.shapeItemId === selectedShapeItem.id);
+                        if (filteredExamples.length === 0) {
                           return (
-                            <div
-                              key={ex.id}
-                              onClick={() => setGuidedDraft(curr => ({ ...curr, shapeExampleId: ex.id }))}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                                padding: "8px",
-                                borderRadius: "6px",
-                                background: isSelected ? "rgba(59,130,246,0.05)" : "white",
-                                cursor: "pointer",
-                                border: isSelected ? "1.5px solid var(--primary)" : "1px solid transparent"
-                              }}
-                            >
-                              {ex.imageUrl ? (
-                                <img src={ex.imageUrl} alt="" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "4px" }} />
-                              ) : (
-                                <div style={{ width: "32px", height: "32px", background: "#f1f5f9", borderRadius: "4px" }} />
-                              )}
-                              <span style={{ fontSize: "14px" }}>{ex.exampleText}</span>
+                            <div style={{ padding: "16px", color: "var(--text-muted)", fontSize: "14px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: "8px", background: "var(--bg-card)" }}>
+                              Chưa có ví dụ nào cho mục này. Hãy thêm ví dụ ở trang Bộ hình trước.
                             </div>
                           );
-                        })}
+                        }
+                        return (
+                          <div style={{ display: "grid", gap: "8px", maxHeight: "180px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px" }}>
+                            {filteredExamples.map(ex => {
+                              const isSelected = guidedDraft.shapeExampleId === ex.id;
+                              return (
+                                <div
+                                  key={ex.id}
+                                  onClick={() => setGuidedDraft(curr => ({ ...curr, shapeExampleId: ex.id }))}
+                                  style={getListRowStyle(isSelected)}
+                                >
+                                  {ex.imageUrl ? (
+                                    <img src={ex.imageUrl} alt="" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "4px" }} />
+                                  ) : (
+                                    <div style={{ width: "32px", height: "32px", background: "var(--border)", borderRadius: "4px" }} />
+                                  )}
+                                  <div style={{ display: "flex", flexDirection: "column" }}>
+                                    <span style={{ fontSize: "14px", fontWeight: 600 }}>{ex.exampleText}</span>
+                                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Hình gốc: {formatShapeDisplayName(selectedShapeItem.shapeName)}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
@@ -1298,7 +1169,7 @@ export function NfcTagsPage() {
             {guidedDraft.businessType === "PECS" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn nhóm nội dung PECS *</label>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn nhóm nội dung PECS *</label>
                   <select
                     value={guidedDraft.pecsCategory}
                     onChange={(event) =>
@@ -1308,7 +1179,7 @@ export function NfcTagsPage() {
                         pecsCardId: "",
                       }))
                     }
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface, white)", color: "var(--text)" }}
                   >
                     {PECS_CATEGORY_OPTIONS.map((category) => (
                       <option key={category} value={category}>
@@ -1319,21 +1190,32 @@ export function NfcTagsPage() {
                 </div>
 
                 <div className="field">
-                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>Chọn thẻ PECS *</label>
-                  <select
-                    value={guidedDraft.pecsCardId}
-                    onChange={(event) => setGuidedDraft((current) => ({ ...current, pecsCardId: event.target.value }))}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)" }}
-                  >
-                    <option value="">-- Chọn thẻ PECS --</option>
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text)" }}>Chọn thẻ PECS *</label>
+                  <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px" }}>
                     {pecsCards
                       .filter((card) => card.category === guidedDraft.pecsCategory)
-                      .map((card) => (
-                        <option key={card.id} value={card.id}>
-                          {card.title}
-                        </option>
-                      ))}
-                  </select>
+                      .map((card) => {
+                        const isSelected = guidedDraft.pecsCardId === card.id;
+                        return (
+                          <div
+                            key={card.id}
+                            onClick={() => setGuidedDraft(curr => ({ ...curr, pecsCardId: card.id }))}
+                            style={getListRowStyle(isSelected)}
+                          >
+                            {card.imageUrl ? (
+                              <img src={card.imageUrl} alt="" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "4px" }} />
+                            ) : (
+                              <div style={{ width: "32px", height: "32px", background: "var(--border)", borderRadius: "4px" }} />
+                            )}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600 }}>{card.title}</div>
+                              <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>TTS: {card.spokenText}</div>
+                            </div>
+                            {isSelected && <span style={{ color: "var(--primary)", fontWeight: "bold" }}>✓ Selected</span>}
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               </div>
             )}
@@ -1343,12 +1225,12 @@ export function NfcTagsPage() {
 
           {/* Active toggle switch */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label style={{ fontWeight: 600 }}>Tự động kích hoạt thẻ khi lưu</label>
+            <label style={{ fontWeight: 600, color: "var(--text)" }}>Tự động kích hoạt thẻ khi lưu</label>
             <ToggleSwitch id="guided-active" label="" checked={guidedDraft.isActive} onChange={(value) => setGuidedDraft((current) => ({ ...current, isActive: value }))} />
           </div>
 
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            <button type="button" className="secondary" onClick={resetGuidedForm} disabled={saving} style={{ padding: "10px 16px", borderRadius: "8px", cursor: "pointer" }}>
+            <button type="button" className="secondary" onClick={resetGuidedForm} disabled={saving} style={{ padding: "10px 16px", borderRadius: "8px", cursor: "pointer", color: "var(--text)", background: "var(--surface)" }}>
               Làm mới
             </button>
             <button type="button" onClick={handleGuidedSubmit} disabled={saving || !guidedPreview} style={{ padding: "10px 20px", borderRadius: "8px", background: guidedPreview ? "var(--primary)" : "#cbd5e1", color: "white", border: "none", cursor: guidedPreview ? "pointer" : "not-allowed", fontWeight: 600 }}>
@@ -1358,9 +1240,9 @@ export function NfcTagsPage() {
         </div>
 
         {/* Right column - visual premium preview card */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0 }}>Xem trước thẻ NFC sinh ra</h3>
-          
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px", position: "sticky", top: "24px", alignSelf: "start" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--text)" }}>Xem trước thẻ NFC sinh ra</h3>
+
           {guidedPreview ? (
             <div style={{ background: "linear-gradient(135deg, #1e293b, #0f172a)", color: "white", borderRadius: "16px", padding: "20px", boxShadow: "0 10px 25px rgba(15,23,42,0.15)", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1378,45 +1260,54 @@ export function NfcTagsPage() {
               )}
 
               <div>
-                <div style={{ fontSize: "13px", color: "#94a3b8" }}>Tên hiển thị:</div>
-                <div style={{ fontSize: "18px", fontWeight: 700, marginTop: "2px" }}>{guidedPreview.displayName}</div>
-              </div>
-
-              <div>
                 <div style={{ fontSize: "13px", color: "#94a3b8" }}>Nội dung TTS sẽ đọc:</div>
                 <div style={{ fontSize: "14px", marginTop: "2px", color: "#cbd5e1" }}>"{guidedPreview.spokenText}"</div>
               </div>
 
               <div>
-                <div style={{ fontSize: "13px", color: "#94a3b8" }}>Mô tả nguồn:</div>
+                <div style={{ fontSize: "13px", color: "#94a3b8" }}>Nguồn nội dung:</div>
                 <div style={{ fontSize: "13px", marginTop: "2px", color: "#cbd5e1" }}>{guidedPreview.sourceLabel}</div>
               </div>
 
               <div style={{ borderTop: "1.5px dashed rgba(255,255,255,0.15)", paddingTop: "14px", marginTop: "4px" }}>
-                <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Mã Payload (NDEF Text):</div>
+                <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Nội dung ghi NFC đề xuất (Custom URL / URI):</div>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <code style={{ flex: 1, background: "rgba(255,255,255,0.08)", padding: "8px 12px", borderRadius: "6px", fontSize: "14px", fontWeight: "bold", fontFamily: "monospace", color: "#34d399", overflowX: "auto" }}>
-                    {guidedPreview.payloadValue}
+                    projectha://nfc/{guidedPreview.payloadValue}
                   </code>
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(guidedPreview.payloadValue);
-                      alert("Đã copy mã payload: " + guidedPreview.payloadValue);
+                      const fullUri = `projectha://nfc/${guidedPreview.payloadValue}`;
+                      navigator.clipboard.writeText(fullUri);
+                      alert("Đã copy URI đề xuất: " + fullUri);
                     }}
                     style={{ background: "#3b82f6", color: "white", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}
                   >
-                    Copy
+                    Copy URI
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(guidedPreview.payloadValue);
+                    alert("Đã copy payload nội bộ: " + guidedPreview.payloadValue);
+                  }}
+                  style={{ background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", fontSize: "12px", marginTop: "6px", cursor: "pointer", textAlign: "left", display: "block" }}
+                >
+                  Copy payload nội bộ ({guidedPreview.payloadValue})
+                </button>
               </div>
 
               <div style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: "8px", padding: "10px", fontSize: "12px", color: "#fef08a", marginTop: "8px" }}>
-                💡 <strong>Hướng dẫn nạp thẻ:</strong> Lưu thẻ này lại, mở ứng dụng <strong>NFC Tools</strong> &gt; chọn <strong>Write</strong> &gt; chọn <strong>Add a record</strong> &gt; chọn <strong>Text</strong>. Dán mã payload trên vào rồi ghi đè lên thẻ NFC vật lý của bé.
+                💡 <strong>Hướng dẫn nạp thẻ:</strong> Mở ứng dụng <strong>NFC Tools</strong> &gt; chọn <strong>Write</strong> &gt; chọn <strong>Add a record</strong> &gt; chọn <strong>Custom URL / URI</strong>, dán nội dung này và ghi vào thẻ NFC.
+                <div style={{ marginTop: "4px", opacity: 0.8 }}>
+                  * Text record với payload nội bộ PHA_* vẫn được hỗ trợ, nhưng iPhone có thể không tự mở app.
+                </div>
               </div>
             </div>
           ) : (
-            <div style={{ padding: "40px 20px", textAlign: "center", border: "1.5px dashed var(--border)", borderRadius: "16px", color: "var(--text-muted)", background: "#fafafa" }}>
+            <div style={{ padding: "40px 20px", textAlign: "center", border: "1.5px dashed var(--border)", borderRadius: "16px", color: "var(--text-muted)", background: "rgba(0,0,0,0.01)" }}>
               Vui lòng chọn đầy đủ thông tin ở cột bên trái để hiển thị thẻ xem trước NFC.
             </div>
           )}
@@ -1424,6 +1315,291 @@ export function NfcTagsPage() {
       </div>
     );
   }
+
+  return (
+    <div className="container" style={{ padding: "24px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <div>
+          <h1 style={{ fontSize: "24px", fontWeight: 800, margin: 0, color: "var(--text)" }}>Quản lý thẻ NFC</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: "4px 0 0 0" }}>Liên kết các bài học, học phần hoặc đáp án tới thẻ NFC vật lý thông qua payload chuẩn</p>
+        </div>
+        <div className="tabs" style={{ display: "flex", gap: "8px" }}>
+          <button
+            className={`tab-btn ${activeTab === "LIST" ? "active" : ""}`}
+            onClick={() => setActiveTab("LIST")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              background: activeTab === "LIST" ? "var(--primary)" : "var(--surface)",
+              color: activeTab === "LIST" ? "white" : "var(--text)",
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
+          >
+            Danh sách thẻ
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "GUIDED" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("GUIDED");
+              resetGuidedForm();
+            }}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              background: activeTab === "GUIDED" ? "var(--primary)" : "var(--surface)",
+              color: activeTab === "GUIDED" ? "white" : "var(--text)",
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
+          >
+            Tạo thẻ theo nội dung
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "LIST" ? renderListView() : renderGuidedView()}
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ width: "min(680px, 96vw)", maxHeight: "90vh" }}>
+            {/* Modal Header */}
+            <div className="modal-header">
+              <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "var(--text-main)" }}>Chỉnh sửa thông tin thẻ NFC</h2>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setEditingItem(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Content (Scrollable) */}
+            {/* Modal Content (Scrollable) */}
+            <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" }}>
+              <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                {/* Warning about payload change */}
+                <div style={{
+                  background: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.2)",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  fontSize: "13px",
+                  color: "#d97706"
+                }}>
+                  ⚠️ <strong>Lưu ý:</strong> Thay đổi nội dung học tập liên kết để sinh payload mới bằng cách nhấn nút <strong>Chọn lại nội dung</strong>. Form sửa này chỉ cập nhật các thông tin mô tả và trạng thái.
+                </div>
+
+                <div className="field">
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Loại thẻ</label>
+                  <input
+                    type="text"
+                    value={BUSINESS_TYPE_LABELS[editingItem.tagType] || editingItem.tagType}
+                    disabled
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-main)", color: "var(--text-muted)" }}
+                  />
+                </div>
+
+                <div className="field">
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Nội dung ghi NFC đề xuất (Custom URL / URI)</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <code style={{ flex: 1, background: "var(--bg-main)", color: "#065f46", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", fontSize: "14px", fontFamily: "monospace", fontWeight: "bold", overflowX: "auto" }}>
+                        projectha://nfc/{editingItem.payloadValue || "—"}
+                      </code>
+                      {editingItem.payloadValue && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`projectha://nfc/${editingItem.payloadValue}`);
+                            alert("Đã copy URI: projectha://nfc/" + editingItem.payloadValue);
+                          }}
+                          style={{ padding: "8px 14px", fontSize: "13px" }}
+                        >
+                          Copy URI
+                        </button>
+                      )}
+                    </div>
+                    {editingItem.payloadValue && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(editingItem.payloadValue || "");
+                          alert("Đã copy payload nội bộ: " + editingItem.payloadValue);
+                        }}
+                        style={{ background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", fontSize: "12px", cursor: "pointer", textAlign: "left", width: "fit-content" }}
+                      >
+                        Copy payload nội bộ ({editingItem.payloadValue})
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Nội dung TTS đọc *</label>
+                  <input
+                    type="text"
+                    value={editSpokenText}
+                    onChange={(e) => setEditSpokenText(e.target.value)}
+                    required
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-main)" }}
+                  />
+                </div>
+
+                <div className="field">
+                  <label style={{ fontWeight: 600, display: "block", marginBottom: "6px", color: "var(--text-main)" }}>Nguồn nội dung (Mô tả) *</label>
+                  <input
+                    type="text"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    required
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-main)" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
+                  <label style={{ fontWeight: 600, color: "var(--text-main)" }}>Trạng thái hoạt động</label>
+                  <ToggleSwitch id="edit-active" label="" checked={editIsActive} onChange={(value) => setEditIsActive(value)} />
+                </div>
+
+                {/* Reselect content button */}
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "16px", marginTop: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={handleSelectNewContent}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      background: "rgba(59, 130, 246, 0.1)",
+                      color: "var(--primary)",
+                      border: "1px solid rgba(59, 130, 246, 0.3)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    Chọn lại nội dung liên kết (Tạo payload mới)
+                  </button>
+                </div>
+
+                {/* Technical Info Accordion */}
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "12px", marginTop: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowTechInfo(!showTechInfo)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "4px 0",
+                      fontSize: "12px",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <span style={{ fontWeight: 500 }}>Thông tin kỹ thuật dành cho lập trình viên</span>
+                    <span>{showTechInfo ? "▲" : "▼"}</span>
+                  </button>
+
+                  {showTechInfo && (
+                    <div style={{
+                      marginTop: "10px",
+                      padding: "12px",
+                      background: "var(--bg-main)",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      fontSize: "13px"
+                    }}>
+                      <div style={{ fontStyle: "italic", color: "var(--text-muted)", marginBottom: "4px" }}>
+                        ℹ️ Phần này chỉ dùng để kiểm tra kỹ thuật. Admin thông thường không cần chỉnh sửa hoặc quan tâm đến các thông tin này.
+                      </div>
+                      <div>
+                        <span style={{ color: "var(--text-muted)", display: "inline-block", width: "180px" }}>Mã bản ghi hệ thống:</span>
+                        <code style={{ color: "var(--text-main)", fontWeight: "bold" }}>{editingItem.id}</code>
+                      </div>
+                      <div>
+                        <span style={{ color: "var(--text-muted)", display: "inline-block", width: "180px" }}>Loại thẻ:</span>
+                        <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                          {BUSINESS_TYPE_LABELS[editingItem.tagType] || editingItem.tagType}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: "var(--text-muted)", display: "inline-block", width: "180px" }}>Kiểu liên kết:</span>
+                        <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                          {editingItem.targetType === "RAW_VALUE" ? "Dùng nội dung ghi trong thẻ" :
+                            editingItem.targetType === "FLASHCARD" ? "Liên kết Flashcard" :
+                              editingItem.targetType === "ANSWER_OPTION" || editingItem.targetType === "ANSWER_VALUE" ? "Liên kết đáp án" :
+                                editingItem.targetType === "PECS_CARD" ? "Liên kết thẻ PECS" :
+                                  editingItem.targetType === "NUMBER_ITEM" ? "Liên kết số học" :
+                                    editingItem.targetType === "NUMBER_EXAMPLE" ? "Liên kết ví dụ số" :
+                                      editingItem.targetType === "SHAPE_ITEM" ? "Liên kết hình khối" :
+                                        editingItem.targetType === "SHAPE_EXAMPLE" ? "Liên kết ví dụ hình" :
+                                          editingItem.targetType || "Dùng nội dung ghi trong thẻ"}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: "var(--text-muted)", display: "inline-block", width: "180px" }}>Mã nội dung liên kết:</span>
+                        <code style={{ color: "var(--text-main)" }}>{editingItem.targetId || "Không có"}</code>
+                      </div>
+                      <div>
+                        <span style={{ color: "var(--text-muted)", display: "inline-block", width: "180px" }}>UID vật lý cũ:</span>
+                        <code style={{ color: "var(--text-main)" }}>{editingItem.tagUid || "Không sử dụng"}</code>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setEditingItem(null)}
+                  disabled={saving}
+                  style={{ padding: "10px 16px", borderRadius: "8px", cursor: "pointer" }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    background: "var(--primary)",
+                    color: "white",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600
+                  }}
+                >
+                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Helpers

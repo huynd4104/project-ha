@@ -86,8 +86,10 @@ class NfcService {
     if (kDebugMode) {
       _mockSubscription = _mockController.stream.listen((input) {
         final trimmed = input.trim();
-        if (trimmed.startsWith('PHA_')) {
-          _handleTagScanned('mock_uid_${trimmed.toLowerCase()}', trimmed);
+        final match = RegExp(r'PHA_[A-Z0-9_]+').firstMatch(trimmed);
+        if (match != null) {
+          final extracted = match.group(0);
+          _handleTagScanned('mock_uid_${extracted!.toLowerCase()}', extracted);
         } else {
           _handleTagScanned(trimmed, null);
         }
@@ -135,10 +137,19 @@ class NfcService {
           try {
             final records = await FlutterNfcKit.readNDEFRecords();
             for (var record in records) {
-              if (record is ndef.TextRecord && record.text != null) {
-                final match = RegExp(r'PHA_[A-Z0-9_]+').firstMatch(record.text!);
+              String? recordText;
+              if (record is ndef.TextRecord) {
+                recordText = record.text;
+              } else if (record is ndef.UriRecord) {
+                recordText = record.uriString;
+              } else {
+                recordText = record.toString();
+              }
+
+              if (recordText != null) {
+                final match = RegExp(r'PHA_[A-Z0-9_]+').firstMatch(recordText);
                 if (match != null) {
-                  ndefPayload = match.group(0);
+                  ndefPayload = recordText;
                   break;
                 }
               }
@@ -148,12 +159,7 @@ class NfcService {
           }
         }
 
-        if (ndefPayload == null && tag.id.isEmpty) {
-          _stateController.add(NfcState.error);
-          _messageController.add("Thẻ NFC này chưa có nội dung. Hãy ghi nội dung thẻ từ trang Quản lý thẻ NFC.");
-        } else {
-          await _handleTagScanned(tag.id, ndefPayload);
-        }
+        await _handleTagScanned(tag.id, ndefPayload);
 
         await Future.delayed(const Duration(milliseconds: 1000));
       } catch (e) {
@@ -164,8 +170,32 @@ class NfcService {
   }
 
   Future<void> _handleTagScanned(String uid, String? ndefPayload) async {
+    String? extractedToken;
+    if (ndefPayload != null) {
+      final match = RegExp(r'PHA_[A-Z0-9_]+').firstMatch(ndefPayload);
+      if (match != null) {
+        extractedToken = match.group(0);
+      }
+    }
+
+    if (extractedToken == null && uid.isNotEmpty) {
+      final match = RegExp(r'PHA_[A-Z0-9_]+').firstMatch(uid);
+      if (match != null) {
+        extractedToken = match.group(0);
+      }
+    }
+
+    final hasToken = extractedToken != null;
+    final hasUid = uid.isNotEmpty;
+
+    if (!hasToken && !hasUid) {
+      _stateController.add(NfcState.error);
+      _messageController.add("Thẻ NFC này chưa có nội dung hợp lệ. Hãy ghi nội dung thẻ từ trang Quản lý thẻ NFC.");
+      return;
+    }
+
     final now = DateTime.now();
-    final debounceKey = ndefPayload ?? uid;
+    final debounceKey = extractedToken ?? uid;
 
     if (_lastTagUid == debounceKey && _lastTagTime != null && now.difference(_lastTagTime!).inSeconds < 2) {
       debugPrint('NFC: Skipped duplicate scan of $debounceKey within debounce window.');
@@ -179,9 +209,11 @@ class NfcService {
     _messageController.add("Đang nhận dạng thẻ...");
 
     try {
-      final Map<String, dynamic> body = {'tagUid': uid};
-      if (ndefPayload != null) {
-        body['payload'] = ndefPayload;
+      final Map<String, dynamic> body = {};
+      if (hasToken) {
+        body['payload'] = extractedToken;
+      } else {
+        body['tagUid'] = uid;
       }
       final response = await ApiClient.instance.post('/api/nfc/resolve', body);
 
@@ -196,7 +228,7 @@ class NfcService {
         if (msg != null && msg.toString().isNotEmpty) {
           _messageController.add(msg.toString());
         } else {
-          _messageController.add("Thẻ NFC này chưa có nội dung. Hãy ghi nội dung thẻ từ trang Quản lý thẻ NFC.");
+          _messageController.add("Thẻ NFC này chưa có nội dung hợp lệ. Hãy ghi nội dung thẻ từ trang Quản lý thẻ NFC.");
         }
       }
     } catch (e) {

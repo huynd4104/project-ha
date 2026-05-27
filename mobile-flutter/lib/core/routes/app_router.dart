@@ -37,6 +37,7 @@ import '../services/app_state.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
+import '../../features/technology/presentation/screens/nfc_deep_link_result_screen.dart';
 
 GoRouter buildRouter(AppState state) {
   return GoRouter(
@@ -207,6 +208,21 @@ GoRouter buildRouter(AppState state) {
       GoRoute(
         path: '/scan',
         builder: (_, __) => const QRScannerScreen(),
+      ),
+      GoRoute(
+        path: '/nfc',
+        builder: (_, state) {
+          final payload = state.uri.queryParameters['payload'] ?? '';
+          return NfcDeepLinkResultScreen(payloadUri: payload);
+        },
+      ),
+      GoRoute(
+        path: '/nfc/:payload',
+        builder: (_, state) {
+          final pathPayload = state.pathParameters['payload'] ?? '';
+          final queryPayload = state.uri.queryParameters['payload'];
+          return NfcDeepLinkResultScreen(payloadUri: queryPayload ?? pathPayload);
+        },
       ),
     ],
     errorBuilder: (_, __) =>

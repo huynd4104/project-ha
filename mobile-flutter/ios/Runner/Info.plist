@@ -51,5 +51,18 @@
 	<string>Ứng dụng cần sử dụng microphone để cho phép con trả lời câu hỏi bằng giọng nói.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Ứng dụng cần nhận diện giọng nói để hiểu câu trả lời của con.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.projectha.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>projectha</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
