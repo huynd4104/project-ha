@@ -85,7 +85,7 @@ class PecsSelectionScreen extends StatelessWidget {
                         subtitle: 'Những điều con muốn nói ngay',
                         icon: Icons.chat_bubble_rounded,
                         gradient: LinearGradient(
-                          colors: [Colors.teal.shade400, Colors.emerald.shade600],
+                          colors: [Colors.teal.shade400, Colors.green.shade600],
                         ),
                         onTap: () => Navigator.push(
                           context,
@@ -153,10 +153,9 @@ class PecsSelectionScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Colors.whiteee,
-                        opacity: 0.9,
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                   ],
@@ -173,7 +172,4 @@ class PecsSelectionScreen extends StatelessWidget {
       ),
     );
   }
-}
-class Colors {
-  static const Color whiteee = Color(0xFFF5F5F5);
 }

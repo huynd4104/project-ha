@@ -13,14 +13,12 @@ interface PecsCard {
   title: string;
   spokenText: string;
   imageUrl?: string;
-  nfcTagId?: string;
   isActive: boolean;
 }
 
 export function PecsManagementPage() {
   const [tab, setTab] = useState<Tab>("EMOTION");
   const [items, setItems] = useState<PecsCard[]>([]);
-  const [nfcTags, setNfcTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +29,6 @@ export function PecsManagementPage() {
   const [title, setTitle] = useState("");
   const [spokenText, setSpokenText] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [nfcTagId, setNfcTagId] = useState("");
   const [isActive, setIsActive] = useState(true);
 
   const resourcePath = "/pecs-cards";
@@ -50,24 +47,9 @@ export function PecsManagementPage() {
     }
   }
 
-  async function loadNfcTags() {
-    try {
-      const res = await adminApi.list("/nfc-tags");
-      const tags = res.data.data || [];
-      // Filter for PECS tags if relevant, or show all. Let's show PECS tags first then others.
-      setNfcTags(tags);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
   useEffect(() => {
     loadData();
   }, [tab]);
-
-  useEffect(() => {
-    loadNfcTags();
-  }, []);
 
   const filtered = items.filter((item) => {
     const q = search.toLowerCase();
@@ -82,11 +64,6 @@ export function PecsManagementPage() {
     [
       { value: "title", label: "Tiêu đề", getValue: (i) => i.title },
       { value: "spokenText", label: "Câu phát âm", getValue: (i) => i.spokenText },
-      { value: "nfcTag", label: "Thẻ NFC", getValue: (i) => {
-          const tag = nfcTags.find((t) => t.id === i.nfcTagId);
-          return tag ? `${tag.displayName} (${tag.payloadValue})` : "Chưa liên kết";
-        }
-      },
       { value: "status", label: "Trạng thái", getValue: (i) => i.isActive },
     ],
     "title"
@@ -97,7 +74,6 @@ export function PecsManagementPage() {
     setTitle("");
     setSpokenText("");
     setImageUrl("");
-    setNfcTagId("");
     setIsActive(true);
     setIsModalOpen(true);
   };
@@ -107,7 +83,6 @@ export function PecsManagementPage() {
     setTitle(item.title || "");
     setSpokenText(item.spokenText || "");
     setImageUrl(item.imageUrl || "");
-    setNfcTagId(item.nfcTagId || "");
     setIsActive(item.isActive !== false);
     setIsModalOpen(true);
   };
@@ -119,7 +94,6 @@ export function PecsManagementPage() {
       title: title.trim(),
       spokenText: spokenText.trim(),
       imageUrl: imageUrl.trim() || null,
-      nfcTagId: nfcTagId || null,
       isActive,
     };
 
@@ -187,7 +161,6 @@ export function PecsManagementPage() {
                 <tr>
                   <th>Tiêu đề</th>
                   <th>Câu phát âm (TTS)</th>
-                  <th>Thẻ NFC liên kết</th>
                   <th>Hình ảnh</th>
                   <th style={{ width: "120px" }}>Trạng thái</th>
                   <th style={{ width: "150px" }}>Thao tác</th>
@@ -196,28 +169,16 @@ export function PecsManagementPage() {
               <tbody>
                 {table.pagedItems.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: "center", padding: "24px" }}>
+                    <td colSpan={5} style={{ textAlign: "center", padding: "24px" }}>
                       Chưa có thẻ PECS nào trong mục này.
                     </td>
                   </tr>
                 ) : (
                   table.pagedItems.map((item: PecsCard) => {
-                    const linkedTag = nfcTags.find((t) => t.id === item.nfcTagId);
                     return (
                       <tr key={item.id}>
                         <td style={{ fontWeight: "bold" }}>{item.title}</td>
                         <td>{item.spokenText}</td>
-                        <td>
-                          {linkedTag ? (
-                            <span className="badge active" style={{ background: "#e0f2fe", color: "#0369a1" }}>
-                              🏷️ {linkedTag.displayName}
-                            </span>
-                          ) : (
-                            <span className="badge inactive" style={{ background: "#f1f5f9", color: "#64748b" }}>
-                              Chưa liên kết
-                            </span>
-                          )}
-                        </td>
                         <td>{item.imageUrl ? <img src={item.imageUrl} alt="preview" style={{ height: "45px", borderRadius: "4px" }} /> : "—"}</td>
                         <td>
                           <span className={`badge ${item.isActive ? "active" : "inactive"}`}>
@@ -259,17 +220,6 @@ export function PecsManagementPage() {
                   <div className="field">
                     <label>Câu nói phát âm (TTS) *</label>
                     <textarea value={spokenText} onChange={(e) => setSpokenText(e.target.value)} required style={{ minHeight: "80px" }} />
-                  </div>
-                  <div className="field">
-                    <label>Liên kết Thẻ NFC</label>
-                    <select value={nfcTagId} onChange={(e) => setNfcTagId(e.target.value)}>
-                      <option value="">-- Không liên kết --</option>
-                      {nfcTags.map((tag) => (
-                        <option key={tag.id} value={tag.id}>
-                          {tag.displayName} ({tag.payloadValue})
-                        </option>
-                      ))}
-                    </select>
                   </div>
                   <div className="field">
                     <label>URL Hình ảnh</label>

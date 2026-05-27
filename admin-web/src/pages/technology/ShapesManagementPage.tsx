@@ -223,7 +223,7 @@ export function ShapesManagementPage() {
                   ) : (
                     <>
                       <div className="field">
-                        <label>Mã hình đáp án (NFC) *</label>
+                        <label>Mã hình đúng *</label>
                         <input type="text" placeholder="VD: CIRCLE, SQUARE..." value={correctShapeCode} onChange={(e) => setCorrectShapeCode(e.target.value.toUpperCase())} required />
                       </div>
                       <div className="field">

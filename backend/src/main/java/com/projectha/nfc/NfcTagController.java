@@ -19,9 +19,11 @@ public class NfcTagController {
     }
 
     @GetMapping("/resolve")
-    public Map<String, Object> resolveGet(@RequestParam(name = "uid", required = false) String uid) {
+    public Map<String, Object> resolveGet(
+            @RequestParam(name = "payload", required = false) String payload,
+            @RequestParam(name = "uid", required = false) String uid) {
         try {
-            return service.resolveTag(uid);
+            return service.resolveTag(payload, uid);
         } catch (Exception e) {
             return errorResponse();
         }
@@ -30,8 +32,11 @@ public class NfcTagController {
     @PostMapping("/resolve")
     public Map<String, Object> resolvePost(@RequestBody Map<String, Object> body) {
         try {
-            String uid = body != null ? String.valueOf(body.get("tagUid")) : null;
-            return service.resolveTag(uid);
+            String payload = body != null && body.containsKey("payload") && body.get("payload") != null 
+                ? String.valueOf(body.get("payload")) : null;
+            String uid = body != null && body.containsKey("tagUid") && body.get("tagUid") != null 
+                ? String.valueOf(body.get("tagUid")) : null;
+            return service.resolveTag(payload, uid);
         } catch (Exception e) {
             return errorResponse();
         }

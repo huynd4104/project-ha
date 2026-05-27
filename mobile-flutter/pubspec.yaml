@@ -52,6 +52,7 @@ dependencies:
   flutter_tts: ^4.1.0
   flutter_nfc_kit: ^3.4.2
   image_picker: ^1.0.4
+  ndef: ^0.4.0
 
 dev_dependencies:
   flutter_test:

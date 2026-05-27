@@ -245,7 +245,7 @@ export function NumbersManagementPage() {
                   ) : (
                     <>
                       <div className="field">
-                        <label>Số lượng đáp án (NFC) *</label>
+                        <label>Số lượng đúng *</label>
                         <input type="number" value={correctNumber} onChange={(e) => setCorrectNumber(Number(e.target.value))} required min="0" />
                       </div>
                       <div className="field">

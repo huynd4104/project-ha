@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/nfc_service.dart';
 import '../../../../core/services/tts_service.dart';
+import '../../../../core/utils/nfc_value_normalizer.dart';
 import '../../../lessons/widgets/nfc_tts_mixin.dart';
 import '../../data/technology_repository.dart';
 
@@ -18,15 +19,6 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
   bool _isLoading = true;
 
   final String _openingQuestion = 'Hôm nay bạn cảm thấy như thế nào?';
-
-  static const Map<String, String> _payloadToTitleMap = {
-    'pecs_emotion_happy': 'Vui',
-    'pecs_emotion_sad': 'Buồn',
-    'pecs_emotion_angry': 'Tức giận',
-    'pecs_emotion_scared': 'Sợ hãi',
-    'pecs_emotion_tired': 'Mệt',
-    'pecs_emotion_calm': 'Bình tĩnh',
-  };
 
   @override
   void initState() {
@@ -75,15 +67,26 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
       }
     }
 
-    // 2. Match by stable payloadValue
+    // 2. Match by linked source id from the new NFC workflow
+    final targetId = tag.targetId;
+    if (targetId != null && targetId.isNotEmpty) {
+      for (final card in _items) {
+        if (card['id']?.toString() == targetId) {
+          return card;
+        }
+      }
+    }
+
+    // 3. Match by stable payloadValue or normalized title/category
     final payload = tag.payloadValue;
     if (payload != null && payload.isNotEmpty) {
-      final titleFromPayload = _payloadToTitleMap[payload];
-      if (titleFromPayload != null) {
-        for (final card in _items) {
-          if (card['title']?.toString().toLowerCase() == titleFromPayload.toLowerCase()) {
-            return card;
-          }
+      for (final card in _items) {
+        final title = card['title']?.toString() ?? '';
+        final category = card['category']?.toString() ?? '';
+        if (nfcValuesMatch(payload, title) ||
+            nfcValuesMatch(payload, '${category}_$title') ||
+            nfcValuesMatch(payload, category)) {
+          return card;
         }
       }
     }
@@ -108,14 +111,13 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
     if (matchedCard != null) {
       _onCardSelected(matchedCard);
     } else {
-      // 3. Fallback card using NFC response
-      final fallbackCard = {
-        'id': 'fallback',
-        'title': tag.displayName.isNotEmpty ? tag.displayName : 'Cảm xúc',
-        'spokenText': tag.spokenText ?? 'Cảm xúc này chưa được định nghĩa.',
-        'imageUrl': '',
-      };
-      _onCardSelected(fallbackCard);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Thẻ này chưa phù hợp với hoạt động này.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      TtsService.instance.speak('Thẻ này chưa phù hợp với hoạt động này.');
     }
   }
 
@@ -251,7 +253,7 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
                 child: Image.network(
                   _selectedCard!['imageUrl'],
                   height: 180,
-                  fit: const BoxFit.contain,
+                  fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Icon(Icons.sentiment_satisfied_alt_rounded, size: 120, color: Colors.orange.shade300),
                 ),
               ),
@@ -265,7 +267,7 @@ class _PecsEmotionScreenState extends State<PecsEmotionScreen> with NfcTtsMixin 
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 32,
-                fontWeight: FontWeight.extrabold,
+                fontWeight: FontWeight.bold,
                 color: Colors.orange.shade900,
               ),
             ),

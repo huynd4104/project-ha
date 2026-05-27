@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
 import '../../../core/services/nfc_service.dart';
+import '../../../core/utils/nfc_value_normalizer.dart';
 import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../models/models.dart';
@@ -61,9 +62,9 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> with NfcTts
       // 1. Try to match option IDs or text (Choice types)
       ActivityOption? matchedOption;
       for (final option in activity.options) {
-        if (tag.targetId == option.id ||
-            tag.payloadValue?.toLowerCase() == option.id.toLowerCase() ||
-            tag.payloadValue?.toLowerCase() == option.text.toLowerCase()) {
+        if (tag.targetId?.toLowerCase() == option.id.toLowerCase() ||
+            (tag.payloadValue != null && nfcValuesMatch(tag.payloadValue!, option.id)) ||
+            (tag.payloadValue != null && nfcValuesMatch(tag.payloadValue!, option.text))) {
           matchedOption = option;
           break;
         }
@@ -85,10 +86,10 @@ class _ActivityLessonScreenState extends State<ActivityLessonScreen> with NfcTts
 
       // 2. Direct payload comparison
       if (tag.payloadValue != null && tag.payloadValue!.isNotEmpty) {
-        final rawVal = tag.payloadValue!.trim().toLowerCase();
+        final rawVal = tag.payloadValue!.trim();
         bool isCorrect = false;
         for (final ans in activity.correctAnswers) {
-          if (ans.trim().toLowerCase() == rawVal) {
+          if (nfcValuesMatch(rawVal, ans.trim())) {
             isCorrect = true;
             break;
           }

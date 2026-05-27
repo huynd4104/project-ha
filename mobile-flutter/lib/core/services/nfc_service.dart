@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
+import 'package:ndef/ndef.dart' as ndef;
 import '../api/api_client.dart';
 
 class NfcResolvedTag {
@@ -12,6 +13,7 @@ class NfcResolvedTag {
     this.payloadValue,
     this.displayName = '',
     this.spokenText,
+    this.description,
     this.metadata = const {},
   });
 
@@ -22,6 +24,7 @@ class NfcResolvedTag {
   final String? payloadValue;
   final String displayName;
   final String? spokenText;
+  final String? description;
   final Map<String, dynamic> metadata;
 
   factory NfcResolvedTag.fromMap(Map<String, dynamic> map) {
@@ -33,6 +36,7 @@ class NfcResolvedTag {
       payloadValue: map['payloadValue']?.toString(),
       displayName: '${map['displayName'] ?? ''}',
       spokenText: map['spokenText']?.toString(),
+      description: map['description']?.toString(),
       metadata: map['metadata'] is Map ? Map<String, dynamic>.from(map['metadata']) : const {},
     );
   }
@@ -79,10 +83,14 @@ class NfcService {
     _lastTagUid = null;
     _lastTagTime = null;
 
-    // Start listening to mock events in debug mode
     if (kDebugMode) {
-      _mockSubscription = _mockController.stream.listen((uid) {
-        _handleTagScanned(uid);
+      _mockSubscription = _mockController.stream.listen((input) {
+        final trimmed = input.trim();
+        if (trimmed.startsWith('PHA_')) {
+          _handleTagScanned('mock_uid_${trimmed.toLowerCase()}', trimmed);
+        } else {
+          _handleTagScanned(trimmed, null);
+        }
       });
     }
 
@@ -99,7 +107,6 @@ class NfcService {
   }
 
   Future<void> _pollPhysicalNfc() async {
-    // Check if device supports NFC
     try {
       final availability = await FlutterNfcKit.nfcAvailability;
       if (availability != NFCAvailability.available) {
@@ -122,36 +129,62 @@ class NfcService {
           timeout: const Duration(seconds: 20),
           iosAlertMessage: "Đang đợi quét thẻ học...",
         );
-        
-        await _handleTagScanned(tag.id);
-        
-        // Brief pause before polling again
+
+        String? ndefPayload;
+        if (tag.ndefAvailable == true) {
+          try {
+            final records = await FlutterNfcKit.readNDEFRecords();
+            for (var record in records) {
+              if (record is ndef.TextRecord && record.text != null) {
+                final match = RegExp(r'PHA_[A-Z0-9_]+').firstMatch(record.text!);
+                if (match != null) {
+                  ndefPayload = match.group(0);
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint('NFC: Error reading NDEF records: $e');
+          }
+        }
+
+        if (ndefPayload == null && tag.id.isEmpty) {
+          _stateController.add(NfcState.error);
+          _messageController.add("Thẻ NFC này chưa có nội dung. Hãy ghi nội dung thẻ từ trang Quản lý thẻ NFC.");
+        } else {
+          await _handleTagScanned(tag.id, ndefPayload);
+        }
+
         await Future.delayed(const Duration(milliseconds: 1000));
       } catch (e) {
-        // Safe check for timeout or cancelled poll
         if (!_isListening) break;
         await Future.delayed(const Duration(milliseconds: 1000));
       }
     }
   }
 
-  Future<void> _handleTagScanned(String uid) async {
+  Future<void> _handleTagScanned(String uid, String? ndefPayload) async {
     final now = DateTime.now();
+    final debounceKey = ndefPayload ?? uid;
 
-    // Debounce / Throttle repeated tag scans (2 seconds window)
-    if (_lastTagUid == uid && _lastTagTime != null && now.difference(_lastTagTime!).inSeconds < 2) {
-      debugPrint('NFC: Skipped duplicate scan of $uid within debounce window.');
+    if (_lastTagUid == debounceKey && _lastTagTime != null && now.difference(_lastTagTime!).inSeconds < 2) {
+      debugPrint('NFC: Skipped duplicate scan of $debounceKey within debounce window.');
       return;
     }
 
-    _lastTagUid = uid;
+    _lastTagUid = debounceKey;
     _lastTagTime = now;
 
     _stateController.add(NfcState.reading);
     _messageController.add("Đang nhận dạng thẻ...");
 
     try {
-      final response = await ApiClient.instance.post('/api/nfc/resolve', {'tagUid': uid});
+      final Map<String, dynamic> body = {'tagUid': uid};
+      if (ndefPayload != null) {
+        body['payload'] = ndefPayload;
+      }
+      final response = await ApiClient.instance.post('/api/nfc/resolve', body);
+
       if (response != null && response['success'] == true) {
         final resolved = NfcResolvedTag.fromMap(response['data']);
         _stateController.add(NfcState.success);
@@ -159,7 +192,12 @@ class NfcService {
         _tagController.add(resolved);
       } else {
         _stateController.add(NfcState.error);
-        _messageController.add(response?['message'] ?? "Thẻ chưa được hỗ trợ.");
+        final msg = response?['message'];
+        if (msg != null && msg.toString().isNotEmpty) {
+          _messageController.add(msg.toString());
+        } else {
+          _messageController.add("Thẻ NFC này chưa có nội dung. Hãy ghi nội dung thẻ từ trang Quản lý thẻ NFC.");
+        }
       }
     } catch (e) {
       _stateController.add(NfcState.error);

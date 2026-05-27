@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/app_state.dart';
 import '../../../core/services/sound_service.dart';
 import '../../../core/services/nfc_service.dart';
+import '../../../core/utils/nfc_value_normalizer.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_image.dart';
@@ -50,9 +50,9 @@ class _MathLessonScreenState extends State<MathLessonScreen> with NfcTtsMixin<Ma
       String? matchedOption;
       for (final entry in q.options.entries) {
         if (entry.value.trim().isEmpty) continue;
-        if (tag.targetId == entry.key ||
-            tag.payloadValue?.toLowerCase() == entry.key.toLowerCase() ||
-            tag.payloadValue?.toLowerCase() == entry.value.toLowerCase()) {
+        if (tag.targetId?.toLowerCase() == entry.key.toLowerCase() ||
+            (tag.payloadValue != null && nfcValuesMatch(tag.payloadValue!, entry.key)) ||
+            (tag.payloadValue != null && nfcValuesMatch(tag.payloadValue!, entry.value))) {
           matchedOption = entry.key;
           break;
         }

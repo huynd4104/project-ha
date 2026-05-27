@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/nfc_service.dart';
 import '../../../../core/services/tts_service.dart';
+import '../../../../core/utils/nfc_value_normalizer.dart';
 import '../../../lessons/widgets/nfc_tts_mixin.dart';
 import '../../data/technology_repository.dart';
 
@@ -18,17 +19,6 @@ class _PecsDailyActivityScreenState extends State<PecsDailyActivityScreen> with 
   bool _isLoading = true;
 
   final String _openingQuestion = 'Hôm nay bạn đã làm gì?';
-
-  static const Map<String, String> _payloadToTitleMap = {
-    'pecs_daily_eat': 'Ăn cơm',
-    'pecs_daily_drink': 'Uống nước',
-    'pecs_daily_sleep': 'Đi ngủ',
-    'pecs_daily_school': 'Đi học',
-    'pecs_daily_brush_teeth': 'Đánh răng',
-    'pecs_daily_wash_hands': 'Rửa tay',
-    'pecs_daily_toilet': 'Đi vệ sinh',
-    'pecs_daily_play': 'Chơi đồ chơi',
-  };
 
   @override
   void initState() {
@@ -77,15 +67,26 @@ class _PecsDailyActivityScreenState extends State<PecsDailyActivityScreen> with 
       }
     }
 
-    // 2. Match by stable payloadValue
+    // 2. Match by linked source id from the new NFC workflow
+    final targetId = tag.targetId;
+    if (targetId != null && targetId.isNotEmpty) {
+      for (final card in _items) {
+        if (card['id']?.toString() == targetId) {
+          return card;
+        }
+      }
+    }
+
+    // 3. Match by stable payloadValue or normalized title/category
     final payload = tag.payloadValue;
     if (payload != null && payload.isNotEmpty) {
-      final titleFromPayload = _payloadToTitleMap[payload];
-      if (titleFromPayload != null) {
-        for (final card in _items) {
-          if (card['title']?.toString().toLowerCase() == titleFromPayload.toLowerCase()) {
-            return card;
-          }
+      for (final card in _items) {
+        final title = card['title']?.toString() ?? '';
+        final category = card['category']?.toString() ?? '';
+        if (nfcValuesMatch(payload, title) ||
+            nfcValuesMatch(payload, '${category}_$title') ||
+            nfcValuesMatch(payload, category)) {
+          return card;
         }
       }
     }
@@ -110,14 +111,13 @@ class _PecsDailyActivityScreenState extends State<PecsDailyActivityScreen> with 
     if (matchedCard != null) {
       _onCardSelected(matchedCard);
     } else {
-      // 3. Fallback card using NFC response
-      final fallbackCard = {
-        'id': 'fallback',
-        'title': tag.displayName.isNotEmpty ? tag.displayName : 'Sinh hoạt',
-        'spokenText': tag.spokenText ?? 'Hoạt động này chưa được định nghĩa.',
-        'imageUrl': '',
-      };
-      _onCardSelected(fallbackCard);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Thẻ này chưa phù hợp với hoạt động này.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      TtsService.instance.speak('Thẻ này chưa phù hợp với hoạt động này.');
     }
   }
 
@@ -253,7 +253,7 @@ class _PecsDailyActivityScreenState extends State<PecsDailyActivityScreen> with 
                 child: Image.network(
                   _selectedCard!['imageUrl'],
                   height: 180,
-                  fit: const BoxFit.contain,
+                  fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Icon(Icons.accessibility_new_rounded, size: 120, color: Colors.blue.shade300),
                 ),
               ),
@@ -267,7 +267,7 @@ class _PecsDailyActivityScreenState extends State<PecsDailyActivityScreen> with 
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 32,
-                fontWeight: FontWeight.extrabold,
+                fontWeight: FontWeight.bold,
                 color: Colors.blue.shade900,
               ),
             ),

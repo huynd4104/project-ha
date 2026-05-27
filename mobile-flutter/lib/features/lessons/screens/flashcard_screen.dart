@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/app_state.dart';
-import '../../../core/services/sound_service.dart';
 import '../../../core/services/nfc_service.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../core/widgets/app_button.dart';
@@ -30,6 +31,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> with NfcTtsMixin<Flas
   late Future<({Lesson lesson, List<Flashcard> cards})> data;
   int index = 0;
   int? _lastSpokenIndex;
+  Timer? _pendingBackSpeech;
   bool back = false;
 
   @override
@@ -41,19 +43,49 @@ class _FlashcardScreenState extends State<FlashcardScreen> with NfcTtsMixin<Flas
   @override
   void onNfcTagScanned(NfcResolvedTag tag) {
     data.then((value) {
-      if (index >= value.cards.length) return;
-      final card = value.cards[index];
-      
-      // Auto flip to back on scan
-      setState(() => back = true);
+      _pendingBackSpeech?.cancel();
+      final matchedCard = value.cards.cast<Flashcard?>().firstWhere(
+            (card) => card != null && tag.targetId != null && card.id == tag.targetId,
+            orElse: () => null,
+          );
+      final card = matchedCard ?? (index < value.cards.length ? value.cards[index] : null);
 
-      // Speak tag spoken text, back text, or front text
+      final metadataFront = tag.metadata['frontText']?.toString().trim() ?? '';
+      final metadataBack = tag.metadata['backText']?.toString().trim() ?? '';
+      final pauseMs = (tag.metadata['pauseMs'] as num?)?.toInt() ?? 1200;
+
+      final frontText = metadataFront.isNotEmpty
+          ? metadataFront
+          : card?.frontText ?? '';
+      final backText = metadataBack.isNotEmpty
+          ? metadataBack
+          : card?.backText ?? '';
+
+      if (frontText.isNotEmpty && backText.isNotEmpty) {
+        setState(() => back = true);
+        TtsService.instance.speak(frontText);
+        _pendingBackSpeech = Timer(Duration(milliseconds: pauseMs), () {
+          if (!mounted) return;
+          TtsService.instance.speak(backText);
+        });
+        return;
+      }
+
       final textToSpeak = (tag.spokenText != null && tag.spokenText!.isNotEmpty)
           ? tag.spokenText!
-          : (card.backText.isNotEmpty ? card.backText : card.frontText);
-          
-      TtsService.instance.speak(textToSpeak);
+          : (backText.isNotEmpty ? backText : frontText);
+
+      if (textToSpeak.isNotEmpty) {
+        setState(() => back = true);
+        TtsService.instance.speak(textToSpeak);
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _pendingBackSpeech?.cancel();
+    super.dispose();
   }
 
   Future<({Lesson lesson, List<Flashcard> cards})> load() async {

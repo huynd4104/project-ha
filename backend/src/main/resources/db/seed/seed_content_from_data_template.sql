@@ -1760,32 +1760,32 @@ ON CONFLICT (code) DO UPDATE SET
 INSERT INTO nfc_tags (
   id, tag_uid, display_name, tag_type, target_type, target_id, payload_value, spoken_text, description, is_active
 ) VALUES
-  ('a0a0a0a0-0000-0000-0000-000000000001', 'NFC_ANSWER_UMBRELLA', 'Thẻ Đáp Án Cái Ô', 'ANSWER', 'RAW_VALUE', NULL, 'umbrella', 'Cái ô', 'Thẻ NFC đáp án cái ô', true),
-  ('a0a0a0a0-0000-0000-0000-000000000002', 'NFC_ANSWER_BALL', 'Thẻ Đáp Án Quả Bóng', 'ANSWER', 'RAW_VALUE', NULL, 'ball', 'Quả bóng', 'Thẻ NFC đáp án quả bóng', true),
-  ('a0a0a0a0-0000-0000-0000-000000000003', 'NFC_ANSWER_SPOON', 'Thẻ Đáp Án Cái Thìa', 'ANSWER', 'RAW_VALUE', NULL, 'spoon', 'Cái thìa', 'Thẻ NFC đáp án cái thìa', true),
-  ('a0a0a0a0-0000-0000-0000-000000000004', 'NFC_ANSWER_SOCKS', 'Thẻ Đáp Án Đôi Tất', 'ANSWER', 'RAW_VALUE', NULL, 'socks', 'Đôi tất', 'Thẻ NFC đáp án đôi tất', true),
-  ('a0a0a0a0-0000-0000-0000-000000000005', 'NFC_FLASHCARD_APPLE', 'Thẻ Học Quả Táo', 'FLASHCARD', 'RAW_VALUE', NULL, 'apple', 'Quả táo chín đỏ', 'Thẻ NFC flashcard quả táo', true),
-  ('a0a0a0a0-0000-0000-0000-000000000006', 'NFC_FLASHCARD_CAT', 'Thẻ Học Con Mèo', 'FLASHCARD', 'RAW_VALUE', NULL, 'cat', 'Con mèo kêu meo meo', 'Thẻ NFC flashcard con mèo', true),
+  ('a0a0a0a0-0000-0000-0000-000000000001', 'PHA_ANSWER_CHIEC_O', 'Thẻ Đáp Án Chiếc Ô', 'ANSWER', 'RAW_VALUE', NULL, 'PHA_ANSWER_CHIEC_O', 'Chiếc ô', 'Thẻ NFC đáp án chiếc ô', true),
+  ('a0a0a0a0-0000-0000-0000-000000000002', 'PHA_ANSWER_QUA_BONG', 'Thẻ Đáp Án Quả Bóng', 'ANSWER', 'RAW_VALUE', NULL, 'PHA_ANSWER_QUA_BONG', 'Quả bóng', 'Thẻ NFC đáp án quả bóng', true),
+  ('a0a0a0a0-0000-0000-0000-000000000003', 'PHA_ANSWER_CAI_THIA', 'Thẻ Đáp Án Cái Thìa', 'ANSWER', 'RAW_VALUE', NULL, 'PHA_ANSWER_CAI_THIA', 'Cái thìa', 'Thẻ NFC đáp án cái thìa', true),
+  ('a0a0a0a0-0000-0000-0000-000000000004', 'PHA_ANSWER_DOI_TAT', 'Thẻ Đáp Án Đôi Tất', 'ANSWER', 'RAW_VALUE', NULL, 'PHA_ANSWER_DOI_TAT', 'Đôi tất', 'Thẻ NFC đáp án đôi tất', true),
+  ('a0a0a0a0-0000-0000-0000-000000000005', 'PHA_FLASHCARD_APPLE', 'Thẻ Học Quả Táo', 'FLASHCARD', 'RAW_VALUE', NULL, 'PHA_FLASHCARD_APPLE', 'Quả táo chín đỏ', 'Thẻ NFC flashcard quả táo', true),
+  ('a0a0a0a0-0000-0000-0000-000000000006', 'PHA_FLASHCARD_CON_MEO', 'Thẻ Học Con Mèo', 'FLASHCARD', 'RAW_VALUE', NULL, 'PHA_FLASHCARD_CON_MEO', 'Con mèo kêu meo meo', 'Thẻ NFC flashcard con mèo', true),
   -- Number Tags
-  ('a0a0a0a0-0000-0000-0000-000000000100', 'NFC_NUMBER_0', 'Thẻ Số 0', 'NUMBER', 'RAW_VALUE', NULL, '0', 'Đây là số không.', 'Thẻ NFC số 0', true),
-  ('a0a0a0a0-0000-0000-0000-000000000101', 'NFC_NUMBER_1', 'Thẻ Số 1', 'NUMBER', 'RAW_VALUE', NULL, '1', 'Đây là số một.', 'Thẻ NFC số 1', true),
-  ('a0a0a0a0-0000-0000-0000-000000000102', 'NFC_NUMBER_2', 'Thẻ Số 2', 'NUMBER', 'RAW_VALUE', NULL, '2', 'Đây là số hai.', 'Thẻ NFC số 2', true),
-  ('a0a0a0a0-0000-0000-0000-000000000103', 'NFC_NUMBER_3', 'Thẻ Số 3', 'NUMBER', 'RAW_VALUE', NULL, '3', 'Đây là số ba.', 'Thẻ NFC số 3', true),
-  ('a0a0a0a0-0000-0000-0000-000000000104', 'NFC_NUMBER_4', 'Thẻ Số 4', 'NUMBER', 'RAW_VALUE', NULL, '4', 'Đây là số bốn.', 'Thẻ NFC số 4', true),
-  ('a0a0a0a0-0000-0000-0000-000000000105', 'NFC_NUMBER_5', 'Thẻ Số 5', 'NUMBER', 'RAW_VALUE', NULL, '5', 'Đây là số năm.', 'Thẻ NFC số 5', true),
-  ('a0a0a0a0-0000-0000-0000-000000000106', 'NFC_NUMBER_6', 'Thẻ Số 6', 'NUMBER', 'RAW_VALUE', NULL, '6', 'Đây là số sáu.', 'Thẻ NFC số 6', true),
-  ('a0a0a0a0-0000-0000-0000-000000000107', 'NFC_NUMBER_7', 'Thẻ Số 7', 'NUMBER', 'RAW_VALUE', NULL, '7', 'Đây là số bảy.', 'Thẻ NFC số 7', true),
-  ('a0a0a0a0-0000-0000-0000-000000000108', 'NFC_NUMBER_8', 'Thẻ Số 8', 'NUMBER', 'RAW_VALUE', NULL, '8', 'Đây là số tám.', 'Thẻ NFC số 8', true),
-  ('a0a0a0a0-0000-0000-0000-000000000109', 'NFC_NUMBER_9', 'Thẻ Số 9', 'NUMBER', 'RAW_VALUE', NULL, '9', 'Đây là số chín.', 'Thẻ NFC số 9', true),
-  ('a0a0a0a0-0000-0000-0000-000000000110', 'NFC_NUMBER_10', 'Thẻ Số 10', 'NUMBER', 'RAW_VALUE', NULL, '10', 'Đây là số mười.', 'Thẻ NFC số 10', true),
+  ('a0a0a0a0-0000-0000-0000-000000000100', 'PHA_NUMBER_0', 'Thẻ Số 0', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_0', 'Đây là số không.', 'Thẻ NFC số 0', true),
+  ('a0a0a0a0-0000-0000-0000-000000000101', 'PHA_NUMBER_1', 'Thẻ Số 1', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_1', 'Đây là số một.', 'Thẻ NFC số 1', true),
+  ('a0a0a0a0-0000-0000-0000-000000000102', 'PHA_NUMBER_2', 'Thẻ Số 2', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_2', 'Đây là số hai.', 'Thẻ NFC số 2', true),
+  ('a0a0a0a0-0000-0000-0000-000000000103', 'PHA_NUMBER_3', 'Thẻ Số 3', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_3', 'Đây là số ba.', 'Thẻ NFC số 3', true),
+  ('a0a0a0a0-0000-0000-0000-000000000104', 'PHA_NUMBER_4', 'Thẻ Số 4', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_4', 'Đây là số bốn.', 'Thẻ NFC số 4', true),
+  ('a0a0a0a0-0000-0000-0000-000000000105', 'PHA_NUMBER_5', 'Thẻ Số 5', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_5', 'Đây là số năm.', 'Thẻ NFC số 5', true),
+  ('a0a0a0a0-0000-0000-0000-000000000106', 'PHA_NUMBER_6', 'Thẻ Số 6', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_6', 'Đây là số sáu.', 'Thẻ NFC số 6', true),
+  ('a0a0a0a0-0000-0000-0000-000000000107', 'PHA_NUMBER_7', 'Thẻ Số 7', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_7', 'Đây là số bảy.', 'Thẻ NFC số 7', true),
+  ('a0a0a0a0-0000-0000-0000-000000000108', 'PHA_NUMBER_8', 'Thẻ Số 8', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_8', 'Đây là số tám.', 'Thẻ NFC số 8', true),
+  ('a0a0a0a0-0000-0000-0000-000000000109', 'PHA_NUMBER_9', 'Thẻ Số 9', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_9', 'Đây là số chín.', 'Thẻ NFC số 9', true),
+  ('a0a0a0a0-0000-0000-0000-000000000110', 'PHA_NUMBER_10', 'Thẻ Số 10', 'NUMBER', 'RAW_VALUE', NULL, 'PHA_NUMBER_10', 'Đây là số mười.', 'Thẻ NFC số 10', true),
   -- Shape Tags
-  ('a0a0a0a0-0000-0000-0000-000000000201', 'NFC_SHAPE_CIRCLE', 'Thẻ Hình Tròn', 'SHAPE', 'RAW_VALUE', NULL, 'CIRCLE', 'Đây là hình tròn.', 'Thẻ NFC hình tròn', true),
-  ('a0a0a0a0-0000-0000-0000-000000000202', 'NFC_SHAPE_SQUARE', 'Thẻ Hình Vuông', 'SHAPE', 'RAW_VALUE', NULL, 'SQUARE', 'Đây là hình vuông.', 'Thẻ NFC hình vuông', true),
-  ('a0a0a0a0-0000-0000-0000-000000000203', 'NFC_SHAPE_TRIANGLE', 'Thẻ Hình Tam Giác', 'SHAPE', 'RAW_VALUE', NULL, 'TRIANGLE', 'Đây là hình tam giác.', 'Thẻ NFC hình tam giác', true),
-  ('a0a0a0a0-0000-0000-0000-000000000204', 'NFC_SHAPE_RECTANGLE', 'Thẻ Hình Chữ Nhật', 'SHAPE', 'RAW_VALUE', NULL, 'RECTANGLE', 'Đây là hình chữ nhật.', 'Thẻ NFC hình chữ nhật', true),
-  ('a0a0a0a0-0000-0000-0000-000000000205', 'NFC_SHAPE_STAR', 'Thẻ Hình Sao', 'SHAPE', 'RAW_VALUE', NULL, 'STAR', 'Đây là hình sao.', 'Thẻ NFC hình sao', true),
-  ('a0a0a0a0-0000-0000-0000-000000000206', 'NFC_SHAPE_HEART', 'Thẻ Hình Trái Tim', 'SHAPE', 'RAW_VALUE', NULL, 'HEART', 'Đây là hình trái tim.', 'Thẻ NFC hình trái tim', true),
-  ('a0a0a0a0-0000-0000-0000-000000000207', 'NFC_SHAPE_OVAL', 'Thẻ Hình Bầu Dục', 'SHAPE', 'RAW_VALUE', NULL, 'OVAL', 'Đây là hình bầu dục.', 'Thẻ NFC hình bầu dục', true)
+  ('a0a0a0a0-0000-0000-0000-000000000201', 'PHA_SHAPE_CIRCLE', 'Thẻ Hình Tròn', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_CIRCLE', 'Đây là hình tròn.', 'Thẻ NFC hình tròn', true),
+  ('a0a0a0a0-0000-0000-0000-000000000202', 'PHA_SHAPE_SQUARE', 'Thẻ Hình Vuông', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_SQUARE', 'Đây là hình vuông.', 'Thẻ NFC hình vuông', true),
+  ('a0a0a0a0-0000-0000-0000-000000000203', 'PHA_SHAPE_TRIANGLE', 'Thẻ Hình Tam Giác', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_TRIANGLE', 'Đây là hình tam giác.', 'Thẻ NFC hình tam giác', true),
+  ('a0a0a0a0-0000-0000-0000-000000000204', 'PHA_SHAPE_RECTANGLE', 'Thẻ Hình Chữ Nhật', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_RECTANGLE', 'Đây là hình chữ nhật.', 'Thẻ NFC hình chữ nhật', true),
+  ('a0a0a0a0-0000-0000-0000-000000000205', 'PHA_SHAPE_STAR', 'Thẻ Hình Sao', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_STAR', 'Đây là hình sao.', 'Thẻ NFC hình sao', true),
+  ('a0a0a0a0-0000-0000-0000-000000000206', 'PHA_SHAPE_HEART', 'Thẻ Hình Trái Tim', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_HEART', 'Đây là hình trái tim.', 'Thẻ NFC hình trái tim', true),
+  ('a0a0a0a0-0000-0000-0000-000000000207', 'PHA_SHAPE_OVAL', 'Thẻ Hình Bầu Dục', 'SHAPE', 'RAW_VALUE', NULL, 'PHA_SHAPE_OVAL', 'Đây là hình bầu dục.', 'Thẻ NFC hình bầu dục', true)
 ON CONFLICT (tag_uid) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   tag_type = EXCLUDED.tag_type,
@@ -1834,29 +1834,36 @@ ON CONFLICT (id) DO NOTHING;
 
 -- PECS NFC Tags
 INSERT INTO nfc_tags (id, tag_uid, display_name, tag_type, target_type, payload_value, spoken_text, is_active) VALUES
-  ('a0f0f0f0-0000-0000-0000-000000000001', 'pecs_uid_happy', 'Thẻ cảm xúc: Vui', 'PECS', 'RAW_VALUE', 'pecs_emotion_happy', 'Hôm nay con cảm thấy vui.', true),
-  ('a0f0f0f0-0000-0000-0000-000000000002', 'pecs_uid_sad', 'Thẻ cảm xúc: Buồn', 'PECS', 'RAW_VALUE', 'pecs_emotion_sad', 'Hôm nay con cảm thấy buồn.', true),
-  ('a0f0f0f0-0000-0000-0000-000000000003', 'pecs_uid_angry', 'Thẻ cảm xúc: Tức giận', 'PECS', 'RAW_VALUE', 'pecs_emotion_angry', 'Hôm nay con đang tức giận.', true),
-  ('a0f0f0f0-0000-0000-0000-000000000004', 'pecs_uid_scared', 'Thẻ cảm xúc: Sợ hãi', 'PECS', 'RAW_VALUE', 'pecs_emotion_scared', 'Hôm nay con cảm thấy sợ.', true),
-  ('a0f0f0f0-0000-0000-0000-000000000005', 'pecs_uid_tired', 'Thẻ cảm xúc: Mệt', 'PECS', 'RAW_VALUE', 'pecs_emotion_tired', 'Hôm nay con thấy mệt.', true),
-  ('a0f0f0f0-0000-0000-0000-000000000006', 'pecs_uid_calm', 'Thẻ cảm xúc: Bình tĩnh', 'PECS', 'RAW_VALUE', 'pecs_emotion_calm', 'Hôm nay con cảm thấy bình tĩnh.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000001', 'PHA_PECS_EMOTION_HAPPY', 'Thẻ cảm xúc: Vui', 'PECS', 'RAW_VALUE', 'PHA_PECS_EMOTION_HAPPY', 'Hôm nay con cảm thấy vui.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000002', 'PHA_PECS_EMOTION_SAD', 'Thẻ cảm xúc: Buồn', 'PECS', 'RAW_VALUE', 'PHA_PECS_EMOTION_SAD', 'Hôm nay con cảm thấy buồn.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000003', 'PHA_PECS_EMOTION_ANGRY', 'Thẻ cảm xúc: Tức giận', 'PECS', 'RAW_VALUE', 'PHA_PECS_EMOTION_ANGRY', 'Hôm nay con đang tức giận.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000004', 'PHA_PECS_EMOTION_SCARED', 'Thẻ cảm xúc: Sợ hãi', 'PECS', 'RAW_VALUE', 'PHA_PECS_EMOTION_SCARED', 'Hôm nay con cảm thấy sợ.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000005', 'PHA_PECS_EMOTION_TIRED', 'Thẻ cảm xúc: Mệt', 'PECS', 'RAW_VALUE', 'PHA_PECS_EMOTION_TIRED', 'Hôm nay con thấy mệt.', true),
+  ('a0f0f0f0-0000-0000-0000-000000000006', 'PHA_PECS_EMOTION_CALM', 'Thẻ cảm xúc: Bình tĩnh', 'PECS', 'RAW_VALUE', 'PHA_PECS_EMOTION_CALM', 'Hôm nay con cảm thấy bình tĩnh.', true),
 
-  ('b0f0f0f0-0000-0000-0000-000000000001', 'pecs_uid_eat', 'Thẻ hoạt động: Ăn cơm', 'PECS', 'RAW_VALUE', 'pecs_daily_eat', 'Hôm nay con đã ăn cơm.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000002', 'pecs_uid_drink', 'Thẻ hoạt động: Uống nước', 'PECS', 'RAW_VALUE', 'pecs_daily_drink', 'Hôm nay con đã uống nước.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000003', 'pecs_uid_sleep', 'Thẻ hoạt động: Đi ngủ', 'PECS', 'RAW_VALUE', 'pecs_daily_sleep', 'Hôm nay con đã đi ngủ.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000004', 'pecs_uid_school', 'Thẻ hoạt động: Đi học', 'PECS', 'RAW_VALUE', 'pecs_daily_school', 'Hôm nay con đã đi học.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000005', 'pecs_uid_brush', 'Thẻ hoạt động: Đánh răng', 'PECS', 'RAW_VALUE', 'pecs_daily_brush_teeth', 'Hôm nay con đã đánh răng.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000006', 'pecs_uid_wash', 'Thẻ hoạt động: Rửa tay', 'PECS', 'RAW_VALUE', 'pecs_daily_wash_hands', 'Hôm nay con đã rửa tay.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000007', 'pecs_uid_toilet', 'Thẻ hoạt động: Đi vệ sinh', 'PECS', 'RAW_VALUE', 'pecs_daily_toilet', 'Hôm nay con đã đi vệ sinh.', true),
-  ('b0f0f0f0-0000-0000-0000-000000000008', 'pecs_uid_play', 'Thẻ hoạt động: Chơi đồ chơi', 'PECS', 'RAW_VALUE', 'pecs_daily_play', 'Hôm nay con đã chơi đồ chơi.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000001', 'PHA_PECS_DAILY_EAT', 'Thẻ hoạt động: Ăn cơm', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_EAT', 'Hôm nay con đã ăn cơm.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000002', 'PHA_PECS_DAILY_DRINK', 'Thẻ hoạt động: Uống nước', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_DRINK', 'Hôm nay con đã uống nước.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000003', 'PHA_PECS_DAILY_SLEEP', 'Thẻ hoạt động: Đi ngủ', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_SLEEP', 'Hôm nay con đã đi ngủ.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000004', 'PHA_PECS_DAILY_SCHOOL', 'Thẻ hoạt động: Đi học', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_SCHOOL', 'Hôm nay con đã đi học.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000005', 'PHA_PECS_DAILY_BRUSH_TEETH', 'Thẻ hoạt động: Đánh răng', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_BRUSH_TEETH', 'Hôm nay con đã đánh răng.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000006', 'PHA_PECS_DAILY_WASH_HANDS', 'Thẻ hoạt động: Rửa tay', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_WASH_HANDS', 'Hôm nay con đã rửa tay.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000007', 'PHA_PECS_DAILY_TOILET', 'Thẻ hoạt động: Đi vệ sinh', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_TOILET', 'Hôm nay con đã đi vệ sinh.', true),
+  ('b0f0f0f0-0000-0000-0000-000000000008', 'PHA_PECS_DAILY_PLAY', 'Thẻ hoạt động: Chơi đồ chơi', 'PECS', 'RAW_VALUE', 'PHA_PECS_DAILY_PLAY', 'Hôm nay con đã chơi đồ chơi.', true),
 
-  ('c0f0f0f0-0000-0000-0000-000000000001', 'pecs_uid_nt_drink', 'Thẻ nhu cầu: Uống nước', 'PECS', 'RAW_VALUE', 'pecs_non_topic_drink', 'Con muốn uống nước.', true),
-  ('c0f0f0f0-0000-0000-0000-000000000002', 'pecs_uid_nt_rest', 'Thẻ nhu cầu: Nghỉ', 'PECS', 'RAW_VALUE', 'pecs_non_topic_rest', 'Con muốn nghỉ.', true),
-  ('c0f0f0f0-0000-0000-0000-000000000003', 'pecs_uid_nt_help', 'Thẻ nhu cầu: Cần giúp đỡ', 'PECS', 'RAW_VALUE', 'pecs_non_topic_help', 'Con cần giúp đỡ.', true),
-  ('c0f0f0f0-0000-0000-0000-000000000004', 'pecs_uid_nt_pain', 'Thẻ nhu cầu: Con đau', 'PECS', 'RAW_VALUE', 'pecs_non_topic_pain', 'Con đau.', true),
-  ('c0f0f0f0-0000-0000-0000-000000000005', 'pecs_uid_nt_play', 'Thẻ nhu cầu: Muốn chơi', 'PECS', 'RAW_VALUE', 'pecs_non_topic_play', 'Con muốn chơi.', true),
-  ('c0f0f0f0-0000-0000-0000-000000000006', 'pecs_uid_nt_toilet', 'Thẻ nhu cầu: Đi vệ sinh', 'PECS', 'RAW_VALUE', 'pecs_non_topic_toilet', 'Con muốn đi vệ sinh.', true)
-ON CONFLICT (id) DO NOTHING;
+  ('c0f0f0f0-0000-0000-0000-000000000001', 'PHA_PECS_NON_TOPIC_DRINK', 'Thẻ nhu cầu: Uống nước', 'PECS', 'RAW_VALUE', 'PHA_PECS_NON_TOPIC_DRINK', 'Con muốn uống nước.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000002', 'PHA_PECS_NON_TOPIC_REST', 'Thẻ nhu cầu: Nghỉ', 'PECS', 'RAW_VALUE', 'PHA_PECS_NON_TOPIC_REST', 'Con muốn nghỉ.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000003', 'PHA_PECS_NON_TOPIC_HELP', 'Thẻ nhu cầu: Cần giúp đỡ', 'PECS', 'RAW_VALUE', 'PHA_PECS_NON_TOPIC_HELP', 'Con cần giúp đỡ.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000004', 'PHA_PECS_NON_TOPIC_PAIN', 'Thẻ nhu cầu: Con đau', 'PECS', 'RAW_VALUE', 'PHA_PECS_NON_TOPIC_PAIN', 'Con đau.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000005', 'PHA_PECS_NON_TOPIC_PLAY', 'Thẻ nhu cầu: Muốn chơi', 'PECS', 'RAW_VALUE', 'PHA_PECS_NON_TOPIC_PLAY', 'Con muốn chơi.', true),
+  ('c0f0f0f0-0000-0000-0000-000000000006', 'PHA_PECS_NON_TOPIC_TOILET', 'Thẻ nhu cầu: Đi vệ sinh', 'PECS', 'RAW_VALUE', 'PHA_PECS_NON_TOPIC_TOILET', 'Con muốn đi vệ sinh.', true)
+ON CONFLICT (id) DO UPDATE SET
+  tag_uid = EXCLUDED.tag_uid,
+  display_name = EXCLUDED.display_name,
+  tag_type = EXCLUDED.tag_type,
+  target_type = EXCLUDED.target_type,
+  payload_value = EXCLUDED.payload_value,
+  spoken_text = EXCLUDED.spoken_text,
+  is_active = EXCLUDED.is_active;
 
 -- PECS Cards
 INSERT INTO pecs_cards (id, category, title, spoken_text, image_url, nfc_tag_id, is_active) VALUES

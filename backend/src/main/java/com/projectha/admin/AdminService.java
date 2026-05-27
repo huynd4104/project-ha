@@ -15,12 +15,14 @@ public class AdminService {
     private final AuditService audit;
     private final SubscriptionService subscriptionService;
     private final com.projectha.media.MediaService mediaService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
-    public AdminService(AdminRepository repo, AuditService audit, SubscriptionService subscriptionService, com.projectha.media.MediaService mediaService) {
+    public AdminService(AdminRepository repo, AuditService audit, SubscriptionService subscriptionService, com.projectha.media.MediaService mediaService, org.springframework.jdbc.core.JdbcTemplate jdbc) {
         this.repo = repo;
         this.audit = audit;
         this.subscriptionService = subscriptionService;
         this.mediaService = mediaService;
+        this.jdbc = jdbc;
     }
 
     public Map<String, Object> dashboard() {
@@ -31,6 +33,9 @@ public class AdminService {
     public List<Map<String, Object>> createBatch(UUID actor, String resource, List<Map<String, Object>> payloads) {
         List<Map<String, Object>> results = new ArrayList<>();
         for (Map<String, Object> payload : payloads) {
+            if ("nfc-tags".equals(resource)) {
+                validateAndNormalizeNfcTag(payload, null);
+            }
             Map<String, Object> item = repo.create(resource, payload);
             audit.log(actor, "CREATE_BATCH", resource, String.valueOf(item.get("id")), Map.of("payload", payload));
             results.add(item);
@@ -52,15 +57,64 @@ public class AdminService {
     }
 
     public Map<String, Object> create(UUID actor, String resource, Map<String, Object> payload) {
+        if ("nfc-tags".equals(resource)) {
+            validateAndNormalizeNfcTag(payload, null);
+        }
         Map<String, Object> item = repo.create(resource, payload);
         audit.log(actor, "CREATE", resource, String.valueOf(item.get("id")), Map.of("payload", payload));
         return item;
     }
 
     public Map<String, Object> update(UUID actor, String resource, UUID id, Map<String, Object> payload) {
+        if ("nfc-tags".equals(resource)) {
+            validateAndNormalizeNfcTag(payload, id);
+        }
         Map<String, Object> item = repo.update(resource, id, payload);
         audit.log(actor, "UPDATE", resource, id.toString(), Map.of("payload", payload));
         return item;
+    }
+
+    private void validateAndNormalizeNfcTag(Map<String, Object> payload, UUID id) {
+        String payloadValue = null;
+        if (payload.containsKey("payloadValue")) {
+            Object val = payload.get("payloadValue");
+            payloadValue = val != null ? String.valueOf(val) : null;
+        }
+        
+        String tagUid = null;
+        if (payload.containsKey("tagUid")) {
+            Object val = payload.get("tagUid");
+            tagUid = val != null ? String.valueOf(val) : null;
+        }
+
+        if (payloadValue != null) {
+            payloadValue = payloadValue.trim();
+            payload.put("payloadValue", payloadValue);
+        }
+
+        if (payloadValue == null || payloadValue.isBlank()) {
+            if (tagUid == null || tagUid.isBlank()) {
+                throw new com.projectha.common.BadRequestException("Nội dung ghi vào thẻ (payload_value) không được để trống.");
+            } else {
+                System.out.println("WARN: Creating/updating legacy UID-only NFC tag without payload_value. tagUid: " + tagUid);
+            }
+        } else {
+            payloadValue = payloadValue.toUpperCase();
+            payload.put("payloadValue", payloadValue);
+            if (!payloadValue.matches("^PHA_[A-Z0-9_]+$")) {
+                throw new com.projectha.common.BadRequestException("Định dạng nội dung thẻ không hợp lệ. Phải bắt đầu bằng 'PHA_' và chỉ chứa chữ in hoa, số và dấu gạch dưới.");
+            }
+
+            List<Map<String, Object>> existing;
+            if (id != null) {
+                existing = jdbc.queryForList("SELECT id FROM nfc_tags WHERE payload_value = ? AND id != ?", payloadValue, id);
+            } else {
+                existing = jdbc.queryForList("SELECT id FROM nfc_tags WHERE payload_value = ?", payloadValue);
+            }
+            if (!existing.isEmpty()) {
+                throw new com.projectha.common.BadRequestException("Nội dung ghi vào thẻ (payload_value) '" + payloadValue + "' đã tồn tại.");
+            }
+        }
     }
 
     public void delete(UUID actor, String resource, UUID id) {
