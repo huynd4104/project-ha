@@ -39,12 +39,44 @@ import '../widgets/error_view.dart';
 import '../widgets/loading_view.dart';
 import '../../features/technology/presentation/screens/nfc_deep_link_result_screen.dart';
 
+String? _normalizeNfcDeepLink(Uri uri) {
+  if (uri.scheme != 'projectha' || uri.host != 'nfc') return null;
+
+  final payload = _extractNfcPayload(uri);
+  if (payload == null || payload.isEmpty) {
+    return '/nfc';
+  }
+
+  return Uri(path: '/nfc', queryParameters: {'payload': payload}).toString();
+}
+
+String? _extractNfcPayload(Uri uri) {
+  final queryPayload = uri.queryParameters['payload']?.trim();
+  if (queryPayload != null && queryPayload.isNotEmpty) {
+    return queryPayload;
+  }
+
+  final pathPayload = uri.pathSegments.join('/').trim();
+  if (pathPayload.isNotEmpty) {
+    return pathPayload;
+  }
+
+  return null;
+}
+
+bool _isNfcRoute(String path) => path == '/nfc' || path.startsWith('/nfc/');
+
 GoRouter buildRouter(AppState state) {
   return GoRouter(
     refreshListenable: state,
     initialLocation: '/home',
     redirect: (context, routerState) {
+      final nfcRedirect = _normalizeNfcDeepLink(routerState.uri);
+      if (nfcRedirect != null) return nfcRedirect;
+
       final path = routerState.uri.path;
+      if (_isNfcRoute(path)) return null;
+
       final authPath =
           path == '/' ||
           path == '/login' ||

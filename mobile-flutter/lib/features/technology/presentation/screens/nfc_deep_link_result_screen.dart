@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/services/tts_service.dart';
 
@@ -176,8 +177,7 @@ class _NfcDeepLinkResultScreenState extends State<NfcDeepLinkResultScreen> {
                         if (Navigator.canPop(context)) {
                           Navigator.pop(context);
                         } else {
-                          // Fallback navigation if launched as root screen
-                          Navigator.pushReplacementNamed(context, '/home');
+                          context.go('/home');
                         }
                       },
                       style: ElevatedButton.styleFrom(
