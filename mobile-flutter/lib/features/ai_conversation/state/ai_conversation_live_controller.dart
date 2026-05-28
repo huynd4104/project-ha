@@ -49,6 +49,7 @@ class AiConversationLiveController extends ChangeNotifier {
   bool loading = false;
   bool submitting = false;
   int currentIndex = 0;
+  int _currentAttemptNo = 1;
   Timer? _silenceTimer;
   Timer? _childTurnReminderTimer;
   Timer? _connectionTimeoutTimer;
@@ -393,10 +394,25 @@ class AiConversationLiveController extends ChangeNotifier {
         questionId: question.id,
         turnOrder: currentIndex + 1,
         transcript: transcript.trim(),
-        attemptNo: 1,
+        attemptNo: _currentAttemptNo,
         hintUsed: false,
       );
       if (_isDisposed) return null;
+
+      // ══ DEBUG LOG ══
+      if (kDebugMode) {
+        debugPrint('[AI Mobile Turn]\n'
+            'questionId=${lastResult!.questionId}\n'
+            'attemptNo=${lastResult!.attemptNo}\n'
+            'result=${lastResult!.evaluationResult}\n'
+            'score=${lastResult!.score}\n'
+            'shouldRetry=${lastResult!.shouldRetry}\n'
+            'shouldAdvance=${lastResult!.shouldAdvance}\n'
+            'canSkip=${lastResult!.canSkip}\n'
+            'advanceReason=${lastResult!.advanceReason}\n'
+            'transcript=$transcript');
+      }
+
       liveState = AiLiveState.feedback;
       notifyListeners();
 
@@ -409,23 +425,49 @@ class AiConversationLiveController extends ChangeNotifier {
       await _activeService.speak(speakFeedback);
       if (_isDisposed) return null;
 
-      // Move to next question
-      currentIndex += 1;
-      if (currentQuestion == null) {
-        liveState = AiLiveState.completed;
+      // ══ DECISION: ONLY backend flags control flow ══
+      if (lastResult!.shouldAdvance) {
+        // ── ADVANCE: move to next question (only when backend says so) ──
+        _currentAttemptNo = 1;
+        if (lastResult!.nextQuestionId != null) {
+          final nextIdx = questions.indexWhere((q) => q.id == lastResult!.nextQuestionId);
+          if (nextIdx >= 0) {
+            currentIndex = nextIdx;
+          } else {
+            currentIndex += 1;
+          }
+        } else {
+          currentIndex += 1;
+        }
+
+        if (lastResult!.isSessionCompleted || currentQuestion == null) {
+          liveState = AiLiveState.completed;
+          notifyListeners();
+        } else {
+          liveState = AiLiveState.childTurn;
+          notifyListeners();
+          final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
+              ? currentQuestion!.questionAudioText
+              : currentQuestion!.questionText;
+          await _activeService.speak(speakText);
+          if (_isDisposed) return null;
+          liveState = AiLiveState.childTurn;
+          notifyListeners();
+          _startChildTurnReminder();
+        }
       } else {
-        liveState = AiLiveState.childTurn;
-        notifyListeners();
-        // Auto-speak the next question
-        final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
-            ? currentQuestion!.questionAudioText
-            : currentQuestion!.questionText;
-        await _activeService.speak(speakText);
-        if (_isDisposed) return null;
+        // ── RETRY (or waiting for skip): keep current question ──
+        _currentAttemptNo++;
+        if (kDebugMode) {
+          debugPrint('[AI Conversation Retry] Retrying question $currentIndex, attempt $_currentAttemptNo, canSkip=${lastResult!.canSkip}');
+        }
         liveState = AiLiveState.childTurn;
         notifyListeners();
         _startChildTurnReminder();
+        // NOTE: canSkip is read by the UI to show "Bỏ qua câu này" button.
+        // We do NOT auto-skip here. Only user action triggers skip.
       }
+
       return lastResult;
     } catch (e) {
       if (_isDisposed) return null;
@@ -444,7 +486,6 @@ class AiConversationLiveController extends ChangeNotifier {
     _cancelSilenceTimer();
     _silenceTimer = Timer(const Duration(seconds: 15), () {
       if (liveState == AiLiveState.listening) {
-        // Child has been silent too long
         liveState = AiLiveState.childTurn;
         notifyListeners();
         _activeService.stopListening();
@@ -483,6 +524,41 @@ class AiConversationLiveController extends ChangeNotifier {
     liveState = AiLiveState.childTurn;
     notifyListeners();
     _startChildTurnReminder();
+  }
+
+  /// Skip current question — only call when user taps "Bỏ qua câu này"
+  void skipCurrentQuestion() {
+    // We don't actually call backend skip here. We just advance the index.
+    // The backend will mark it as SKIPPED when the session completes.
+    _currentAttemptNo = 1;
+    if (currentIndex < questions.length - 1) {
+      currentIndex += 1;
+      liveState = AiLiveState.childTurn;
+      notifyListeners();
+      // Speak the next question
+      _speakCurrentQuestion();
+    } else {
+      liveState = AiLiveState.completed;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _speakCurrentQuestion() async {
+    if (currentQuestion == null) return;
+    final speakText = currentQuestion!.questionAudioText.trim().isNotEmpty
+        ? currentQuestion!.questionAudioText
+        : currentQuestion!.questionText;
+    liveState = AiLiveState.aiSpeaking;
+    notifyListeners();
+    try {
+      await _activeService.speak(speakText);
+      if (_isDisposed) return;
+      liveState = AiLiveState.childTurn;
+      notifyListeners();
+      _startChildTurnReminder();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Speak question error: $e');
+    }
   }
 
   String _friendlyError(dynamic e) {

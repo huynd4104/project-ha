@@ -42,11 +42,12 @@ public class AiConversationQuestionRepository {
         return AiConversationMapper.question(jdbc.queryForMap("""
             INSERT INTO ai_conversation_questions(
               topic_id, question_text, question_audio_text, expected_answer,
-              accepted_keywords, alternative_answers, evaluation_type, hint_text,
+              accepted_keywords, alternative_answers, evaluation_type, advance_policy, allow_skip, skip_after_attempts,
+              retry_prompt_text, correct_feedback, hint_text,
               positive_feedback, retry_feedback, max_attempts,
               difficulty_level, sort_order, is_active
             )
-            VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
             """,
             topicId,
@@ -56,10 +57,15 @@ public class AiConversationQuestionRepository {
             Db.json(payload.getOrDefault("acceptedKeywords", List.of())),
             Db.json(payload.getOrDefault("alternativeAnswers", List.of())),
             payload.getOrDefault("evaluationType", "KEYWORD"),
+            payload.getOrDefault("advancePolicy", "ON_CORRECT_ONLY"),
+            payload.getOrDefault("allowSkip", true),
+            payload.get("skipAfterAttempts"),
+            payload.getOrDefault("retryPromptText", ""),
+            payload.getOrDefault("correctFeedback", ""),
             payload.getOrDefault("hintText", ""),
             payload.getOrDefault("positiveFeedback", ""),
             payload.getOrDefault("retryFeedback", ""),
-            payload.getOrDefault("maxAttempts", 2),
+            payload.getOrDefault("maxAttempts", 3),
             payload.getOrDefault("difficultyLevel", "BEGINNER"),
             payload.getOrDefault("sortOrder", 0),
             payload.getOrDefault("isActive", true)
@@ -76,6 +82,11 @@ public class AiConversationQuestionRepository {
               accepted_keywords = CAST(? AS jsonb),
               alternative_answers = CAST(? AS jsonb),
               evaluation_type = ?,
+              advance_policy = ?,
+              allow_skip = ?,
+              skip_after_attempts = ?,
+              retry_prompt_text = ?,
+              correct_feedback = ?,
               hint_text = ?,
               positive_feedback = ?,
               retry_feedback = ?,
@@ -92,10 +103,15 @@ public class AiConversationQuestionRepository {
             Db.json(payload.getOrDefault("acceptedKeywords", List.of())),
             Db.json(payload.getOrDefault("alternativeAnswers", List.of())),
             payload.getOrDefault("evaluationType", "KEYWORD"),
+            payload.getOrDefault("advancePolicy", "ON_CORRECT_ONLY"),
+            payload.getOrDefault("allowSkip", true),
+            payload.get("skipAfterAttempts"),
+            payload.getOrDefault("retryPromptText", ""),
+            payload.getOrDefault("correctFeedback", ""),
             payload.getOrDefault("hintText", ""),
             payload.getOrDefault("positiveFeedback", ""),
             payload.getOrDefault("retryFeedback", ""),
-            payload.getOrDefault("maxAttempts", 2),
+            payload.getOrDefault("maxAttempts", 3),
             payload.getOrDefault("difficultyLevel", "BEGINNER"),
             payload.getOrDefault("sortOrder", 0),
             payload.getOrDefault("isActive", true),

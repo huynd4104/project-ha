@@ -12,6 +12,12 @@ enum AiConversationEvaluationType {
     OPEN_ENDED
 }
 
+enum AiConversationAdvancePolicy {
+    ON_CORRECT_ONLY,
+    AFTER_MAX_ATTEMPTS,
+    MANUAL_SKIP_ONLY
+}
+
 enum AiConversationSessionStatus {
     CREATED,
     IN_PROGRESS,
@@ -53,11 +59,16 @@ record AiConversationQuestion(
     List<String> acceptedKeywords,
     List<String> alternativeAnswers,
     AiConversationEvaluationType evaluationType,
+    AiConversationAdvancePolicy advancePolicy,
+    boolean allowSkip,
+    Integer skipAfterAttempts,
+    String retryPromptText,
+    String correctFeedback,
+    String retryFeedback,
     String hintText,
     String positiveFeedback,
-    String retryFeedback,
-    int maxAttempts,
     String difficultyLevel,
+    int maxAttempts,
     int sortOrder,
     boolean isActive,
     OffsetDateTime createdAt,
@@ -147,7 +158,15 @@ record AiConversationEvaluationOutcome(
     double score,
     String normalizedAnswer,
     String feedback,
-    boolean needsPractice
+    String suggestedRetryText,
+    String reason,
+    boolean needsPractice,
+    boolean usedGemini,
+    String evaluationSource,
+    boolean shouldRetry,
+    boolean shouldAdvance,
+    boolean canSkip,
+    String advanceReason
 ) {}
 
 record AiLiveSessionConfig(

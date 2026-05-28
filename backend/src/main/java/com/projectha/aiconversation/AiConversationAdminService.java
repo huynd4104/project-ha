@@ -125,10 +125,15 @@ public class AiConversationAdminService {
         payload.put("acceptedKeywords", request.acceptedKeywords() == null ? List.of() : request.acceptedKeywords());
         payload.put("alternativeAnswers", request.alternativeAnswers() == null ? List.of() : request.alternativeAnswers());
         payload.put("evaluationType", request.evaluationType().toUpperCase(Locale.ROOT));
+        payload.put("advancePolicy", request.advancePolicy() != null ? request.advancePolicy().toUpperCase(Locale.ROOT) : "ON_CORRECT_ONLY");
+        payload.put("allowSkip", request.allowSkip() == null ? true : request.allowSkip());
+        payload.put("skipAfterAttempts", request.skipAfterAttempts() == null ? (request.maxAttempts() == null ? 3 : request.maxAttempts()) : request.skipAfterAttempts());
+        payload.put("retryPromptText", text(request.retryPromptText(), ""));
+        payload.put("correctFeedback", text(request.correctFeedback(), ""));
         payload.put("hintText", text(request.hintText(), ""));
         payload.put("positiveFeedback", text(request.positiveFeedback(), ""));
         payload.put("retryFeedback", text(request.retryFeedback(), ""));
-        payload.put("maxAttempts", request.maxAttempts() == null ? 2 : request.maxAttempts());
+        payload.put("maxAttempts", request.maxAttempts() == null ? 3 : request.maxAttempts());
         payload.put("difficultyLevel", text(request.difficultyLevel(), "BEGINNER"));
         payload.put("sortOrder", request.sortOrder() == null ? 0 : request.sortOrder());
         payload.put("isActive", request.isActive() == null || request.isActive());

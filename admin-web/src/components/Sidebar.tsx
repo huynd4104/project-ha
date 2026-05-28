@@ -47,7 +47,8 @@ const groups: NavGroup[] = [
       { to: "/nfc-tags", label: "Quản lý thẻ NFC", icon: "qr" },
       { to: "/technology/numbers", label: "Bộ số", icon: "activity" },
       { to: "/technology/shapes", label: "Bộ hình", icon: "activity" },
-      { to: "/technology/pecs", label: "PECS", icon: "activity" }
+      { to: "/technology/pecs", label: "PECS", icon: "activity" },
+      { to: "/ai-config", label: "Cấu hình AI", icon: "more" }
     ]
   },
   {

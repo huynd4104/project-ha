@@ -28,6 +28,12 @@ public final class AiConversationDtos {
         String questionText,
         String questionAudioText,
         String evaluationType,
+        String advancePolicy,
+        boolean allowSkip,
+        Integer skipAfterAttempts,
+        String retryPromptText,
+        String correctFeedback,
+        String retryFeedback,
         String hintText,
         int maxAttempts,
         String difficultyLevel,
@@ -63,7 +69,18 @@ public final class AiConversationDtos {
         String evaluationResult,
         double score,
         String aiFeedback,
-        String nextAction
+        String nextAction,
+        boolean shouldRetry,
+        boolean shouldAdvance,
+        boolean canSkip,
+        int attemptNo,
+        int maxAttempts,
+        UUID nextQuestionId,
+        boolean isSessionCompleted,
+        boolean usedGemini,
+        String evaluationSource,
+        String advanceReason,
+        String suggestedRetryText
     ) {}
 
     public record CompleteAiConversationSessionRequest(String reason) {}
@@ -197,9 +214,14 @@ public final class AiConversationDtos {
         List<String> acceptedKeywords,
         List<String> alternativeAnswers,
         String evaluationType,
+        String advancePolicy,
+        Boolean allowSkip,
+        Integer skipAfterAttempts,
+        String retryPromptText,
+        String correctFeedback,
+        String retryFeedback,
         String hintText,
         String positiveFeedback,
-        String retryFeedback,
         Integer maxAttempts,
         String difficultyLevel,
         Integer sortOrder,
@@ -215,9 +237,14 @@ public final class AiConversationDtos {
         List<String> acceptedKeywords,
         List<String> alternativeAnswers,
         String evaluationType,
+        String advancePolicy,
+        boolean allowSkip,
+        Integer skipAfterAttempts,
+        String retryPromptText,
+        String correctFeedback,
+        String retryFeedback,
         String hintText,
         String positiveFeedback,
-        String retryFeedback,
         int maxAttempts,
         String difficultyLevel,
         int sortOrder,
@@ -246,4 +273,36 @@ public final class AiConversationDtos {
             return isActive != null ? isActive : Boolean.TRUE.equals(active);
         }
     }
+
+    public record AdminGeminiConfigResponse(
+        String provider,
+        boolean evaluationEnabled,
+        String semanticModel,
+        int timeoutMs,
+        boolean apiKeyConfigured,
+        String maskedApiKey,
+        OffsetDateTime lastTestedAt,
+        String lastTestStatus,
+        String lastTestMessage
+    ) {}
+
+    public record AdminGeminiConfigRequest(
+        boolean evaluationEnabled,
+        String semanticModel,
+        int timeoutMs,
+        String apiKey,
+        boolean clearApiKey
+    ) {}
+
+    public record AdminAiConfigTestRequest(
+        String apiKey,
+        String semanticModel,
+        Integer timeoutMs
+    ) {}
+
+    public record AdminAiConfigTestResponse(
+        boolean success,
+        String message,
+        String model
+    ) {}
 }

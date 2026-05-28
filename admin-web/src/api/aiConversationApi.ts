@@ -18,6 +18,8 @@ export interface AiConversationTopic {
   updatedAt?: string;
 }
 
+export type AiConversationAdvancePolicy = "ON_CORRECT_ONLY" | "AFTER_MAX_ATTEMPTS" | "MANUAL_SKIP_ONLY";
+
 export interface AiConversationQuestion {
   id: string;
   topicId: string;
@@ -27,6 +29,11 @@ export interface AiConversationQuestion {
   acceptedKeywords: string[];
   alternativeAnswers: string[];
   evaluationType: AiConversationEvaluationType;
+  advancePolicy: AiConversationAdvancePolicy;
+  allowSkip: boolean;
+  skipAfterAttempts?: number | null;
+  retryPromptText?: string | null;
+  correctFeedback?: string | null;
   hintText?: string | null;
   positiveFeedback?: string | null;
   retryFeedback?: string | null;

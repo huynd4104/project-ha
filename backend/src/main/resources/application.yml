@@ -48,10 +48,17 @@ project-ha:
     mock-voice-provider: ${ENABLE_MOCK_VOICE_PROVIDER:true}
     voice-provider: ${VOICE_PROVIDER:mock}
   ai:
+    config:
+      # encryption-secret is defined in project-ha.ai.config
+      encryption-secret: ${AI_CONFIG_ENCRYPTION_SECRET:}
     gemini:
       api-key: ${GEMINI_API_KEY:}
       live-model: ${GEMINI_LIVE_MODEL:gemini-3.1-flash-live-preview}
       live-enabled: ${GEMINI_LIVE_ENABLED:false}
+      evaluation-enabled: ${GEMINI_EVALUATION_ENABLED:false}
+      evaluation-model: ${GEMINI_TEXT_MODEL:gemini-3.5-flash}
+      evaluation-timeout-ms: ${GEMINI_EVALUATION_TIMEOUT_MS:8000}
+      # encryption-secret is defined in project-ha.ai.config
       response-language: ${GEMINI_LIVE_RESPONSE_LANGUAGE:vi-VN}
       session-duration-seconds: ${GEMINI_LIVE_SESSION_DURATION_SECONDS:180}
       token-ttl-seconds: ${GEMINI_LIVE_TOKEN_TTL_SECONDS:300}

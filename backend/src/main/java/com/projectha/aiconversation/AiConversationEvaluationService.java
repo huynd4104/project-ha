@@ -4,23 +4,166 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AiConversationEvaluationService {
+    private static final Logger log = LoggerFactory.getLogger(AiConversationEvaluationService.class);
+
+    private final GeminiEvaluationService geminiEvaluationService;
+
+    public AiConversationEvaluationService(GeminiEvaluationService geminiEvaluationService) {
+        this.geminiEvaluationService = geminiEvaluationService;
+    }
+
+    /**
+     * MAIN ENTRY: Evaluate a transcript against a question.
+     * Flow:
+     *  1. Normalize
+     *  2. Check "Don't know" HARD RULE (before Gemini)
+     *  3. Evaluate by type (Gemini may be called inside SEMANTIC)
+     *  4. Override: re-check "Don't know" AFTER Gemini (in case Gemini returns PARTIALLY_CORRECT)
+     */
     public AiConversationEvaluationOutcome evaluate(AiConversationQuestion question, String transcript) {
         String normalized = normalize(transcript);
+
+        // Blank transcript → UNCLEAR
         if (normalized.isBlank()) {
-            return outcome(AiConversationEvaluationResult.UNCLEAR, 0, normalized, feedback(question, AiConversationEvaluationResult.UNCLEAR));
+            return buildOutcome(
+                AiConversationEvaluationResult.UNCLEAR, 0.0, normalized,
+                question, false, "LOCAL", "BLANK_TRANSCRIPT"
+            );
         }
 
-        return switch (question.evaluationType()) {
-            case EXACT -> evaluateExact(question, normalized);
-            case KEYWORD -> evaluateKeyword(question, normalized);
-            case SEMANTIC -> evaluateSemantic(question, normalized);
-            case OPEN_ENDED -> evaluateOpenEnded(question, normalized);
-        };
+        // ── STEP 1: Hard rule "Don't know" — run BEFORE Gemini ──
+        if (isDontKnowAnswer(transcript, normalized)) {
+            return buildDontKnowOutcome(question, normalized, "DONT_KNOW_HARD_RULE_BEFORE_GEMINI");
+        }
+
+        // ── STEP 2: Evaluate by evaluation type ──
+        AiConversationEvaluationOutcome outcome;
+        switch (question.evaluationType()) {
+            case EXACT -> outcome = evaluateExact(question, normalized);
+            case KEYWORD -> outcome = evaluateKeyword(question, normalized);
+            case SEMANTIC -> outcome = evaluateSemantic(question, normalized);
+            case OPEN_ENDED -> outcome = evaluateOpenEnded(question, normalized);
+            default -> outcome = buildOutcome(
+                AiConversationEvaluationResult.UNCLEAR, 0.0, normalized,
+                question, false, "LOCAL", "UNKNOWN_EVALUATION_TYPE"
+            );
+        }
+
+        // ── STEP 3: Override AFTER Gemini — safety net ──
+        if (isDontKnowAnswer(transcript, normalized)) {
+            if (outcome.result() == AiConversationEvaluationResult.PARTIALLY_CORRECT
+                || outcome.result() == AiConversationEvaluationResult.CORRECT) {
+                log.info("[Evaluation] Overriding {} to INCORRECT for 'Don't know' answer (questionId={})",
+                    outcome.result(), question.id());
+                return buildDontKnowOutcome(question, normalized, "DONT_KNOW_HARD_RULE_OVERRIDE_AFTER_GEMINI");
+            }
+        }
+
+        return outcome;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  HARD RULE: "Don't know" answer detection
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Detect "Don't know" answers in Vietnamese.
+     * This is a HARD rule — these answers are NEVER PARTIALLY_CORRECT or CORRECT.
+     *
+     * Covers:
+     *  - "không biết"
+     *  - "con không biết", "em không biết", "cháu không biết"
+     *  - "không ạ", "không"
+     *  - "chịu", "con chịu", "em chịu"
+     *  - Empty / too short (after normalization)
+     */
+    private boolean isDontKnowAnswer(String rawTranscript, String normalized) {
+        if (normalized == null || normalized.isBlank()) return true;
+
+        // Strip common prefixes like "con", "em", "cháu", "chị"
+        String stripped = normalized
+            .replaceAll("^(con|em|ch\\u00e1u|ch\\u1ecb)\\s+", "")
+            .trim();
+
+        // Exact or near-exact matches
+        List<String> dontKnowPatterns = List.of(
+            "khong biet",
+            "khong",
+            "khong a",
+            "chiu",
+            "kh hiet",
+            "khong hiet",
+            "khong biet a",
+            "chua biet",
+            "chua hieu",
+            "chua nghe ro",
+            "hong biet",
+            "hk biet",
+            "kbiet"
+        );
+
+        for (String pattern : dontKnowPatterns) {
+            if (stripped.equals(pattern) || normalized.equals(pattern)) {
+                return true;
+            }
+        }
+
+        // Fallback: if the transcript is very short and contains "khong" or "chua"
+        // (e.g., "không có", "không ạ", "chưa") → treat as don't-know
+        if (stripped.length() <= 8) {
+            if (stripped.startsWith("khong") || stripped.startsWith("chua") || stripped.equals("hong")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build the standard "Don't know" outcome.
+     * Result: INCORRECT, Score: 0.1, Feedback: suggestion to try the expected answer.
+     */
+    private AiConversationEvaluationOutcome buildDontKnowOutcome(
+        AiConversationQuestion question, String normalized, String reason
+    ) {
+        String expectedAnswer = question.expectedAnswer() != null ? question.expectedAnswer().trim() : "";
+        String feedback;
+        String suggestedRetryText;
+
+        if (!expectedAnswer.isEmpty()) {
+            feedback = "Không sao đâu, con thử nói: " + expectedAnswer + " nhé.";
+            suggestedRetryText = expectedAnswer;
+        } else {
+            feedback = "Không sao đâu, con thử nói lại nhé.";
+            suggestedRetryText = "";
+        }
+
+        return new AiConversationEvaluationOutcome(
+            AiConversationEvaluationResult.INCORRECT,
+            0.1,
+            normalized,
+            feedback,
+            suggestedRetryText,
+            reason,
+            true,
+            false,    // usedGemini
+            "LOCAL",  // evaluationSource
+            false,    // shouldRetry  (will be overridden by AiConversationService)
+            false,    // shouldAdvance
+            false,    // canSkip
+            "DONT_KNOW"
+        );
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Evaluation by type
+    // ═══════════════════════════════════════════════════════════════════
 
     public String normalize(String value) {
         String text = Normalizer.normalize(value == null ? "" : value, Normalizer.Form.NFD)
@@ -38,10 +181,17 @@ public class AiConversationEvaluationService {
         answers.add(question.expectedAnswer());
         answers.addAll(question.alternativeAnswers());
         boolean correct = answers.stream().map(this::normalize).filter(s -> !s.isBlank()).anyMatch(normalized::equals);
-        if (correct) return outcome(AiConversationEvaluationResult.CORRECT, 1, normalized, feedback(question, AiConversationEvaluationResult.CORRECT));
+        if (correct) {
+            return buildOutcome(AiConversationEvaluationResult.CORRECT, 1.0, normalized,
+                question, false, "LOCAL", "EXACT_MATCH");
+        }
         boolean near = answers.stream().map(this::normalize).filter(s -> !s.isBlank()).anyMatch(answer -> closeEnough(normalized, answer));
-        if (near) return outcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.6, normalized, feedback(question, AiConversationEvaluationResult.PARTIALLY_CORRECT));
-        return outcome(AiConversationEvaluationResult.INCORRECT, 0, normalized, feedback(question, AiConversationEvaluationResult.INCORRECT));
+        if (near) {
+            return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.6, normalized,
+                question, false, "LOCAL", "EXACT_NEAR_MATCH");
+        }
+        return buildOutcome(AiConversationEvaluationResult.INCORRECT, 0.0, normalized,
+            question, true, "LOCAL", "EXACT_NO_MATCH");
     }
 
     private AiConversationEvaluationOutcome evaluateKeyword(AiConversationQuestion question, String normalized) {
@@ -50,36 +200,133 @@ public class AiConversationEvaluationService {
             keywords = List.of(normalize(question.expectedAnswer()));
         }
         boolean correct = keywords.stream().anyMatch(normalized::contains);
-        if (correct) return outcome(AiConversationEvaluationResult.CORRECT, 1, normalized, feedback(question, AiConversationEvaluationResult.CORRECT));
+        if (correct) {
+            return buildOutcome(AiConversationEvaluationResult.CORRECT, 1.0, normalized,
+                question, false, "LOCAL", "KEYWORD_MATCH");
+        }
         boolean partial = keywords.stream().anyMatch(keyword -> keywordTokens(keyword).stream().anyMatch(token -> token.length() >= 3 && normalized.contains(token)));
-        if (partial) return outcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.55, normalized, feedback(question, AiConversationEvaluationResult.PARTIALLY_CORRECT));
-        return outcome(AiConversationEvaluationResult.INCORRECT, 0, normalized, feedback(question, AiConversationEvaluationResult.INCORRECT));
+        if (partial) {
+            return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.55, normalized,
+                question, true, "LOCAL", "KEYWORD_PARTIAL");
+        }
+        return buildOutcome(AiConversationEvaluationResult.INCORRECT, 0.0, normalized,
+            question, true, "LOCAL", "KEYWORD_NO_MATCH");
     }
 
     private AiConversationEvaluationOutcome evaluateSemantic(AiConversationQuestion question, String normalized) {
+        boolean usedGemini = false;
+        String evalSource = "LOCAL";
+        String evalReason = "FALLBACK_LOCAL";
+
+        // Try Gemini evaluation first
+        if (geminiEvaluationService != null) {
+            try {
+                GeminiEvaluationService.GeminiEvaluationResult geminiResult = geminiEvaluationService.evaluate(question, normalized);
+                if (geminiResult != null) {
+                    usedGemini = true;
+                    evalSource = "GEMINI";
+                    evalReason = "GEMINI_SUCCESS";
+
+                    String feedbackText = geminiResult.feedback();
+                    if (feedbackText != null && !feedbackText.isBlank()) {
+                        if (isEnglish(feedbackText)) {
+                            feedbackText = feedback(question, geminiResult.result());
+                        }
+                        return buildOutcomeWithFeedback(
+                            geminiResult.result(), geminiResult.score(), normalized,
+                            feedbackText, geminiResult.reason(),
+                            question, usedGemini, evalSource, evalReason
+                        );
+                    }
+                }
+            } catch (Exception e) {
+                evalReason = "GEMINI_ERROR: " + e.getMessage();
+                log.debug("Gemini evaluation failed for questionId: {}, falling back to local: {}",
+                    question.id(), e.getMessage());
+            }
+        }
+
+        // Fallback to local keyword evaluation
         AiConversationEvaluationOutcome keyword = evaluateKeyword(question, normalized);
         if (keyword.result() == AiConversationEvaluationResult.CORRECT || keyword.result() == AiConversationEvaluationResult.PARTIALLY_CORRECT) {
-            return keyword;
+            return new AiConversationEvaluationOutcome(
+                keyword.result(), keyword.score(), normalized, keyword.feedback(),
+                keyword.suggestedRetryText(), evalReason, keyword.needsPractice(),
+                usedGemini, evalSource, false, false, false, "LOCAL_KEYWORD"
+            );
         }
+
+        // If transcript has content (>= 4 chars), give partial credit
         if (normalized.length() >= 4) {
-            return outcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.5, normalized, feedback(question, AiConversationEvaluationResult.PARTIALLY_CORRECT));
+            return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.5, normalized,
+                question, true, evalSource, "LOCAL_SEMANTIC_PARTIAL");
         }
-        return keyword;
+
+        return new AiConversationEvaluationOutcome(
+            keyword.result(), keyword.score(), normalized, keyword.feedback(),
+            keyword.suggestedRetryText(), evalReason, keyword.needsPractice(),
+            usedGemini, evalSource, false, false, false, "LOCAL_KEYWORD_FALLBACK"
+        );
+    }
+
+    private boolean isEnglish(String text) {
+        if (text == null || text.isBlank()) return false;
+        String lower = text.toLowerCase();
+        return lower.contains("good") || lower.contains("correct") || lower.contains("try") ||
+               lower.contains("again") || lower.contains("answer") || lower.contains("well");
     }
 
     private AiConversationEvaluationOutcome evaluateOpenEnded(AiConversationQuestion question, String normalized) {
         if (normalized.length() < 2) {
-            return outcome(AiConversationEvaluationResult.UNCLEAR, 0, normalized, feedback(question, AiConversationEvaluationResult.UNCLEAR));
+            return buildOutcome(AiConversationEvaluationResult.UNCLEAR, 0.0, normalized,
+                question, false, "LOCAL", "OPEN_ENDED_TOO_SHORT");
         }
         List<String> keywords = question.acceptedKeywords().stream().map(this::normalize).filter(s -> !s.isBlank()).toList();
         if (!keywords.isEmpty() && keywords.stream().noneMatch(normalized::contains)) {
-            return outcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.7, normalized, feedback(question, AiConversationEvaluationResult.PARTIALLY_CORRECT));
+            return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.7, normalized,
+                question, true, "LOCAL", "OPEN_ENDED_NO_KEYWORDS");
         }
-        return outcome(AiConversationEvaluationResult.CORRECT, 1, normalized, feedback(question, AiConversationEvaluationResult.CORRECT));
+        return buildOutcome(AiConversationEvaluationResult.CORRECT, 1.0, normalized,
+            question, false, "LOCAL", "OPEN_ENDED_MATCH");
     }
 
-    private AiConversationEvaluationOutcome outcome(AiConversationEvaluationResult result, double score, String normalized, String feedback) {
-        return new AiConversationEvaluationOutcome(result, score, normalized, feedback, result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR);
+    // ═══════════════════════════════════════════════════════════════════
+    //  Outcome builders
+    // ═══════════════════════════════════════════════════════════════════
+
+    private AiConversationEvaluationOutcome buildOutcome(
+        AiConversationEvaluationResult result, double score, String normalized,
+        AiConversationQuestion question, boolean needsPractice,
+        String evaluationSource, String reason
+    ) {
+        return new AiConversationEvaluationOutcome(
+            result, score, normalized,
+            feedback(question, result),
+            result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR
+                ? question.expectedAnswer() : "",
+            reason,
+            needsPractice,
+            false, // usedGemini
+            evaluationSource,
+            false, false, false, "" // will be set by AiConversationService
+        );
+    }
+
+    private AiConversationEvaluationOutcome buildOutcomeWithFeedback(
+        AiConversationEvaluationResult result, double score, String normalized,
+        String feedbackText, String reason,
+        AiConversationQuestion question, boolean usedGemini, String evalSource, String evalReason
+    ) {
+        return new AiConversationEvaluationOutcome(
+            result, score, normalized,
+            feedbackText,
+            result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR
+                ? question.expectedAnswer() : "",
+            reason,
+            result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR,
+            usedGemini, evalSource,
+            false, false, false, "" // will be set by AiConversationService
+        );
     }
 
     private String feedback(AiConversationQuestion question, AiConversationEvaluationResult result) {

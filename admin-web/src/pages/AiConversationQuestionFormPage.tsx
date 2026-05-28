@@ -25,11 +25,16 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
   const [expectedAnswer, setExpectedAnswer] = useState("");
   const [acceptedKeywords, setAcceptedKeywords] = useState("");
   const [alternativeAnswers, setAlternativeAnswers] = useState("");
-  const [evaluationType, setEvaluationType] = useState<AiConversationEvaluationType>("KEYWORD");
+  const [evaluationType, setEvaluationType] = useState<AiConversationEvaluationType>("SEMANTIC");
+  const [advancePolicy, setAdvancePolicy] = useState<"ON_CORRECT_ONLY" | "AFTER_MAX_ATTEMPTS" | "MANUAL_SKIP_ONLY">("ON_CORRECT_ONLY");
+  const [allowSkip, setAllowSkip] = useState(true);
+  const [skipAfterAttempts, setSkipAfterAttempts] = useState("3");
+  const [retryPromptText, setRetryPromptText] = useState("");
+  const [correctFeedback, setCorrectFeedback] = useState("");
   const [hintText, setHintText] = useState("");
   const [positiveFeedback, setPositiveFeedback] = useState("");
   const [retryFeedback, setRetryFeedback] = useState("");
-  const [maxAttempts, setMaxAttempts] = useState("2");
+  const [maxAttempts, setMaxAttempts] = useState("3");
   const [difficultyLevel, setDifficultyLevel] = useState("BEGINNER");
   const [sortOrder, setSortOrder] = useState("0");
   const [isActive, setIsActive] = useState(true);
@@ -43,10 +48,15 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     setAcceptedKeywords((question?.acceptedKeywords ?? []).join("\n"));
     setAlternativeAnswers((question?.alternativeAnswers ?? []).join("\n"));
     setEvaluationType(question?.evaluationType ?? "KEYWORD");
+    setAdvancePolicy(question?.advancePolicy ?? "ON_CORRECT_ONLY");
+    setAllowSkip(question?.allowSkip ?? true);
+    setSkipAfterAttempts(`${question?.skipAfterAttempts ?? 3}`);
+    setRetryPromptText(question?.retryPromptText ?? "");
+    setCorrectFeedback(question?.correctFeedback ?? "");
     setHintText(question?.hintText ?? "");
     setPositiveFeedback(question?.positiveFeedback ?? "");
     setRetryFeedback(question?.retryFeedback ?? "");
-    setMaxAttempts(`${question?.maxAttempts ?? 2}`);
+    setMaxAttempts(`${question?.maxAttempts ?? 3}`);
     setDifficultyLevel(question?.difficultyLevel ?? "BEGINNER");
     setSortOrder(`${question?.sortOrder ?? 0}`);
     setIsActive(question?.isActive ?? true);
@@ -88,6 +98,11 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
         acceptedKeywords: parseList(acceptedKeywords),
         alternativeAnswers: parseList(alternativeAnswers),
         evaluationType,
+        advancePolicy,
+        allowSkip,
+        skipAfterAttempts: allowSkip ? Number(skipAfterAttempts) : null,
+        retryPromptText: retryPromptText.trim() || null,
+        correctFeedback: correctFeedback.trim() || null,
         hintText: hintText.trim() || null,
         positiveFeedback: positiveFeedback.trim() || null,
         retryFeedback: retryFeedback.trim() || null,
@@ -149,9 +164,10 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
                     {evaluationTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                   {errors.evaluationType && <span className="error-msg">{errors.evaluationType}</span>}
+                  {evaluationType === "SEMANTIC" && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>AI sẽ hiểu ý nghĩa câu trả lời của bé, không yêu cầu bé nói đúng từng chữ.</span>}
                 </div>
                 <div className="field">
-                  <label>Đáp án kỳ vọng <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Dành cho Semantic/Exact)</span></label>
+                  <label>Đáp án kỳ vọng <span style={{ color: "red" }}>*</span></label>
                   <input
                     type="text"
                     value={expectedAnswer}
@@ -227,7 +243,56 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
             {/* Section D: Cấu hình hệ thống */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                d. Cấu hình hệ thống
+                d. Cách chuyển sang câu tiếp theo
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontWeight: 600 }}>Chính sách chuyển câu</label>
+                {[
+                  { value: "ON_CORRECT_ONLY", label: "Chỉ chuyển khi bé trả lời đúng", desc: "AI sẽ tiếp tục gợi ý và cho bé nói lại cho đến khi câu trả lời phù hợp. Đây là lựa chọn khuyến nghị." },
+                  { value: "AFTER_MAX_ATTEMPTS", label: "Chuyển sau số lần thử trước khi gợi ý", desc: "Sau số lần thử đã đặt, hệ thống sẽ chuyển câu tiếp theo dù bé chưa trả lời đúng. Chỉ dùng nếu muốn phiên ngắn." },
+                  { value: "MANUAL_SKIP_ONLY", label: "Chỉ chuyển khi bấm bỏ qua", desc: "AI không tự chuyển câu. Bé/phụ huynh cần bấm bỏ qua nếu muốn sang câu khác." }
+                ].map((option) => (
+                  <label key={option.value} style={{ display: "flex", flexDirection: "column", padding: "12px", border: `1px solid ${advancePolicy === option.value ? "var(--primary)" : "var(--border)"}`, borderRadius: "6px", cursor: "pointer", background: advancePolicy === option.value ? "var(--bg-subtle)" : "white" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <input
+                        type="radio"
+                        name="advancePolicy"
+                        value={option.value}
+                        checked={advancePolicy === option.value}
+                        onChange={() => setAdvancePolicy(option.value as typeof advancePolicy)}
+                      />
+                      <span style={{ fontWeight: 500 }}>{option.label}</span>
+                    </span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "24px", marginTop: "4px" }}>{option.desc}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
+                <ToggleSwitch
+                  id="allowSkip"
+                  label="Cho phép bỏ qua câu hỏi"
+                  checked={allowSkip}
+                  onChange={setAllowSkip}
+                />
+                {allowSkip && (
+                  <div className="field" style={{ marginLeft: "24px" }}>
+                    <label>Hiện nút bỏ qua sau số lần thử</label>
+                    <input type="number" min="1" value={skipAfterAttempts} onChange={(event) => setSkipAfterAttempts(event.target.value)} style={{ maxWidth: "150px" }}/>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Nếu bé chưa trả lời đúng sau số lần này, app sẽ hiện nút Bỏ qua.</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="field" style={{ marginTop: "16px" }}>
+                <label>Số lần thử trước khi gợi ý mạnh hơn</label>
+                <input type="number" min="1" value={maxAttempts} onChange={(event) => setMaxAttempts(event.target.value)} style={{ maxWidth: "150px" }}/>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Nếu bé chưa trả lời đúng sau số lần này, hệ thống sẽ gợi ý rõ hơn hoặc cho phép bỏ qua, nhưng không tự chuyển câu nếu đang chọn chính sách "Chỉ chuyển khi trả lời đúng".</span>
+                {errors.maxAttempts && <span className="error-msg">{errors.maxAttempts}</span>}
+              </div>
+
+              <h3 style={{ margin: "20px 0 0 0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
+                e. Cấu hình khác
               </h3>
               <div className="form-grid">
                 <div className="field">
@@ -237,11 +302,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
                     <option value="BASIC">Trung bình (Basic)</option>
                     <option value="INTERMEDIATE">Khó (Intermediate)</option>
                   </select>
-                </div>
-                <div className="field">
-                  <label>Số lần thử tối đa</label>
-                  <input type="number" min="1" value={maxAttempts} onChange={(event) => setMaxAttempts(event.target.value)} />
-                  {errors.maxAttempts && <span className="error-msg">{errors.maxAttempts}</span>}
                 </div>
                 <div className="field">
                   <label>Thứ tự sắp xếp</label>

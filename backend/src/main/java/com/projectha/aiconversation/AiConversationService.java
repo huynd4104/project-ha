@@ -17,12 +17,16 @@ import com.projectha.common.BadRequestException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiConversationService {
+    private static final Logger log = LoggerFactory.getLogger(AiConversationService.class);
+
     private final ChildRepository childRepository;
     private final AiConversationTopicRepository topicRepository;
     private final AiConversationQuestionRepository questionRepository;
@@ -134,19 +138,174 @@ public class AiConversationService {
         if (session.topicId() != null && !session.topicId().equals(question.topicId())) {
             throw new BadRequestException("Câu hỏi không thuộc chủ đề của phiên.");
         }
+
+        int maxAttempts = question.maxAttempts() > 0 ? question.maxAttempts() : 2;
+        int attemptNo = request.attemptNo() != null ? Math.max(1, request.attemptNo()) : 1;
+
+        // ══ EVALUATE ══
         AiConversationEvaluationOutcome outcome = evaluationService.evaluate(question, request.childTranscript());
+
+        // ══ ADVANCE POLICY ══
+        AiConversationAdvancePolicy policy = question.advancePolicy() != null
+            ? question.advancePolicy()
+            : AiConversationAdvancePolicy.ON_CORRECT_ONLY;
+
+        boolean allowSkip = question.allowSkip();
+        Integer skipAfterAttempts = question.skipAfterAttempts();
+        int effectiveSkipAfterAttempts = skipAfterAttempts != null ? skipAfterAttempts : maxAttempts;
+        boolean canSkip = allowSkip && attemptNo >= effectiveSkipAfterAttempts;
+
+        boolean shouldRetry = false;
+        boolean shouldAdvance = false;
+        String advanceReason = "";
+
+        switch (policy) {
+            case ON_CORRECT_ONLY -> {
+                switch (outcome.result()) {
+                    case CORRECT -> {
+                        shouldRetry = false;
+                        shouldAdvance = true;
+                        advanceReason = "CORRECT";
+                    }
+                    case PARTIALLY_CORRECT -> {
+                        // If score is high enough (>= 0.75), allow advance
+                        if (outcome.score() >= 0.75) {
+                            shouldRetry = false;
+                            shouldAdvance = true;
+                            advanceReason = "PARTIALLY_CORRECT_HIGH_SCORE";
+                        } else {
+                            shouldRetry = true;
+                            shouldAdvance = false;
+                            advanceReason = "PARTIALLY_CORRECT_LOW_SCORE";
+                        }
+                    }
+                    case INCORRECT, UNCLEAR -> {
+                        // ON_CORRECT_ONLY: NEVER auto-advance, even after maxAttempts
+                        shouldRetry = true;
+                        shouldAdvance = false;
+                        advanceReason = "NOT_CORRECT_ON_CORRECT_ONLY";
+                        // canSkip is already computed above based on allowSkip + skipAfterAttempts
+                    }
+                    case SKIPPED -> {
+                        shouldRetry = false;
+                        shouldAdvance = true;
+                        advanceReason = "SKIPPED";
+                    }
+                }
+            }
+            case AFTER_MAX_ATTEMPTS -> {
+                switch (outcome.result()) {
+                    case CORRECT, SKIPPED -> {
+                        shouldRetry = false;
+                        shouldAdvance = true;
+                        advanceReason = outcome.result() == AiConversationEvaluationResult.CORRECT
+                            ? "CORRECT" : "SKIPPED";
+                    }
+                    default -> {
+                        if (attemptNo >= maxAttempts) {
+                            shouldRetry = false;
+                            shouldAdvance = true;
+                            advanceReason = "AFTER_MAX_ATTEMPTS";
+                        } else {
+                            shouldRetry = true;
+                            shouldAdvance = false;
+                            advanceReason = "AFTER_MAX_ATTEMPTS_NOT_YET";
+                        }
+                    }
+                }
+            }
+            case MANUAL_SKIP_ONLY -> {
+                switch (outcome.result()) {
+                    case CORRECT, SKIPPED -> {
+                        shouldRetry = false;
+                        shouldAdvance = true;
+                        advanceReason = outcome.result() == AiConversationEvaluationResult.CORRECT
+                            ? "CORRECT" : "SKIPPED";
+                    }
+                    default -> {
+                        shouldRetry = true;
+                        shouldAdvance = false;
+                        advanceReason = "MANUAL_SKIP_ONLY";
+                        canSkip = allowSkip; // Always allow skip if configured
+                    }
+                }
+            }
+        }
+
+        // ══ DETERMINE NEXT QUESTION ══
+        UUID nextQuestionId = null;
+        boolean isSessionCompleted = false;
+
+        if (shouldAdvance) {
+            List<AiConversationQuestion> questions = questionRepository.findActiveByTopic(session.topicId());
+            int currentIndex = -1;
+            for (int i = 0; i < questions.size(); i++) {
+                if (questions.get(i).id().equals(question.id())) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+            if (currentIndex >= 0 && currentIndex < questions.size() - 1) {
+                nextQuestionId = questions.get(currentIndex + 1).id();
+            } else {
+                isSessionCompleted = true;
+            }
+        }
+
+        // ══ SAVE TURN ══
         AiConversationTurn turn = turnRepository.create(
             session.id(),
             question,
             request.childTranscript(),
             outcome,
             request.hintUsed() != null && request.hintUsed(),
-            request.attemptNo() == null ? 1 : Math.max(1, request.attemptNo())
+            attemptNo
         );
-        String nextAction = outcome.result() == AiConversationEvaluationResult.CORRECT
-            || outcome.result() == AiConversationEvaluationResult.PARTIALLY_CORRECT
-            ? "CONTINUE"
-            : "RETRY_OR_HINT";
+
+        String nextAction = shouldAdvance ? "CONTINUE" : (canSkip ? "RETRY_OR_SKIP" : "RETRY_OR_HINT");
+
+        // ══ DEBUG LOG ══
+        log.info("[AI Turn Debug]\n" +
+            "questionId={}\n" +
+            "questionText={}\n" +
+            "evaluationType={}\n" +
+            "advancePolicy={}\n" +
+            "attemptNo={}\n" +
+            "maxAttempts={}\n" +
+            "allowSkip={}\n" +
+            "skipAfterAttempts={}\n" +
+            "usedGemini={}\n" +
+            "evaluationSource={}\n" +
+            "childTranscript={}\n" +
+            "evaluationResult={}\n" +
+            "score={}\n" +
+            "shouldRetry={}\n" +
+            "shouldAdvance={}\n" +
+            "canSkip={}\n" +
+            "advanceReason={}\n" +
+            "feedback={}\n" +
+            "suggestedRetryText={}",
+            question.id(),
+            question.questionText(),
+            question.evaluationType(),
+            policy,
+            attemptNo,
+            maxAttempts,
+            allowSkip,
+            effectiveSkipAfterAttempts,
+            outcome.usedGemini(),
+            outcome.evaluationSource(),
+            request.childTranscript(),
+            outcome.result(),
+            outcome.score(),
+            shouldRetry,
+            shouldAdvance,
+            canSkip,
+            advanceReason,
+            outcome.feedback(),
+            outcome.suggestedRetryText()
+        );
+
         return new SubmitAiConversationTurnResponse(
             turn.id(),
             session.id(),
@@ -154,7 +313,18 @@ public class AiConversationService {
             outcome.result().name(),
             outcome.score(),
             outcome.feedback(),
-            nextAction
+            nextAction,
+            shouldRetry,
+            shouldAdvance,
+            canSkip,
+            attemptNo,
+            maxAttempts,
+            nextQuestionId,
+            isSessionCompleted,
+            outcome.usedGemini(),
+            outcome.evaluationSource(),
+            advanceReason,
+            outcome.suggestedRetryText()
         );
     }
 
