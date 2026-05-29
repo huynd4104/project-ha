@@ -269,18 +269,22 @@ CREATE TABLE math_questions (
   question_text TEXT NOT NULL,
   image_url TEXT,
   audio_url TEXT,
-  options JSONB NOT NULL DEFAULT '[]'::jsonb,
   correct_option TEXT NOT NULL DEFAULT 'A',
   explanation TEXT NOT NULL DEFAULT '',
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  expected_answer TEXT
+  expected_answer TEXT,
+  category TEXT,
+  option_a TEXT,
+  option_b TEXT,
+  option_c TEXT,
+  option_d TEXT
 );
 
 CREATE TABLE flashcards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
   front_text TEXT NOT NULL,
   back_text TEXT NOT NULL DEFAULT '',
   image_url TEXT,
