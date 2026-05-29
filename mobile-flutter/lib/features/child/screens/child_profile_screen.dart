@@ -36,6 +36,21 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
   bool uploadingPhoto = false;
   XFile? _pickedLocalFile;
 
+  // AI Support Profile Controllers
+  final nickname = TextEditingController();
+  final favoriteColors = TextEditingController();
+  final favoriteAnimals = TextEditingController();
+  final favoriteToys = TextEditingController();
+  final favoriteSongs = TextEditingController();
+  final favoriteActivities = TextEditingController();
+  final preferredPraise = TextEditingController();
+  final primaryCaregiver = TextEditingController();
+  final familyMembers = TextEditingController();
+  String communicationLevel = 'Chưa nói';
+  final commonTriggers = TextEditingController();
+  final calmingStrategies = TextEditingController();
+  bool loadingProfile = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +67,37 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
       note.text = child.note;
       avatarUrl = child.avatarUrl;
       avatarObjectKey = child.avatarObjectKey;
+      _loadDevelopmentProfile();
+    }
+  }
+
+  Future<void> _loadDevelopmentProfile() async {
+    final child = context.read<AppState>().activeChild;
+    if (child == null) return;
+    setState(() => loadingProfile = true);
+    try {
+      final repo = context.read<AppState>().childRepository;
+      final profile = await repo.getDevelopmentProfile(child.id);
+      setState(() {
+        nickname.text = profile.nickname;
+        favoriteColors.text = profile.favoriteColors;
+        favoriteAnimals.text = profile.favoriteAnimals;
+        favoriteToys.text = profile.favoriteToys;
+        favoriteSongs.text = profile.favoriteSongs;
+        favoriteActivities.text = profile.favoriteActivities;
+        preferredPraise.text = profile.preferredPraise;
+        primaryCaregiver.text = profile.primaryCaregiver;
+        familyMembers.text = profile.familyMembers;
+        communicationLevel = profile.communicationLevel.isNotEmpty ? profile.communicationLevel : 'Chưa nói';
+        commonTriggers.text = profile.commonTriggers;
+        calmingStrategies.text = profile.calmingStrategies;
+      });
+    } catch (e) {
+      debugPrint('Error loading development profile: $e');
+    } finally {
+      if (mounted) {
+        setState(() => loadingProfile = false);
+      }
     }
   }
 
@@ -61,6 +107,17 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     age.dispose();
     dailyDuration.dispose();
     note.dispose();
+    nickname.dispose();
+    favoriteColors.dispose();
+    favoriteAnimals.dispose();
+    favoriteToys.dispose();
+    favoriteSongs.dispose();
+    favoriteActivities.dispose();
+    preferredPraise.dispose();
+    primaryCaregiver.dispose();
+    familyMembers.dispose();
+    commonTriggers.dispose();
+    calmingStrategies.dispose();
     super.dispose();
   }
 
@@ -147,6 +204,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     final state = context.read<AppState>();
     setState(() => loading = true);
     final child = state.activeChild;
+    String targetChildId = '';
     try {
       if (child == null) {
         final newChild = await state.childRepository.create(
@@ -161,6 +219,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
           dailyDurationMinutes: int.parse(dailyDuration.text),
           coLearningMode: coLearningMode,
         );
+        targetChildId = newChild.id;
 
         if (_pickedLocalFile != null) {
           final fileBytes = await _pickedLocalFile!.readAsBytes();
@@ -171,6 +230,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
           );
         }
       } else {
+        targetChildId = child.id;
         await state.childRepository.update(
           child.copyWith(
             name: name.text,
@@ -187,6 +247,36 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
           ),
         );
       }
+
+      // Save development profile separately
+      if (targetChildId.isNotEmpty) {
+        try {
+          await state.childRepository.updateDevelopmentProfile(
+            targetChildId,
+            {
+              'nickname': nickname.text.trim(),
+              'favoriteColors': favoriteColors.text.trim(),
+              'favoriteAnimals': favoriteAnimals.text.trim(),
+              'favoriteToys': favoriteToys.text.trim(),
+              'favoriteSongs': favoriteSongs.text.trim(),
+              'favoriteActivities': favoriteActivities.text.trim(),
+              'preferredPraise': preferredPraise.text.trim(),
+              'primaryCaregiver': primaryCaregiver.text.trim(),
+              'familyMembers': familyMembers.text.trim(),
+              'communicationLevel': communicationLevel,
+              'commonTriggers': commonTriggers.text.trim(),
+              'calmingStrategies': calmingStrategies.text.trim(),
+            },
+          );
+        } catch (deve) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Hồ sơ AI chưa được cập nhật: $deve')),
+            );
+          }
+        }
+      }
+
       await state.refresh();
       if (mounted) context.go('/home');
     } catch (e) {
@@ -614,6 +704,163 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
             label: 'Ghi chú cho phụ huynh',
             icon: Icons.notes_rounded,
             maxLines: 3,
+          ),
+          const SizedBox(height: 24),
+          
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppColors.border, width: 1.5),
+            ),
+            color: Colors.white,
+            elevation: 0,
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                title: const Text(
+                  'Hồ sơ hỗ trợ AI',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppColors.text),
+                ),
+                subtitle: const Text(
+                  'Thông tin này giúp AI chọn ví dụ, lời khen và cách gợi ý phù hợp hơn cho bé. Có thể để trống.',
+                  style: TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.normal),
+                ),
+                childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Thông tin gọi tên',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  AppTextField(
+                    controller: nickname,
+                    label: 'Biệt danh / Tên gọi ở nhà',
+                    icon: Icons.face_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Sở thích của bé',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  AppTextField(
+                    controller: favoriteColors,
+                    label: 'Màu bé thích',
+                    icon: Icons.color_lens_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: favoriteAnimals,
+                    label: 'Con vật bé thích',
+                    icon: Icons.pets_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: favoriteToys,
+                    label: 'Đồ chơi bé thích',
+                    icon: Icons.toys_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: favoriteSongs,
+                    label: 'Bài hát bé thích',
+                    icon: Icons.music_note_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: favoriteActivities,
+                    label: 'Hoạt động bé thích',
+                    icon: Icons.sports_esports_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: preferredPraise,
+                    label: 'Cách khen bé thích',
+                    icon: Icons.thumb_up_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Gia đình',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  AppTextField(
+                    controller: primaryCaregiver,
+                    label: 'Người chăm sóc chính',
+                    icon: Icons.supervised_user_circle_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: familyMembers,
+                    label: 'Thành viên gia đình',
+                    icon: Icons.group_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Giao tiếp & cảm xúc cơ bản',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: communicationLevel,
+                    decoration: InputDecoration(
+                      labelText: 'Mức độ giao tiếp của bé',
+                      prefixIcon: const Icon(Icons.chat_bubble_rounded, color: AppColors.muted),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Chưa nói', child: Text('Chưa nói')),
+                      DropdownMenuItem(value: 'Bập bẹ', child: Text('Bập bẹ')),
+                      DropdownMenuItem(value: 'Từ đơn', child: Text('Từ đơn')),
+                      DropdownMenuItem(value: 'Cụm từ ngắn', child: Text('Cụm từ ngắn')),
+                      DropdownMenuItem(value: 'Câu ngắn', child: Text('Câu ngắn')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          communicationLevel = val;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: commonTriggers,
+                    label: 'Điều làm bé khó chịu/sợ',
+                    icon: Icons.warning_amber_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: calmingStrategies,
+                    label: 'Cách giúp bé bình tĩnh',
+                    icon: Icons.favorite_rounded,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           

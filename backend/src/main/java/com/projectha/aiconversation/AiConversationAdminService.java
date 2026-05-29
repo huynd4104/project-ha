@@ -100,6 +100,9 @@ public class AiConversationAdminService {
         if (type == AiConversationEvaluationType.KEYWORD && (request.acceptedKeywords() == null || request.acceptedKeywords().isEmpty())) {
             throw new BadRequestException("accepted_keywords không được rỗng khi evaluation_type là KEYWORD.");
         }
+        if (request.expectedAnswer() != null && (request.expectedAnswer().contains("{expectedAnswer}") || request.expectedAnswer().contains("[Đáp án mục tiêu]"))) {
+            throw new BadRequestException("Không thể dùng [Đáp án mục tiêu] trong chính trường Mục tiêu bé cần nói.");
+        }
     }
 
     private Map<String, Object> topicPayload(AdminAiConversationTopicRequest request) {

@@ -20,7 +20,9 @@ public class AiConversationTurnRepository {
         String childTranscript,
         AiConversationEvaluationOutcome outcome,
         boolean hintUsed,
-        int attemptNo
+        int attemptNo,
+        String expectedAnswerResolved,
+        List<String> acceptedKeywordsResolved
     ) {
         int turnOrder = nextTurnOrder(sessionId);
         return AiConversationMapper.turn(jdbc.queryForMap("""
@@ -36,8 +38,8 @@ public class AiConversationTurnRepository {
             question.id(),
             turnOrder,
             question.questionText(),
-            question.expectedAnswer(),
-            Db.json(question.acceptedKeywords()),
+            expectedAnswerResolved != null ? expectedAnswerResolved : question.expectedAnswer(),
+            Db.json(acceptedKeywordsResolved != null ? acceptedKeywordsResolved : question.acceptedKeywords()),
             childTranscript,
             outcome.normalizedAnswer(),
             outcome.result().name(),

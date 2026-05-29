@@ -19,3 +19,5 @@ export 'user_badge.dart';
 export 'user_mission_progress.dart';
 export 'xp_log.dart';
 export 'subscription_summary.dart';
+export 'child_development_profile.dart';
+

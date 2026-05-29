@@ -26,46 +26,107 @@ public class AiConversationEvaluationService {
      *  3. Evaluate by type (Gemini may be called inside SEMANTIC)
      *  4. Override: re-check "Don't know" AFTER Gemini (in case Gemini returns PARTIALLY_CORRECT)
      */
-    public AiConversationEvaluationOutcome evaluate(AiConversationQuestion question, String transcript) {
+    public AiConversationEvaluationOutcome evaluate(AiConversationQuestion question, String transcript, AiConversationRuntimeContext context, int attemptNo) {
         String normalized = normalize(transcript);
 
         // Blank transcript → UNCLEAR
         if (normalized.isBlank()) {
             return buildOutcome(
                 AiConversationEvaluationResult.UNCLEAR, 0.0, normalized,
-                question, false, "LOCAL", "BLANK_TRANSCRIPT"
+                question, context, false, "LOCAL", "BLANK_TRANSCRIPT"
             );
         }
 
-        // ── STEP 1: Hard rule "Don't know" — run BEFORE Gemini ──
-        if (isDontKnowAnswer(transcript, normalized)) {
-            return buildDontKnowOutcome(question, normalized, "DONT_KNOW_HARD_RULE_BEFORE_GEMINI");
+        boolean isDontKnow = isDontKnowAnswer(transcript, normalized);
+
+        // If it is "Don't know" and it is NOT SEMANTIC (or Gemini is not enabled), run the hard rule immediately:
+        boolean runGemini = (question.evaluationType() == AiConversationEvaluationType.SEMANTIC && geminiEvaluationService != null);
+        if (isDontKnow && !runGemini) {
+            return buildDontKnowOutcome(question, context, normalized, "DONT_KNOW_HARD_RULE_BEFORE_GEMINI");
         }
 
-        // ── STEP 2: Evaluate by evaluation type ──
+        // Evaluate by type
         AiConversationEvaluationOutcome outcome;
         switch (question.evaluationType()) {
-            case EXACT -> outcome = evaluateExact(question, normalized);
-            case KEYWORD -> outcome = evaluateKeyword(question, normalized);
-            case SEMANTIC -> outcome = evaluateSemantic(question, normalized);
-            case OPEN_ENDED -> outcome = evaluateOpenEnded(question, normalized);
+            case EXACT -> outcome = evaluateExact(question, context, normalized);
+            case KEYWORD -> outcome = evaluateKeyword(question, context, normalized);
+            case SEMANTIC -> outcome = evaluateSemantic(question, context, normalized, attemptNo);
+            case OPEN_ENDED -> outcome = evaluateOpenEnded(question, context, normalized);
             default -> outcome = buildOutcome(
                 AiConversationEvaluationResult.UNCLEAR, 0.0, normalized,
-                question, false, "LOCAL", "UNKNOWN_EVALUATION_TYPE"
+                question, context, false, "LOCAL", "UNKNOWN_EVALUATION_TYPE"
             );
         }
 
-        // ── STEP 3: Override AFTER Gemini — safety net ──
-        if (isDontKnowAnswer(transcript, normalized)) {
-            if (outcome.result() == AiConversationEvaluationResult.PARTIALLY_CORRECT
-                || outcome.result() == AiConversationEvaluationResult.CORRECT) {
-                log.info("[Evaluation] Overriding {} to INCORRECT for 'Don't know' answer (questionId={})",
-                    outcome.result(), question.id());
-                return buildDontKnowOutcome(question, normalized, "DONT_KNOW_HARD_RULE_OVERRIDE_AFTER_GEMINI");
+        // Hard rule override after evaluation (for SEMANTIC when Gemini runs on "Don't know" or returns something else):
+        if (isDontKnow) {
+            log.info("[Evaluation] Overriding result to INCORRECT for 'Don't know' answer (questionId={})", question.id());
+            
+            // Build the local fallback feedback for "Don't know"
+            AiConversationEvaluationOutcome localDontKnow = buildDontKnowOutcome(question, context, normalized, "DONT_KNOW_HARD_RULE_OVERRIDE_AFTER_GEMINI");
+            
+            // If Gemini was used and correctly identified incorrect/unclear, we can keep its feedback, otherwise use local fallback
+            boolean geminiIsIncorrectOrUnclear = (outcome.result() == AiConversationEvaluationResult.INCORRECT || outcome.result() == AiConversationEvaluationResult.UNCLEAR);
+            String feedbackText = outcome.usedGemini() && geminiIsIncorrectOrUnclear && !outcome.feedback().isBlank() ? outcome.feedback() : localDontKnow.feedback();
+            String suggestedRetryText = outcome.usedGemini() && geminiIsIncorrectOrUnclear && !outcome.suggestedRetryText().isBlank() ? outcome.suggestedRetryText() : localDontKnow.suggestedRetryText();
+            
+            // Sanitize again to be safe
+            feedbackText = AiConversationTemplateResolver.sanitize(feedbackText);
+            suggestedRetryText = AiConversationTemplateResolver.sanitize(suggestedRetryText);
+
+            // Double check fallback feedback if resolved contains raw placeholders
+            if (AiConversationTemplateResolver.hasUnresolvedPlaceholders(feedbackText) || feedbackText.isBlank()) {
+                feedbackText = localDontKnow.feedback();
             }
+            if (AiConversationTemplateResolver.hasUnresolvedPlaceholders(suggestedRetryText)) {
+                suggestedRetryText = localDontKnow.suggestedRetryText();
+            }
+
+            return new AiConversationEvaluationOutcome(
+                AiConversationEvaluationResult.INCORRECT,
+                0.1,
+                normalized,
+                feedbackText,
+                suggestedRetryText,
+                "DONT_KNOW_HARD_RULE_OVERRIDE_AFTER_GEMINI",
+                true, // needsPractice
+                outcome.usedGemini(),
+                outcome.evaluationSource(),
+                true, // shouldRetry
+                false, // shouldAdvance
+                false, // canSkip
+                "DONT_KNOW"
+            );
         }
 
-        return outcome;
+        // Even for normal answers, sanitize the final outcome's feedback and suggestedRetryText
+        String cleanedFeedback = AiConversationTemplateResolver.sanitize(outcome.feedback());
+        String cleanedRetryText = AiConversationTemplateResolver.sanitize(outcome.suggestedRetryText());
+
+        // If after cleaning, feedback is blank or has unresolved placeholders, use fallback
+        if (cleanedFeedback.isBlank() || AiConversationTemplateResolver.hasUnresolvedPlaceholders(cleanedFeedback)) {
+            cleanedFeedback = buildFallbackFeedback(question, context, outcome.result());
+        }
+
+        if (AiConversationTemplateResolver.hasUnresolvedPlaceholders(cleanedRetryText)) {
+            cleanedRetryText = "";
+        }
+
+        return new AiConversationEvaluationOutcome(
+            outcome.result(),
+            outcome.score(),
+            outcome.normalizedAnswer(),
+            cleanedFeedback,
+            cleanedRetryText,
+            outcome.reason(),
+            outcome.needsPractice(),
+            outcome.usedGemini(),
+            outcome.evaluationSource(),
+            outcome.shouldRetry(),
+            outcome.shouldAdvance(),
+            outcome.canSkip(),
+            outcome.advanceReason()
+        );
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -75,13 +136,6 @@ public class AiConversationEvaluationService {
     /**
      * Detect "Don't know" answers in Vietnamese.
      * This is a HARD rule — these answers are NEVER PARTIALLY_CORRECT or CORRECT.
-     *
-     * Covers:
-     *  - "không biết"
-     *  - "con không biết", "em không biết", "cháu không biết"
-     *  - "không ạ", "không"
-     *  - "chịu", "con chịu", "em chịu"
-     *  - Empty / too short (after normalization)
      */
     private boolean isDontKnowAnswer(String rawTranscript, String normalized) {
         if (normalized == null || normalized.isBlank()) return true;
@@ -114,8 +168,6 @@ public class AiConversationEvaluationService {
             }
         }
 
-        // Fallback: if the transcript is very short and contains "khong" or "chua"
-        // (e.g., "không có", "không ạ", "chưa") → treat as don't-know
         if (stripped.length() <= 8) {
             if (stripped.startsWith("khong") || stripped.startsWith("chua") || stripped.equals("hong")) {
                 return true;
@@ -125,22 +177,33 @@ public class AiConversationEvaluationService {
         return false;
     }
 
+    private boolean isNameQuestion(AiConversationQuestion question) {
+        String qText = question.questionText().toLowerCase();
+        String expected = question.expectedAnswer().toLowerCase();
+        return qText.contains("tên là gì") || qText.contains("tên con") || qText.contains("tên của con") ||
+               expected.contains("{childname}") || expected.contains("{name}");
+    }
+
     /**
      * Build the standard "Don't know" outcome.
      * Result: INCORRECT, Score: 0.1, Feedback: suggestion to try the expected answer.
      */
     private AiConversationEvaluationOutcome buildDontKnowOutcome(
-        AiConversationQuestion question, String normalized, String reason
+        AiConversationQuestion question, AiConversationRuntimeContext context, String normalized, String reason
     ) {
-        String expectedAnswer = question.expectedAnswer() != null ? question.expectedAnswer().trim() : "";
+        String expectedAnswerResolved = context.expectedAnswerResolved() != null ? context.expectedAnswerResolved().trim() : "";
         String feedback;
         String suggestedRetryText;
 
-        if (!expectedAnswer.isEmpty()) {
-            feedback = "Không sao đâu, con thử nói: " + expectedAnswer + " nhé.";
-            suggestedRetryText = expectedAnswer;
+        if (!expectedAnswerResolved.isEmpty() && !AiConversationTemplateResolver.hasUnresolvedPlaceholders(expectedAnswerResolved)) {
+            feedback = "Không sao đâu, con nói cùng mình: " + expectedAnswerResolved + " nhé.";
+            suggestedRetryText = expectedAnswerResolved;
         } else {
-            feedback = "Không sao đâu, con thử nói lại nhé.";
+            if (isNameQuestion(question)) {
+                feedback = "Con thử nói tên của con nhé.";
+            } else {
+                feedback = "Con thử nói lại theo cách của con nhé.";
+            }
             suggestedRetryText = "";
         }
 
@@ -154,11 +217,27 @@ public class AiConversationEvaluationService {
             true,
             false,    // usedGemini
             "LOCAL",  // evaluationSource
-            false,    // shouldRetry  (will be overridden by AiConversationService)
+            true,    // shouldRetry
             false,    // shouldAdvance
             false,    // canSkip
             "DONT_KNOW"
         );
+    }
+
+    private String buildFallbackFeedback(AiConversationQuestion question, AiConversationRuntimeContext context, AiConversationEvaluationResult result) {
+        if (result == AiConversationEvaluationResult.CORRECT) {
+            return "Giỏi lắm!";
+        } else if (result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR || result == AiConversationEvaluationResult.PARTIALLY_CORRECT) {
+            String expectedResolved = context.expectedAnswerResolved() != null ? context.expectedAnswerResolved().trim() : "";
+            if (!expectedResolved.isEmpty() && !AiConversationTemplateResolver.hasUnresolvedPlaceholders(expectedResolved)) {
+                return "Không sao đâu, con nói cùng mình: " + expectedResolved + " nhé.";
+            } else {
+                return "Không sao đâu, con thử nói lại theo cách của con nhé.";
+            }
+        } else if (result == AiConversationEvaluationResult.SKIPPED) {
+            return "Mình chuyển sang câu tiếp theo nhé.";
+        }
+        return "Con thử nói lại nhé.";
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -176,44 +255,51 @@ public class AiConversationEvaluationService {
         return text.replaceAll("\\s+", " ");
     }
 
-    private AiConversationEvaluationOutcome evaluateExact(AiConversationQuestion question, String normalized) {
+    private AiConversationEvaluationOutcome evaluateExact(AiConversationQuestion question, AiConversationRuntimeContext context, String normalized) {
         List<String> answers = new ArrayList<>();
-        answers.add(question.expectedAnswer());
-        answers.addAll(question.alternativeAnswers());
+        if (context.expectedAnswerResolved() != null && !context.expectedAnswerResolved().isBlank()) {
+            answers.add(context.expectedAnswerResolved());
+        }
+        if (context.alternativeAnswersResolved() != null) {
+            answers.addAll(context.alternativeAnswersResolved());
+        }
+        
         boolean correct = answers.stream().map(this::normalize).filter(s -> !s.isBlank()).anyMatch(normalized::equals);
         if (correct) {
             return buildOutcome(AiConversationEvaluationResult.CORRECT, 1.0, normalized,
-                question, false, "LOCAL", "EXACT_MATCH");
+                question, context, false, "LOCAL", "EXACT_MATCH");
         }
         boolean near = answers.stream().map(this::normalize).filter(s -> !s.isBlank()).anyMatch(answer -> closeEnough(normalized, answer));
         if (near) {
             return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.6, normalized,
-                question, false, "LOCAL", "EXACT_NEAR_MATCH");
+                question, context, false, "LOCAL", "EXACT_NEAR_MATCH");
         }
         return buildOutcome(AiConversationEvaluationResult.INCORRECT, 0.0, normalized,
-            question, true, "LOCAL", "EXACT_NO_MATCH");
+            question, context, true, "LOCAL", "EXACT_NO_MATCH");
     }
 
-    private AiConversationEvaluationOutcome evaluateKeyword(AiConversationQuestion question, String normalized) {
-        List<String> keywords = question.acceptedKeywords().stream().map(this::normalize).filter(s -> !s.isBlank()).toList();
-        if (keywords.isEmpty() && !question.expectedAnswer().isBlank()) {
-            keywords = List.of(normalize(question.expectedAnswer()));
+    private AiConversationEvaluationOutcome evaluateKeyword(AiConversationQuestion question, AiConversationRuntimeContext context, String normalized) {
+        List<String> keywords = context.acceptedKeywordsResolved() != null ? context.acceptedKeywordsResolved() : List.of();
+        keywords = keywords.stream().map(this::normalize).filter(s -> !s.isBlank()).toList();
+        
+        if (keywords.isEmpty() && context.expectedAnswerResolved() != null && !context.expectedAnswerResolved().isBlank()) {
+            keywords = List.of(normalize(context.expectedAnswerResolved()));
         }
         boolean correct = keywords.stream().anyMatch(normalized::contains);
         if (correct) {
             return buildOutcome(AiConversationEvaluationResult.CORRECT, 1.0, normalized,
-                question, false, "LOCAL", "KEYWORD_MATCH");
+                question, context, false, "LOCAL", "KEYWORD_MATCH");
         }
         boolean partial = keywords.stream().anyMatch(keyword -> keywordTokens(keyword).stream().anyMatch(token -> token.length() >= 3 && normalized.contains(token)));
         if (partial) {
             return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.55, normalized,
-                question, true, "LOCAL", "KEYWORD_PARTIAL");
+                question, context, true, "LOCAL", "KEYWORD_PARTIAL");
         }
         return buildOutcome(AiConversationEvaluationResult.INCORRECT, 0.0, normalized,
-            question, true, "LOCAL", "KEYWORD_NO_MATCH");
+            question, context, true, "LOCAL", "KEYWORD_NO_MATCH");
     }
 
-    private AiConversationEvaluationOutcome evaluateSemantic(AiConversationQuestion question, String normalized) {
+    private AiConversationEvaluationOutcome evaluateSemantic(AiConversationQuestion question, AiConversationRuntimeContext context, String normalized, int attemptNo) {
         boolean usedGemini = false;
         String evalSource = "LOCAL";
         String evalReason = "FALLBACK_LOCAL";
@@ -221,7 +307,7 @@ public class AiConversationEvaluationService {
         // Try Gemini evaluation first
         if (geminiEvaluationService != null) {
             try {
-                GeminiEvaluationService.GeminiEvaluationResult geminiResult = geminiEvaluationService.evaluate(question, normalized);
+                GeminiEvaluationService.GeminiEvaluationResult geminiResult = geminiEvaluationService.evaluate(question, context, normalized, attemptNo);
                 if (geminiResult != null) {
                     usedGemini = true;
                     evalSource = "GEMINI";
@@ -230,12 +316,17 @@ public class AiConversationEvaluationService {
                     String feedbackText = geminiResult.feedback();
                     if (feedbackText != null && !feedbackText.isBlank()) {
                         if (isEnglish(feedbackText)) {
-                            feedbackText = feedback(question, geminiResult.result());
+                            feedbackText = feedback(question, context, geminiResult.result());
                         }
+                        
+                        // Sanitize to be safe
+                        feedbackText = AiConversationTemplateResolver.sanitize(feedbackText);
+                        String suggestedRetryText = AiConversationTemplateResolver.sanitize(geminiResult.suggestedRetryText());
+
                         return buildOutcomeWithFeedback(
                             geminiResult.result(), geminiResult.score(), normalized,
-                            feedbackText, geminiResult.reason(),
-                            question, usedGemini, evalSource, evalReason
+                            feedbackText, suggestedRetryText, geminiResult.reason(),
+                            question, context, usedGemini, evalSource, evalReason
                         );
                     }
                 }
@@ -247,7 +338,7 @@ public class AiConversationEvaluationService {
         }
 
         // Fallback to local keyword evaluation
-        AiConversationEvaluationOutcome keyword = evaluateKeyword(question, normalized);
+        AiConversationEvaluationOutcome keyword = evaluateKeyword(question, context, normalized);
         if (keyword.result() == AiConversationEvaluationResult.CORRECT || keyword.result() == AiConversationEvaluationResult.PARTIALLY_CORRECT) {
             return new AiConversationEvaluationOutcome(
                 keyword.result(), keyword.score(), normalized, keyword.feedback(),
@@ -259,7 +350,7 @@ public class AiConversationEvaluationService {
         // If transcript has content (>= 4 chars), give partial credit
         if (normalized.length() >= 4) {
             return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.5, normalized,
-                question, true, evalSource, "LOCAL_SEMANTIC_PARTIAL");
+                question, context, true, evalSource, "LOCAL_SEMANTIC_PARTIAL");
         }
 
         return new AiConversationEvaluationOutcome(
@@ -276,18 +367,20 @@ public class AiConversationEvaluationService {
                lower.contains("again") || lower.contains("answer") || lower.contains("well");
     }
 
-    private AiConversationEvaluationOutcome evaluateOpenEnded(AiConversationQuestion question, String normalized) {
+    private AiConversationEvaluationOutcome evaluateOpenEnded(AiConversationQuestion question, AiConversationRuntimeContext context, String normalized) {
         if (normalized.length() < 2) {
             return buildOutcome(AiConversationEvaluationResult.UNCLEAR, 0.0, normalized,
-                question, false, "LOCAL", "OPEN_ENDED_TOO_SHORT");
+                question, context, false, "LOCAL", "OPEN_ENDED_TOO_SHORT");
         }
-        List<String> keywords = question.acceptedKeywords().stream().map(this::normalize).filter(s -> !s.isBlank()).toList();
+        List<String> keywords = context.acceptedKeywordsResolved() != null ? context.acceptedKeywordsResolved() : List.of();
+        keywords = keywords.stream().map(this::normalize).filter(s -> !s.isBlank()).toList();
+        
         if (!keywords.isEmpty() && keywords.stream().noneMatch(normalized::contains)) {
             return buildOutcome(AiConversationEvaluationResult.PARTIALLY_CORRECT, 0.7, normalized,
-                question, true, "LOCAL", "OPEN_ENDED_NO_KEYWORDS");
+                question, context, true, "LOCAL", "OPEN_ENDED_NO_KEYWORDS");
         }
         return buildOutcome(AiConversationEvaluationResult.CORRECT, 1.0, normalized,
-            question, false, "LOCAL", "OPEN_ENDED_MATCH");
+            question, context, false, "LOCAL", "OPEN_ENDED_MATCH");
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -296,14 +389,17 @@ public class AiConversationEvaluationService {
 
     private AiConversationEvaluationOutcome buildOutcome(
         AiConversationEvaluationResult result, double score, String normalized,
-        AiConversationQuestion question, boolean needsPractice,
+        AiConversationQuestion question, AiConversationRuntimeContext context, boolean needsPractice,
         String evaluationSource, String reason
     ) {
+        String rawFeedback = feedback(question, context, result);
+        String expectedResolved = context.expectedAnswerResolved() != null ? context.expectedAnswerResolved() : "";
+        
         return new AiConversationEvaluationOutcome(
             result, score, normalized,
-            feedback(question, result),
+            rawFeedback,
             result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR
-                ? question.expectedAnswer() : "",
+                ? expectedResolved : "",
             reason,
             needsPractice,
             false, // usedGemini
@@ -314,14 +410,13 @@ public class AiConversationEvaluationService {
 
     private AiConversationEvaluationOutcome buildOutcomeWithFeedback(
         AiConversationEvaluationResult result, double score, String normalized,
-        String feedbackText, String reason,
-        AiConversationQuestion question, boolean usedGemini, String evalSource, String evalReason
+        String feedbackText, String suggestedRetryText, String reason,
+        AiConversationQuestion question, AiConversationRuntimeContext context, boolean usedGemini, String evalSource, String evalReason
     ) {
         return new AiConversationEvaluationOutcome(
             result, score, normalized,
             feedbackText,
-            result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR
-                ? question.expectedAnswer() : "",
+            suggestedRetryText,
             reason,
             result == AiConversationEvaluationResult.INCORRECT || result == AiConversationEvaluationResult.UNCLEAR,
             usedGemini, evalSource,
@@ -329,17 +424,35 @@ public class AiConversationEvaluationService {
         );
     }
 
-    private String feedback(AiConversationQuestion question, AiConversationEvaluationResult result) {
-        return switch (result) {
-            case CORRECT -> !question.positiveFeedback().isBlank() ? question.positiveFeedback() : "Giỏi lắm!";
-            case PARTIALLY_CORRECT -> "Gần đúng rồi, con thử nói rõ hơn nhé.";
-            case INCORRECT, UNCLEAR -> {
-                String retry = !question.retryFeedback().isBlank() ? question.retryFeedback() : "Mình thử lại nhé.";
-                String hint = !question.hintText().isBlank() ? " " + question.hintText() : "";
-                yield retry + hint;
+    private String feedback(AiConversationQuestion question, AiConversationRuntimeContext context, AiConversationEvaluationResult result) {
+        String resolvedFeedback = "";
+        switch (result) {
+            case CORRECT -> {
+                resolvedFeedback = context.correctFeedbackResolved() != null ? context.correctFeedbackResolved().trim() : "";
+                if (resolvedFeedback.isEmpty()) {
+                    resolvedFeedback = (question.positiveFeedback() != null && !question.positiveFeedback().isBlank()) ? question.positiveFeedback() : "Giỏi lắm!";
+                }
             }
-            case SKIPPED -> "Mình chuyển sang câu tiếp theo nhé.";
-        };
+            case PARTIALLY_CORRECT -> {
+                resolvedFeedback = "Gần đúng rồi, con thử nói rõ hơn nhé.";
+            }
+            case INCORRECT, UNCLEAR -> {
+                resolvedFeedback = context.retryFeedbackResolved() != null ? context.retryFeedbackResolved().trim() : "";
+                if (resolvedFeedback.isEmpty()) {
+                    String expectedResolved = context.expectedAnswerResolved() != null ? context.expectedAnswerResolved().trim() : "";
+                    if (!expectedResolved.isEmpty() && !AiConversationTemplateResolver.hasUnresolvedPlaceholders(expectedResolved)) {
+                        resolvedFeedback = "Không sao đâu, con nói cùng mình: " + expectedResolved + " nhé.";
+                    } else {
+                        resolvedFeedback = "Không sao đâu, con thử nói lại theo cách của con nhé.";
+                    }
+                }
+            }
+            case SKIPPED -> {
+                resolvedFeedback = "Mình chuyển sang câu tiếp theo nhé.";
+            }
+        }
+        
+        return AiConversationTemplateResolver.resolve(resolvedFeedback, context.childName(), context.expectedAnswerResolved());
     }
 
     private boolean closeEnough(String input, String answer) {

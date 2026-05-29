@@ -3,8 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../models/child_profile.dart';
-import '../../../models/domain.dart';
+import '../../../models/models.dart';
 
 class ChildRepository {
   ChildRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
@@ -112,5 +111,22 @@ class ChildRepository {
       'programId': programId,
       'pathId': pathId,
     });
+  }
+
+  Future<ChildDevelopmentProfile> getDevelopmentProfile(String childId) async {
+    final data = await _api.get('/api/children/$childId/development-profile')
+        as Map<String, dynamic>;
+    return ChildDevelopmentProfile.fromMap(data);
+  }
+
+  Future<ChildDevelopmentProfile> updateDevelopmentProfile(
+    String childId,
+    Map<String, dynamic> payload,
+  ) async {
+    final data = await _api.put(
+      '/api/children/$childId/development-profile',
+      payload,
+    ) as Map<String, dynamic>;
+    return ChildDevelopmentProfile.fromMap(data);
   }
 }

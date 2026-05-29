@@ -13,11 +13,172 @@ interface Props {
 }
 
 const evaluationTypes: { value: AiConversationEvaluationType; label: string }[] = [
-  { value: "KEYWORD", label: "Theo từ khóa (KEYWORD)" },
-  { value: "SEMANTIC", label: "Theo ngữ nghĩa (SEMANTIC)" },
-  { value: "EXACT", label: "Khớp chính xác (EXACT)" },
-  { value: "OPEN_ENDED", label: "Câu hỏi mở (OPEN_ENDED)" }
+  { value: "SEMANTIC", label: "AI hiểu ý nghĩa câu trả lời" },
+  { value: "KEYWORD", label: "Chấm theo từ khóa" },
+  { value: "EXACT", label: "Chấm khớp chính xác" },
+  { value: "OPEN_ENDED", label: "Câu hỏi mở" }
 ];
+
+// Conversions between UI representation "[Tên bé]" and DB placeholder "{childName}"
+const tokenCategories = [
+  {
+    label: "Thông tin của bé",
+    tokens: [
+      { display: "[Tên bé]", db: "{childName}" },
+      { display: "[Tuổi bé]", db: "{childAge}" },
+      { display: "[Tên gọi ở nhà]", db: "{nickname}" }
+    ]
+  },
+  {
+    label: "Sở thích của bé",
+    tokens: [
+      { display: "[Màu bé thích]", db: "{favoriteColor}" },
+      { display: "[Con vật bé thích]", db: "{favoriteAnimal}" },
+      { display: "[Đồ chơi bé thích]", db: "{favoriteToy}" },
+      { display: "[Bài hát bé thích]", db: "{favoriteSong}" }
+    ]
+  },
+  {
+    label: "Gia đình",
+    tokens: [
+      { display: "[Người chăm sóc chính]", db: "{primaryCaregiver}" },
+      { display: "[Thành viên gia đình]", db: "{familyMembers}" }
+    ]
+  },
+  {
+    label: "Nội dung câu hỏi",
+    tokens: [
+      { display: "[Đáp án mục tiêu]", db: "{expectedAnswer}" }
+    ]
+  }
+];
+
+const tokenMappings = tokenCategories.flatMap(c => c.tokens);
+
+const templateToDisplay = (text: string | null | undefined): string => {
+  if (!text) return "";
+  let result = text;
+  for (const mapping of tokenMappings) {
+    const escapedDb = mapping.db.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    result = result.replace(new RegExp(escapedDb, "g"), mapping.display);
+  }
+  return result;
+};
+
+const displayToTemplate = (text: string | null | undefined): string => {
+  if (!text) return "";
+  let result = text;
+  for (const mapping of tokenMappings) {
+    const escapedDisplay = mapping.display.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    result = result.replace(new RegExp(escapedDisplay, "g"), mapping.db);
+  }
+  return result;
+};
+
+function TokenInsertDropdown({ onInsert, excludeExpectedAnswer }: { onInsert: (token: string) => void; excludeExpectedAnswer?: boolean }) {
+  const [open, setOpen] = useState(false);
+  
+  const filteredCategories = tokenCategories.map(category => {
+    const filteredTokens = excludeExpectedAnswer
+      ? category.tokens.filter(t => t.db !== "{expectedAnswer}")
+      : category.tokens;
+    if (filteredTokens.length === 0) return null;
+    return { ...category, tokens: filteredTokens };
+  }).filter(Boolean) as typeof tokenCategories;
+
+  return (
+    <div style={{ position: "relative", display: "inline-block", marginTop: "4px" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={{
+          padding: "4px 10px",
+          fontSize: "12px",
+          fontWeight: "500",
+          backgroundColor: "#f1f5f9",
+          border: "1px solid #cbd5e1",
+          borderRadius: "4px",
+          cursor: "pointer",
+          color: "#334155",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px"
+        }}
+      >
+        + Chèn biến ▾
+      </button>
+      {open && (
+        <>
+          <div 
+            style={{ position: "fixed", inset: 0, zIndex: 9 }} 
+            onClick={() => setOpen(false)} 
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              zIndex: 10,
+              marginTop: "4px",
+              background: "#ffffff",
+              border: "1px solid #cbd5e1",
+              borderRadius: "4px",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              display: "flex",
+              flexDirection: "column",
+              width: "240px",
+              maxHeight: "320px",
+              overflowY: "auto"
+            }}
+          >
+            {filteredCategories.map((category) => (
+              <div key={category.label} style={{ display: "flex", flexDirection: "column" }}>
+                <div
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#64748b",
+                    backgroundColor: "#f8fafc",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em"
+                  }}
+                >
+                  {category.label}
+                </div>
+                {category.tokens.map((t) => (
+                  <button
+                    key={t.display}
+                    type="button"
+                    onClick={() => {
+                      onInsert(t.display);
+                      setOpen(false);
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "12px",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      width: "100%",
+                      color: "#1f2937",
+                      borderBottom: "1px solid #f1f5f9"
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f1f5f9")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    {t.display}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }: Props) {
   const [questionText, setQuestionText] = useState("");
@@ -40,33 +201,76 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     setQuestionText(question?.questionText ?? "");
     setQuestionAudioText(question?.questionAudioText ?? "");
-    setExpectedAnswer(question?.expectedAnswer ?? "");
+    setExpectedAnswer(templateToDisplay(question?.expectedAnswer));
     setAcceptedKeywords((question?.acceptedKeywords ?? []).join("\n"));
     setAlternativeAnswers((question?.alternativeAnswers ?? []).join("\n"));
-    setEvaluationType(question?.evaluationType ?? "KEYWORD");
+    
+    const initialType = question?.evaluationType ?? "SEMANTIC";
+    setEvaluationType(initialType);
     setAdvancePolicy(question?.advancePolicy ?? "ON_CORRECT_ONLY");
     setAllowSkip(question?.allowSkip ?? true);
     setSkipAfterAttempts(`${question?.skipAfterAttempts ?? 3}`);
-    setRetryPromptText(question?.retryPromptText ?? "");
-    setCorrectFeedback(question?.correctFeedback ?? "");
-    setHintText(question?.hintText ?? "");
-    setPositiveFeedback(question?.positiveFeedback ?? "");
-    setRetryFeedback(question?.retryFeedback ?? "");
+    setRetryPromptText(templateToDisplay(question?.retryPromptText));
+    setCorrectFeedback(templateToDisplay(question?.correctFeedback));
+    setHintText(templateToDisplay(question?.hintText));
+    setPositiveFeedback(templateToDisplay(question?.positiveFeedback));
+    setRetryFeedback(templateToDisplay(question?.retryFeedback));
     setMaxAttempts(`${question?.maxAttempts ?? 3}`);
     setDifficultyLevel(question?.difficultyLevel ?? "BEGINNER");
     setSortOrder(`${question?.sortOrder ?? 0}`);
     setIsActive(question?.isActive ?? true);
     setErrors({});
+    
+    setShowAdvanced(initialType === "KEYWORD");
   }, [question]);
+
+  useEffect(() => {
+    if (evaluationType === "KEYWORD") {
+      setShowAdvanced(true);
+    }
+  }, [evaluationType]);
 
   const parseList = (value: string) =>
     value.split(/\n|,/)
       .map((item) => item.trim())
       .filter(Boolean);
+
+  const handleInsertExpectedAnswer = (token: string) => {
+    setExpectedAnswer(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed) return token;
+      return prev + " " + token;
+    });
+  };
+
+  const handleInsertHintText = (token: string) => {
+    setHintText(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed) return token;
+      return prev + " " + token;
+    });
+  };
+
+  const handleInsertPositiveFeedback = (token: string) => {
+    setPositiveFeedback(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed) return token;
+      return prev + " " + token;
+    });
+  };
+
+  const handleInsertRetryFeedback = (token: string) => {
+    setRetryFeedback(prev => {
+      const trimmed = prev.trim();
+      if (!trimmed) return token;
+      return prev + " " + token;
+    });
+  };
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -79,9 +283,38 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     if (!Number.isFinite(Number(sortOrder))) {
       next.sortOrder = "Thứ tự phải là một số hợp lệ.";
     }
+
+    if ((evaluationType === "SEMANTIC" || evaluationType === "EXACT") && !expectedAnswer.trim()) {
+      next.expectedAnswer = "Vui lòng nhập mục tiêu bé cần nói.";
+    }
+
+    if (expectedAnswer.includes("[Đáp án mục tiêu]") || expectedAnswer.includes("{expectedAnswer}")) {
+      next.expectedAnswer = "Không thể dùng [Đáp án mục tiêu] trong chính trường Mục tiêu bé cần nói.";
+    }
+
     if (evaluationType === "KEYWORD" && parseList(acceptedKeywords).length === 0) {
       next.acceptedKeywords = "Vui lòng nhập ít nhất một từ khóa khi chọn cách chấm Theo từ khóa.";
     }
+
+    // Friendly validation for raw placeholders/indicators in fields read to children (TTS)
+    const ttsFields = [
+      { key: "expectedAnswer", label: "Mục tiêu bé cần nói", val: expectedAnswer },
+      { key: "hintText", label: "Gợi ý mẫu tùy chỉnh", val: hintText },
+      { key: "retryPromptText", label: "Câu gợi ý khi sai/thử lại", val: retryPromptText },
+      { key: "correctFeedback", label: "Lời khen tùy chỉnh khi đúng", val: correctFeedback },
+      { key: "retryFeedback", label: "Lời nhắc thử lại tùy chỉnh", val: retryFeedback },
+      { key: "positiveFeedback", label: "Lời khích lệ động viên thêm", val: positiveFeedback }
+    ];
+
+    for (const field of ttsFields) {
+      if (!field.val) continue;
+      if (field.val.includes("...")) {
+        next[field.key] = `Không sử dụng dấu "...". Bạn có thể sửa thành: "${field.val.replace(/\.\.\./g, "[Tên bé]")}" (hoặc dùng nút 'Chèn tên bé').`;
+      } else if (field.val.toLowerCase().includes("[tên của con]") || field.val.toLowerCase().includes("tên của con")) {
+        next[field.key] = "Bạn có thể dùng nút 'Chèn tên bé' để hệ thống tự thay bằng tên thật của bé.";
+      }
+    }
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -94,18 +327,18 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
       await onSubmit({
         questionText: questionText.trim(),
         questionAudioText: questionAudioText.trim() || null,
-        expectedAnswer: expectedAnswer.trim() || null,
+        expectedAnswer: displayToTemplate(expectedAnswer.trim()) || null,
         acceptedKeywords: parseList(acceptedKeywords),
         alternativeAnswers: parseList(alternativeAnswers),
         evaluationType,
         advancePolicy,
         allowSkip,
         skipAfterAttempts: allowSkip ? Number(skipAfterAttempts) : null,
-        retryPromptText: retryPromptText.trim() || null,
-        correctFeedback: correctFeedback.trim() || null,
-        hintText: hintText.trim() || null,
-        positiveFeedback: positiveFeedback.trim() || null,
-        retryFeedback: retryFeedback.trim() || null,
+        retryPromptText: displayToTemplate(retryPromptText.trim()) || null,
+        correctFeedback: displayToTemplate(correctFeedback.trim()) || null,
+        hintText: displayToTemplate(hintText.trim()) || null,
+        positiveFeedback: displayToTemplate(positiveFeedback.trim()) || null,
+        retryFeedback: displayToTemplate(retryFeedback.trim()) || null,
         maxAttempts: Number(maxAttempts),
         difficultyLevel,
         sortOrder: Number(sortOrder),
@@ -155,95 +388,169 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
             {/* Section B: Đáp án & cách chấm */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                b. Đáp án & cách chấm điểm
+                b. Đánh giá câu trả lời
               </h3>
               <div className="form-grid">
                 <div className="field">
-                  <label>Cách chấm điểm <span style={{ color: "red" }}>*</span></label>
+                  <label>AI đánh giá câu trả lời <span style={{ color: "red" }}>*</span></label>
                   <select value={evaluationType} onChange={(event) => setEvaluationType(event.target.value as AiConversationEvaluationType)}>
                     {evaluationTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                   {errors.evaluationType && <span className="error-msg">{errors.evaluationType}</span>}
-                  {evaluationType === "SEMANTIC" && <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>AI sẽ hiểu ý nghĩa câu trả lời của bé, không yêu cầu bé nói đúng từng chữ.</span>}
-                </div>
-                <div className="field">
-                  <label>Đáp án kỳ vọng <span style={{ color: "red" }}>*</span></label>
-                  <input
-                    type="text"
-                    value={expectedAnswer}
-                    onChange={(event) => setExpectedAnswer(event.target.value)}
-                    placeholder="VD: Con tên là Nam, năm nay con 6 tuổi."
-                  />
-                </div>
-              </div>
-
-              <div className="form-grid">
-                <div className="field">
-                  <label>
-                    Từ khóa chấp nhận <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng hoặc phẩy phân tách một từ khóa)</span>
-                  </label>
-                  <textarea
-                    value={acceptedKeywords}
-                    onChange={(event) => setAcceptedKeywords(event.target.value)}
-                    rows={3}
-                    placeholder="VD: tên là&#10;tuổi&#10;tuổi"
-                  />
-                  {errors.acceptedKeywords && <span className="error-msg">{errors.acceptedKeywords}</span>}
+                  {evaluationType === "SEMANTIC" && (
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                      AI sẽ hiểu ý bé nói, không cần bé nói đúng từng chữ.
+                    </span>
+                  )}
                 </div>
                 <div className="field">
                   <label>
-                    Đáp án thay thế <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng hoặc phẩy phân tách một câu trả lời mẫu)</span>
+                    Mục tiêu bé cần nói {evaluationType !== "OPEN_ENDED" && <span style={{ color: "red" }}>*</span>}
                   </label>
-                  <textarea
-                    value={alternativeAnswers}
-                    onChange={(event) => setAlternativeAnswers(event.target.value)}
-                    rows={3}
-                    placeholder="VD: Mình tên là Nam, mình 6 tuổi.&#10;Con tên Nam, con lên 6."
-                  />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <input
+                      type="text"
+                      value={expectedAnswer}
+                      onChange={(event) => setExpectedAnswer(event.target.value)}
+                      placeholder="VD: Con tên là [Tên bé]"
+                    />
+                    <TokenInsertDropdown onInsert={handleInsertExpectedAnswer} excludeExpectedAnswer />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                      Nhập câu mẫu bé nên nói. Có thể chèn dữ liệu của bé như [Tên bé], [Màu bé thích].
+                    </span>
+                  </div>
+                  {errors.expectedAnswer && <span className="error-msg" style={{ color: "red", fontSize: "11px" }}>{errors.expectedAnswer}</span>}
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                    {evaluationType === "SEMANTIC"
+                      ? "Đây là câu mẫu để AI hiểu mục tiêu giao tiếp. AI vẫn chấp nhận cách nói tương đương."
+                      : "Nhập câu mẫu bé nên nói. Có thể dùng nút bên dưới để chèn tên bé tự động."}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Section C: Phản hồi cho bé */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                c. Phản hồi của AI/Mascot dành cho bé
-              </h3>
-              <div className="form-grid">
-                <div className="field">
-                  <label>Gợi ý khi nói (Hint)</label>
-                  <textarea
-                    value={hintText}
-                    onChange={(event) => setHintText(event.target.value)}
-                    rows={2}
-                    placeholder="VD: Con hãy trả lời bắt đầu bằng cụm từ: Con tên là..."
-                  />
+            {/* Collapsible Advanced Options */}
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: "15px" }}>
+              <button
+                type="button"
+                className="advanced-toggle"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  color: "#1f2937"
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span style={{ fontWeight: "600", fontSize: "14px" }}>Tuỳ chọn nâng cao</span>
+                  <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "normal" }}>Cấu hình từ khóa, đáp án thay thế, phản hồi tuỳ chỉnh</span>
                 </div>
-                <div className="field">
-                  <label>Lời khen khi trả lời đúng (Feedback tốt)</label>
-                  <textarea
-                    value={positiveFeedback}
-                    onChange={(event) => setPositiveFeedback(event.target.value)}
-                    rows={2}
-                    placeholder="VD: Giỏi lắm! Giọng con rất rõ ràng và đáng yêu."
-                  />
+                <span style={{ fontSize: "14px", fontWeight: "600" }}>{showAdvanced ? "▲ Thu gọn" : "▼ Mở rộng"}</span>
+              </button>
+
+              {showAdvanced && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "15px", padding: "15px", border: "1px dashed #cbd5e1", borderRadius: "6px", background: "#f8fafc" }}>
+                  <div className="form-grid">
+                    <div className="field">
+                      <label>
+                        Từ khóa chấp nhận {evaluationType === "KEYWORD" && <span style={{ color: "red" }}>*</span>} <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng hoặc phẩy phân tách một từ khóa)</span>
+                      </label>
+                      <textarea
+                        value={acceptedKeywords}
+                        onChange={(event) => setAcceptedKeywords(event.target.value)}
+                        rows={3}
+                        placeholder="VD: tên là&#10;tuổi&#10;tuổi"
+                      />
+                      {errors.acceptedKeywords && <span className="error-msg">{errors.acceptedKeywords}</span>}
+                    </div>
+                    <div className="field">
+                      <label>
+                        Đáp án thay thế <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: "normal" }}>(Mỗi dòng hoặc phẩy phân tách một câu trả lời mẫu)</span>
+                      </label>
+                      <textarea
+                        value={alternativeAnswers}
+                        onChange={(event) => setAlternativeAnswers(event.target.value)}
+                        rows={3}
+                        placeholder="VD: Mình tên là Nam, mình 6 tuổi.&#10;Con tên Nam, con lên 6."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="field">
+                      <label>Gợi ý mẫu tùy chỉnh</label>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <textarea
+                          value={hintText}
+                          onChange={(event) => setHintText(event.target.value)}
+                          rows={2}
+                          placeholder="VD: Con hãy trả lời bắt đầu bằng cụm từ: Con tên là..."
+                        />
+                        <TokenInsertDropdown onInsert={handleInsertHintText} />
+                        <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                          Có thể dùng [Đáp án mục tiêu] để nhắc lại câu mẫu bé cần nói.
+                        </span>
+                      </div>
+                      {errors.hintText && <span className="error-msg">{errors.hintText}</span>}
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                        Có thể để trống để AI tự tạo phản hồi phù hợp.
+                      </span>
+                    </div>
+                    <div className="field">
+                      <label>Lời khen tùy chỉnh khi đúng</label>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <textarea
+                          value={positiveFeedback}
+                          onChange={(event) => setPositiveFeedback(event.target.value)}
+                          rows={2}
+                          placeholder="VD: Giỏi lắm! Giọng con rất rõ ràng và đáng yêu."
+                        />
+                        <TokenInsertDropdown onInsert={handleInsertPositiveFeedback} />
+                        <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                          Có thể dùng [Đáp án mục tiêu] để nhắc lại câu mẫu bé cần nói.
+                        </span>
+                      </div>
+                      {errors.positiveFeedback && <span className="error-msg">{errors.positiveFeedback}</span>}
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                        Có thể để trống để AI tự tạo phản hồi phù hợp.
+                      </span>
+                    </div>
+                    <div className="field">
+                      <label>Lời nhắc thử lại tùy chỉnh</label>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <textarea
+                          value={retryFeedback}
+                          onChange={(event) => setRetryFeedback(event.target.value)}
+                          rows={2}
+                          placeholder="VD: Gần được rồi con yêu. Con bấm mic nói lại tên và tuổi rõ hơn nhé!"
+                        />
+                        <TokenInsertDropdown onInsert={handleInsertRetryFeedback} />
+                        <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                          Có thể dùng [Đáp án mục tiêu] để nhắc lại câu mẫu bé cần nói.
+                        </span>
+                      </div>
+                      {errors.retryFeedback && <span className="error-msg">{errors.retryFeedback}</span>}
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                        Có thể để trống để AI tự tạo phản hồi phù hợp.
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="field">
-                  <label>Lời khích lệ khi bé cần thử lại</label>
-                  <textarea
-                    value={retryFeedback}
-                    onChange={(event) => setRetryFeedback(event.target.value)}
-                    rows={2}
-                    placeholder="VD: Gần được rồi con yêu. Con bấm mic nói lại tên và tuổi rõ hơn nhé!"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Section D: Cấu hình hệ thống */}
+            {/* Section D: Cách chuyển sang câu tiếp theo */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                d. Cách chuyển sang câu tiếp theo
+                c. Cách chuyển sang câu tiếp theo
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label style={{ fontWeight: 600 }}>Chính sách chuyển câu</label>
@@ -279,7 +586,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
                   <div className="field" style={{ marginLeft: "24px" }}>
                     <label>Hiện nút bỏ qua sau số lần thử</label>
                     <input type="number" min="1" value={skipAfterAttempts} onChange={(event) => setSkipAfterAttempts(event.target.value)} style={{ maxWidth: "150px" }}/>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Nếu bé chưa trả lời đúng sau số lần này, app sẽ hiện nút Bỏ qua.</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>If bé chưa trả lời đúng sau số lần này, app sẽ hiện nút Bỏ qua.</span>
                   </div>
                 )}
               </div>
@@ -292,7 +599,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
               </div>
 
               <h3 style={{ margin: "20px 0 0 0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                e. Cấu hình khác
+                d. Cấu hình khác
               </h3>
               <div className="form-grid">
                 <div className="field">

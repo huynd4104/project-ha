@@ -180,3 +180,17 @@ record AiLiveSessionConfig(
     String responseLanguage,
     int maxDurationSeconds
 ) {}
+
+record AiConversationRuntimeContext(
+    UUID childId,
+    String childName,
+    String topicName,
+    String expectedAnswerResolved,
+    String retryPromptTextResolved,
+    String correctFeedbackResolved,
+    String retryFeedbackResolved,
+    List<String> acceptedKeywordsResolved,
+    List<String> alternativeAnswersResolved,
+    java.util.Map<String, Object> childContext
+) {}
+

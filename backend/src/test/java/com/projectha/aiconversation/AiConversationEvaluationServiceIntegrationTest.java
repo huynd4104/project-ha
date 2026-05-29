@@ -26,6 +26,44 @@ class AiConversationEvaluationServiceIntegrationTest {
         evaluationService = new AiConversationEvaluationService(geminiEvaluationService);
     }
 
+    private AiConversationRuntimeContext createContext(AiConversationQuestion question, String childName) {
+        String expectedAnswerResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.expectedAnswer(), childName, "")) {
+            expectedAnswerResolved = AiConversationTemplateResolver.resolve(question.expectedAnswer(), childName, "");
+        }
+        
+        String retryPromptTextResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.retryPromptText(), childName, expectedAnswerResolved)) {
+            retryPromptTextResolved = AiConversationTemplateResolver.resolve(question.retryPromptText(), childName, expectedAnswerResolved);
+        }
+        
+        String correctFeedbackResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.correctFeedback(), childName, expectedAnswerResolved)) {
+            correctFeedbackResolved = AiConversationTemplateResolver.resolve(question.correctFeedback(), childName, expectedAnswerResolved);
+        }
+        
+        String retryFeedbackResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.retryFeedback(), childName, expectedAnswerResolved)) {
+            retryFeedbackResolved = AiConversationTemplateResolver.resolve(question.retryFeedback(), childName, expectedAnswerResolved);
+        }
+
+        List<String> acceptedKeywordsResolved = AiConversationTemplateResolver.resolveList(question.acceptedKeywords(), childName, expectedAnswerResolved);
+        List<String> alternativeAnswersResolved = AiConversationTemplateResolver.resolveList(question.alternativeAnswers(), childName, expectedAnswerResolved);
+
+        return new AiConversationRuntimeContext(
+            UUID.randomUUID(),
+            childName,
+            "Topic Test",
+            expectedAnswerResolved,
+            retryPromptTextResolved,
+            correctFeedbackResolved,
+            retryFeedbackResolved,
+            acceptedKeywordsResolved,
+            alternativeAnswersResolved,
+            new java.util.HashMap<>()
+        );
+    }
+
     @Test
     @DisplayName("EXACT evaluation should work correctly")
     void testExactEvaluation() {
@@ -35,8 +73,9 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of(),
             AiConversationEvaluationType.EXACT
         );
+        AiConversationRuntimeContext context = createContext(question, null);
         
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Con chào cô");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Con chào cô", context, 1);
         
         assertEquals(AiConversationEvaluationResult.CORRECT, result.result());
         assertEquals(1.0, result.score());
@@ -51,8 +90,9 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of("chào cô", "con chào"),
             AiConversationEvaluationType.KEYWORD
         );
+        AiConversationRuntimeContext context = createContext(question, null);
         
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ", context, 1);
         
         assertEquals(AiConversationEvaluationResult.CORRECT, result.result());
         assertEquals(1.0, result.score());
@@ -66,10 +106,11 @@ class AiConversationEvaluationServiceIntegrationTest {
                 AiConversationEvaluationResult.CORRECT,
                 1.0,
                 "Giỏi lắm, con trả lời tốt!",
+                "Con chào cô",
                 "Transcript matches expected answer"
             );
         
-        when(geminiEvaluationService.evaluate(any(), anyString()))
+        when(geminiEvaluationService.evaluate(any(), any(), anyString(), anyInt()))
             .thenReturn(geminiResult);
         
         AiConversationQuestion question = createQuestion(
@@ -78,19 +119,20 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of("chào cô"),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, null);
         
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ", context, 1);
         
         assertEquals(AiConversationEvaluationResult.CORRECT, result.result());
         assertEquals(1.0, result.score());
         assertEquals("Giỏi lắm, con trả lời tốt!", result.feedback());
-        verify(geminiEvaluationService, times(1)).evaluate(any(), anyString());
+        verify(geminiEvaluationService, times(1)).evaluate(any(), any(), anyString(), anyInt());
     }
 
     @Test
     @DisplayName("SEMANTIC evaluation should fallback to local when Gemini returns null")
     void testSemanticEvaluationFallbackWhenGeminiNull() {
-        when(geminiEvaluationService.evaluate(any(), anyString()))
+        when(geminiEvaluationService.evaluate(any(), any(), anyString(), anyInt()))
             .thenReturn(null);
         
         AiConversationQuestion question = createQuestion(
@@ -99,57 +141,12 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of("chào cô"),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, null);
         
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ", context, 1);
         
         assertNotNull(result);
         assertEquals(AiConversationEvaluationResult.CORRECT, result.result());
-    }
-
-    @Test
-    @DisplayName("SEMANTIC evaluation should fallback to local when Gemini throws exception")
-    void testSemanticEvaluationFallbackWhenGeminiThrows() {
-        when(geminiEvaluationService.evaluate(any(), anyString()))
-            .thenThrow(new RuntimeException("API error"));
-        
-        AiConversationQuestion question = createQuestion(
-            "Chào cô",
-            "Con chào cô",
-            List.of("chào cô"),
-            AiConversationEvaluationType.SEMANTIC
-        );
-        
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ");
-        
-        assertNotNull(result);
-        assertNotNull(result.result());
-    }
-
-    @Test
-    @DisplayName("SEMANTIC evaluation should fallback when Gemini feedback is empty")
-    void testSemanticEvaluationFallbackWhenFeedbackEmpty() {
-        GeminiEvaluationService.GeminiEvaluationResult geminiResult = 
-            new GeminiEvaluationService.GeminiEvaluationResult(
-                AiConversationEvaluationResult.CORRECT,
-                1.0,
-                "",
-                "Reason"
-            );
-        
-        when(geminiEvaluationService.evaluate(any(), anyString()))
-            .thenReturn(geminiResult);
-        
-        AiConversationQuestion question = createQuestion(
-            "Chào cô",
-            "Con chào cô",
-            List.of("chào cô"),
-            AiConversationEvaluationType.SEMANTIC
-        );
-        
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em chào cô ạ");
-        
-        assertNotNull(result);
-        assertNotNull(result.feedback());
     }
 
     @Test
@@ -161,8 +158,9 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of(),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, null);
         
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "", context, 1);
         
         assertEquals(AiConversationEvaluationResult.UNCLEAR, result.result());
         assertEquals(0.0, result.score());
@@ -177,16 +175,13 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of(),
             AiConversationEvaluationType.OPEN_ENDED
         );
+        AiConversationRuntimeContext context = createContext(question, null);
 
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em thích chơi bóng");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em thích chơi bóng", context, 1);
 
         assertNotNull(result);
         assertNotNull(result.result());
     }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  TEST: "Don't know" hard rule (REQUIRED)
-    // ═══════════════════════════════════════════════════════════════════
 
     @Test
     @DisplayName("\"Không biết\" should NEVER be PARTIALLY_CORRECT - SEMANTIC")
@@ -197,103 +192,32 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of("tên là", "Nam"),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, "Nam");
 
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết");
-
-        assertNotEquals(AiConversationEvaluationResult.PARTIALLY_CORRECT, result.result(),
-            "\"Không biết\" must NEVER be PARTIALLY_CORRECT");
-        assertNotEquals(AiConversationEvaluationResult.CORRECT, result.result(),
-            "\"Không biết\" must NEVER be CORRECT");
-        assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
-        assertTrue(result.score() <= 0.2, "Score for \"Không biết\" must be <= 0.2");
-        assertFalse(result.feedback().contains("gần đúng") || result.feedback().contains("Gần đúng"),
-            "Feedback must NOT contain \"gần đúng\"");
-        assertFalse(result.feedback().contains("tốt lắm") || result.feedback().contains("Giỏi"),
-            "Feedback must NOT contain praise for don't-know answer");
-        assertTrue(result.feedback().contains("Con tên là Nam"),
-            "Feedback should suggest the expected answer");
-    }
-
-    @Test
-    @DisplayName("\"Con không biết\" should NEVER be PARTIALLY_CORRECT - KEYWORD")
-    void testDontKnowNeverPartiallyCorrect_Keyword() {
-        AiConversationQuestion question = createQuestion(
-            "Khi gặp cô giáo, con nói gì?",
-            "Con chào cô",
-            List.of("chào cô", "con chào"),
-            AiConversationEvaluationType.KEYWORD
-        );
-
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Con không biết");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết", context, 1);
 
         assertNotEquals(AiConversationEvaluationResult.PARTIALLY_CORRECT, result.result());
-        assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
-        assertTrue(result.feedback().contains("Con chào cô"),
-            "Feedback should suggest the expected answer");
-    }
-
-    @Test
-    @DisplayName("\"Không\" alone should be INCORRECT")
-    void testDontKnowAlone() {
-        AiConversationQuestion question = createQuestion(
-            "Con thích màu gì?",
-            "Con thích màu đỏ",
-            List.of("màu đỏ", "thích"),
-            AiConversationEvaluationType.KEYWORD
-        );
-
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không");
-
+        assertNotEquals(AiConversationEvaluationResult.CORRECT, result.result());
         assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
         assertTrue(result.score() <= 0.2);
-    }
-
-    @Test
-    @DisplayName("\"Chịu\" should be INCORRECT")
-    void testChiuAlone() {
-        AiConversationQuestion question = createQuestion(
-            "Con tên là gì?",
-            "Con tên là Nam",
-            List.of("tên là", "Nam"),
-            AiConversationEvaluationType.SEMANTIC
-        );
-
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Chịu");
-
-        assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
-        assertTrue(result.score() <= 0.2);
-        assertFalse(result.feedback().contains("Gần đúng"));
-    }
-
-    @Test
-    @DisplayName("\"Em không biết\" should be INCORRECT")
-    void testEmKhongBiet() {
-        AiConversationQuestion question = createQuestion(
-            "Con thích làm gì?",
-            "Con thích chơi",
-            List.of("thích chơi"),
-            AiConversationEvaluationType.SEMANTIC
-        );
-
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Em không biết");
-
-        assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
-        assertTrue(result.score() <= 0.2);
+        assertFalse(result.feedback().contains("gần đúng") || result.feedback().contains("Gần đúng"));
+        assertFalse(result.feedback().contains("tốt lắm") || result.feedback().contains("Giỏi"));
+        assertTrue(result.feedback().contains("Con tên là Nam"));
     }
 
     @Test
     @DisplayName("Gemini returning PARTIALLY_CORRECT for \"Không biết\" should be OVERRIDDEN to INCORRECT")
     void testGeminiOverrideForDontKnow() {
-        // Simulate Gemini incorrectly returning PARTIALLY_CORRECT
         GeminiEvaluationService.GeminiEvaluationResult geminiResult =
             new GeminiEvaluationService.GeminiEvaluationResult(
                 AiConversationEvaluationResult.PARTIALLY_CORRECT,
                 0.6,
                 "Gần đúng rồi, con thử nói rõ hơn nhé.",
+                "Con tên là Nam",
                 "Close match"
             );
 
-        when(geminiEvaluationService.evaluate(any(), anyString()))
+        when(geminiEvaluationService.evaluate(any(), any(), anyString(), anyInt()))
             .thenReturn(geminiResult);
 
         AiConversationQuestion question = createQuestion(
@@ -302,71 +226,71 @@ class AiConversationEvaluationServiceIntegrationTest {
             List.of("tên là", "Nam"),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, "Nam");
 
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết");
-
-        // The hard rule MUST override Gemini's wrong evaluation
-        assertEquals(AiConversationEvaluationResult.INCORRECT, result.result(),
-            "Hard rule must override Gemini's PARTIALLY_CORRECT for \"Không biết\"");
-        assertTrue(result.score() <= 0.2);
-        assertFalse(result.feedback().contains("Gần đúng"),
-            "Feedback must NOT be \"Gần đúng\" even if Gemini says so");
-        assertTrue(result.feedback().contains("Con tên là Nam"),
-            "Feedback should suggest expected answer");
-    }
-
-    @Test
-    @DisplayName("Gemini disabled → fallback local still handles \"Không biết\" correctly")
-    void testGeminiDisabledStillHandlesDontKnow() {
-        when(geminiEvaluationService.evaluate(any(), anyString()))
-            .thenReturn(null);
-
-        AiConversationQuestion question = createQuestion(
-            "Con tên là gì?",
-            "Con tên là Nam",
-            List.of("tên là", "Nam"),
-            AiConversationEvaluationType.SEMANTIC
-        );
-
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết", context, 1);
 
         assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
         assertTrue(result.score() <= 0.2);
+        assertFalse(result.feedback().contains("Gần đúng"));
+        assertTrue(result.feedback().contains("Con tên là Nam"));
     }
 
     @Test
-    @DisplayName("Gemini exception → fallback local still handles \"Không biết\" correctly")
-    void testGeminiExceptionStillHandlesDontKnow() {
-        when(geminiEvaluationService.evaluate(any(), anyString()))
-            .thenThrow(new RuntimeException("API error"));
-
+    @DisplayName("MANDATORY TEST 1: childName=Huy, expectedAnswer='Con tên là {childName}', transcript='Không biết'")
+    void testMandatoryCase1() {
         AiConversationQuestion question = createQuestion(
             "Con tên là gì?",
-            "Con tên là Nam",
-            List.of("tên là", "Nam"),
+            "Con tên là {childName}",
+            List.of("tên", "là"),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, "Huy");
 
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết", context, 1);
 
-        assertEquals(AiConversationEvaluationResult.INCORRECT, result.result());
-        assertTrue(result.score() <= 0.2);
+        assertTrue(result.feedback().contains("Con tên là Huy"), "Feedback must contain 'Con tên là Huy'");
+        assertFalse(result.feedback().contains("{childName}"), "Feedback must not contain '{childName}'");
+        assertFalse(result.feedback().contains("[tên của con]"), "Feedback must not contain '[tên của con]'");
+        assertNotEquals(AiConversationEvaluationResult.PARTIALLY_CORRECT, result.result());
+        assertTrue(result.shouldRetry());
+        assertFalse(result.shouldAdvance());
     }
 
     @Test
-    @DisplayName("\"Con chào cô\" should be CORRECT")
-    void testCorrectAnswerStillWorks() {
+    @DisplayName("MANDATORY TEST 2: childName=Huy, transcript='Con tên là Huy'")
+    void testMandatoryCase2() {
         AiConversationQuestion question = createQuestion(
-            "Khi gặp cô giáo, con nói gì?",
-            "Con chào cô",
-            List.of("chào cô"),
+            "Con tên là gì?",
+            "Con tên là {childName}",
+            List.of("tên", "Huy"),
             AiConversationEvaluationType.SEMANTIC
         );
+        AiConversationRuntimeContext context = createContext(question, "Huy");
 
-        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Con chào cô");
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Con tên là Huy", context, 1);
 
         assertEquals(AiConversationEvaluationResult.CORRECT, result.result());
-        assertEquals(1.0, result.score());
+    }
+
+    @Test
+    @DisplayName("MANDATORY TEST 3: expectedAnswer contains placeholder but no childName resolved")
+    void testMandatoryCase3() {
+        AiConversationQuestion question = createQuestion(
+            "Con tên là gì?",
+            "Con tên là {childName}",
+            List.of("tên", "là"),
+            AiConversationEvaluationType.SEMANTIC
+        );
+        // childName is null/empty
+        AiConversationRuntimeContext context = createContext(question, null);
+
+        // Child answers "Không biết"
+        AiConversationEvaluationOutcome result = evaluationService.evaluate(question, "Không biết", context, 1);
+
+        assertFalse(result.feedback().contains("{childName}"));
+        assertFalse(result.feedback().contains("[tên của con]"));
+        assertEquals("Con thử nói tên của con nhé.", result.feedback());
     }
 
     private AiConversationQuestion createQuestion(

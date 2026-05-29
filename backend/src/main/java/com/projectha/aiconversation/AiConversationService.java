@@ -35,6 +35,7 @@ public class AiConversationService {
     private final AiConversationEvaluationService evaluationService;
     private final AiConversationProgressService progressService;
     private final AiLiveSessionService liveSessionService;
+    private final AiChildContextService aiChildContextService;
     private final String aiModel;
 
     public AiConversationService(
@@ -46,6 +47,7 @@ public class AiConversationService {
         AiConversationEvaluationService evaluationService,
         AiConversationProgressService progressService,
         AiLiveSessionService liveSessionService,
+        AiChildContextService aiChildContextService,
         @Value("${project-ha.ai.gemini.live-model:gemini-3.1-flash-live-preview}") String aiModel
     ) {
         this.childRepository = childRepository;
@@ -56,6 +58,7 @@ public class AiConversationService {
         this.evaluationService = evaluationService;
         this.progressService = progressService;
         this.liveSessionService = liveSessionService;
+        this.aiChildContextService = aiChildContextService;
         this.aiModel = aiModel;
     }
 
@@ -142,8 +145,59 @@ public class AiConversationService {
         int maxAttempts = question.maxAttempts() > 0 ? question.maxAttempts() : 2;
         int attemptNo = request.attemptNo() != null ? Math.max(1, request.attemptNo()) : 1;
 
+        Map<String, Object> childContext = aiChildContextService.getCompactChildContext(session.childId());
+        String childName = childContext != null ? (String) childContext.getOrDefault("childName", "") : "";
+
+        String topicName = "";
+        if (session.topicId() != null) {
+            try {
+                AiConversationTopic topic = topicRepository.require(session.topicId());
+                if (topic != null) {
+                    topicName = topic.title();
+                }
+            } catch (Exception e) {
+                log.warn("Không thể lấy topic name cho topicId: {}", session.topicId());
+            }
+        }
+
+        String expectedAnswerResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.expectedAnswer(), childContext, "")) {
+            expectedAnswerResolved = AiConversationTemplateResolver.resolve(question.expectedAnswer(), childContext, "");
+        }
+
+        String retryPromptTextResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.retryPromptText(), childContext, expectedAnswerResolved)) {
+            retryPromptTextResolved = AiConversationTemplateResolver.resolve(question.retryPromptText(), childContext, expectedAnswerResolved);
+        }
+
+        String correctFeedbackResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.correctFeedback(), childContext, expectedAnswerResolved)) {
+            correctFeedbackResolved = AiConversationTemplateResolver.resolve(question.correctFeedback(), childContext, expectedAnswerResolved);
+        }
+
+        String retryFeedbackResolved = "";
+        if (AiConversationTemplateResolver.isFullyResolved(question.retryFeedback(), childContext, expectedAnswerResolved)) {
+            retryFeedbackResolved = AiConversationTemplateResolver.resolve(question.retryFeedback(), childContext, expectedAnswerResolved);
+        }
+
+        List<String> acceptedKeywordsResolved = AiConversationTemplateResolver.resolveList(question.acceptedKeywords(), childContext, expectedAnswerResolved);
+        List<String> alternativeAnswersResolved = AiConversationTemplateResolver.resolveList(question.alternativeAnswers(), childContext, expectedAnswerResolved);
+
+        AiConversationRuntimeContext context = new AiConversationRuntimeContext(
+            session.childId(),
+            childName,
+            topicName,
+            expectedAnswerResolved,
+            retryPromptTextResolved,
+            correctFeedbackResolved,
+            retryFeedbackResolved,
+            acceptedKeywordsResolved,
+            alternativeAnswersResolved,
+            childContext
+        );
+
         // ══ EVALUATE ══
-        AiConversationEvaluationOutcome outcome = evaluationService.evaluate(question, request.childTranscript());
+        AiConversationEvaluationOutcome outcome = evaluationService.evaluate(question, request.childTranscript(), context, attemptNo);
 
         // ══ ADVANCE POLICY ══
         AiConversationAdvancePolicy policy = question.advancePolicy() != null
@@ -259,51 +313,37 @@ public class AiConversationService {
             request.childTranscript(),
             outcome,
             request.hintUsed() != null && request.hintUsed(),
-            attemptNo
+            attemptNo,
+            expectedAnswerResolved,
+            acceptedKeywordsResolved
         );
 
         String nextAction = shouldAdvance ? "CONTINUE" : (canSkip ? "RETRY_OR_SKIP" : "RETRY_OR_HINT");
 
         // ══ DEBUG LOG ══
         log.info("[AI Turn Debug]\n" +
-            "questionId={}\n" +
             "questionText={}\n" +
+            "childNameAvailable={}\n" +
+            "expectedAnswerRaw={}\n" +
+            "expectedAnswerResolved={}\n" +
             "evaluationType={}\n" +
-            "advancePolicy={}\n" +
-            "attemptNo={}\n" +
-            "maxAttempts={}\n" +
-            "allowSkip={}\n" +
-            "skipAfterAttempts={}\n" +
             "usedGemini={}\n" +
             "evaluationSource={}\n" +
-            "childTranscript={}\n" +
-            "evaluationResult={}\n" +
-            "score={}\n" +
-            "shouldRetry={}\n" +
-            "shouldAdvance={}\n" +
-            "canSkip={}\n" +
-            "advanceReason={}\n" +
+            "result={}\n" +
             "feedback={}\n" +
-            "suggestedRetryText={}",
-            question.id(),
+            "shouldRetry={}\n" +
+            "shouldAdvance={}",
             question.questionText(),
+            !childName.isEmpty(),
+            question.expectedAnswer(),
+            expectedAnswerResolved,
             question.evaluationType(),
-            policy,
-            attemptNo,
-            maxAttempts,
-            allowSkip,
-            effectiveSkipAfterAttempts,
             outcome.usedGemini(),
             outcome.evaluationSource(),
-            request.childTranscript(),
             outcome.result(),
-            outcome.score(),
-            shouldRetry,
-            shouldAdvance,
-            canSkip,
-            advanceReason,
             outcome.feedback(),
-            outcome.suggestedRetryText()
+            shouldRetry,
+            shouldAdvance
         );
 
         return new SubmitAiConversationTurnResponse(

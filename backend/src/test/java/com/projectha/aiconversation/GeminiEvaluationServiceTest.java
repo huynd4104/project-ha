@@ -39,13 +39,29 @@ class GeminiEvaluationServiceTest {
         );
     }
 
+    private AiConversationRuntimeContext createContext(AiConversationQuestion question) {
+        return new AiConversationRuntimeContext(
+            UUID.randomUUID(),
+            "Huy",
+            "Chủ đề test",
+            question.expectedAnswer(),
+            question.retryPromptText(),
+            question.correctFeedback(),
+            question.retryFeedback(),
+            question.acceptedKeywords(),
+            question.alternativeAnswers(),
+            new java.util.HashMap<>()
+        );
+    }
+
     @Test
     @DisplayName("Should return null when Gemini is disabled")
     void testEvaluateWhenDisabled() {
         mockConfig("test-key", "gemini-3.1-flash-lite", false);
         
         AiConversationQuestion question = createTestQuestion();
-        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, "Em chào cô ạ");
+        AiConversationRuntimeContext context = createContext(question);
+        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, context, "Em chào cô ạ", 1);
         
         assertNull(result);
     }
@@ -56,7 +72,8 @@ class GeminiEvaluationServiceTest {
         mockConfig("", "gemini-3.1-flash-lite", true);
         
         AiConversationQuestion question = createTestQuestion();
-        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, "Em chào cô ạ");
+        AiConversationRuntimeContext context = createContext(question);
+        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, context, "Em chào cô ạ", 1);
         
         assertNull(result);
     }
@@ -73,7 +90,7 @@ class GeminiEvaluationServiceTest {
                   "content": {
                     "parts": [
                       {
-                        "text": "{\\"result\\": \\"CORRECT\\", \\"score\\": 1.0, \\"feedback\\": \\"Giỏi lắm, con trả lời tốt!\\", \\"reason\\": \\"Matches expected answer\\"}"
+                        "text": "{\\"result\\": \\"CORRECT\\", \\"score\\": 1.0, \\"feedback\\": \\"Giỏi lắm, con trả lời tốt!\\", \\"suggestedRetryText\\": \\"Con chào cô\\", \\"reason\\": \\"Matches expected answer\\"}"
                       }
                     ]
                   }
@@ -86,12 +103,14 @@ class GeminiEvaluationServiceTest {
             .thenReturn(geminiResponse);
         
         AiConversationQuestion question = createTestQuestion();
-        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, "Con chào cô");
+        AiConversationRuntimeContext context = createContext(question);
+        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, context, "Con chào cô", 1);
         
         assertNotNull(result);
         assertEquals(AiConversationEvaluationResult.CORRECT, result.result());
         assertEquals(1.0, result.score());
         assertEquals("Giỏi lắm, con trả lời tốt!", result.feedback());
+        assertEquals("Con chào cô", result.suggestedRetryText());
     }
 
     @Test
@@ -106,7 +125,7 @@ class GeminiEvaluationServiceTest {
                   "content": {
                     "parts": [
                       {
-                        "text": "{\\"result\\": \\"PARTIALLY_CORRECT\\", \\"score\\": 0.6, \\"feedback\\": \\"Gần đúng rồi, con thử nói rõ hơn nhé.\\", \\"reason\\": \\"Partial match\\"}"
+                        "text": "{\\"result\\": \\"PARTIALLY_CORRECT\\", \\"score\\": 0.6, \\"feedback\\": \\"Gần đúng rồi, con thử nói rõ hơn nhé.\\", \\"suggestedRetryText\\": \\"Con chào cô\\", \\"reason\\": \\"Partial match\\"}"
                       }
                     ]
                   }
@@ -119,7 +138,8 @@ class GeminiEvaluationServiceTest {
             .thenReturn(geminiResponse);
         
         AiConversationQuestion question = createTestQuestion();
-        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, "Em chào");
+        AiConversationRuntimeContext context = createContext(question);
+        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, context, "Em chào", 1);
         
         assertNotNull(result);
         assertEquals(AiConversationEvaluationResult.PARTIALLY_CORRECT, result.result());
@@ -151,7 +171,8 @@ class GeminiEvaluationServiceTest {
             .thenReturn(invalidResponse);
         
         AiConversationQuestion question = createTestQuestion();
-        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, "Con chào cô");
+        AiConversationRuntimeContext context = createContext(question);
+        GeminiEvaluationService.GeminiEvaluationResult result = service.evaluate(question, context, "Con chào cô", 1);
         
         assertNull(result);
     }
