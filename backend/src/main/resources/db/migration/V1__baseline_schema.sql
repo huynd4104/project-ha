@@ -185,7 +185,13 @@ CREATE TABLE npcs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   unlocked_by_default BOOLEAN NOT NULL DEFAULT false,
-  cost_coins INT NOT NULL DEFAULT 0
+  cost_coins INT NOT NULL DEFAULT 0,
+  animation_url TEXT,
+  role TEXT,
+  personality TEXT,
+  skill_tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+  program_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+  path_ids JSONB NOT NULL DEFAULT '[]'::jsonb
 );
 
 CREATE TABLE lessons (
