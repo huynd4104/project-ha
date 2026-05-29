@@ -29,7 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> submit() async {
     if (!accepted) {
-      setState(() => error = 'Bạn cần xác nhận disclaimer trước khi đăng ký.');
+      setState(() => error = 'Bạn cần xác nhận tuyên bố miễn trừ trách nhiệm trước khi đăng ký.');
       return;
     }
     if (!formKey.currentState!.validate()) return;
