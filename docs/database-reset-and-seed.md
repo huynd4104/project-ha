@@ -2,6 +2,11 @@
 
 This document provides instructions on how to reset the database (local PostgreSQL or Supabase) and import seed/sample data.
 
+> [!NOTE]
+> Upon startup, the backend automatically initializes a default administrator account if it does not exist:
+> - **Email**: `admin@projectha.local`
+> - **Password**: `Admin@123456`
+
 > [!WARNING]
 > These actions will erase all current user profiles, children's progress, and runtime data. Only use these commands if you explicitly intend to reset the database environment.
 
