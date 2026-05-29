@@ -23,7 +23,7 @@ psql "host=aws-1-ap-northeast-1.pooler.supabase.com port=5432 dbname=postgres us
 unset PGPASSWORD
 ```
 
-
+kill -9 $(lsof -t -i:8080) 2>/dev/null
 
 psql "host=aws-1-ap-northeast-1.pooler.supabase.com port=5432 dbname=postgres user=postgres.xxnoabmvwpzentxzwfkt sslmode=require" \
   -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;"

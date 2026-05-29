@@ -497,7 +497,7 @@ CREATE TABLE user_mission_progress (
 
 CREATE TABLE badges (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
+  name TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   icon_url TEXT,
   condition_type TEXT NOT NULL,
@@ -505,7 +505,7 @@ CREATE TABLE badges (
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  badge_type TEXT
+  type TEXT NOT NULL DEFAULT 'LESSON'
 );
 
 CREATE TABLE user_badges (
