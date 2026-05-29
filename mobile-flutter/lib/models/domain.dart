@@ -216,7 +216,6 @@ class DevelopmentCategory {
     required this.label,
     this.parentDescription = '',
     this.isActive = true,
-    this.orderIndex = 0,
   });
 
   final String id;
@@ -224,7 +223,6 @@ class DevelopmentCategory {
   final String label;
   final String parentDescription;
   final bool isActive;
-  final int orderIndex;
 
   factory DevelopmentCategory.fromMap(String id, Map<String, dynamic> map) =>
       DevelopmentCategory(
@@ -233,7 +231,6 @@ class DevelopmentCategory {
         label: '${map['label'] ?? ''}',
         parentDescription: '${map['parentDescription'] ?? ''}',
         isActive: map['isActive'] != false,
-        orderIndex: readInt(map['orderIndex']),
       );
 }
 
@@ -245,7 +242,6 @@ class LearningGoal {
     this.parentDescription = '',
     this.skillTags = const [],
     this.isActive = true,
-    this.orderIndex = 0,
   });
 
   final String id;
@@ -254,7 +250,6 @@ class LearningGoal {
   final String parentDescription;
   final List<String> skillTags;
   final bool isActive;
-  final int orderIndex;
 
   factory LearningGoal.fromMap(String id, Map<String, dynamic> map) =>
       LearningGoal(
@@ -264,7 +259,6 @@ class LearningGoal {
         parentDescription: '${map['parentDescription'] ?? ''}',
         skillTags: readStringList(map['skillTags']),
         isActive: map['isActive'] != false,
-        orderIndex: readInt(map['orderIndex']),
       );
 }
 
@@ -276,7 +270,6 @@ class Skill {
     this.domain = '',
     this.parentDescription = '',
     this.isActive = true,
-    this.orderIndex = 0,
   });
 
   final String id;
@@ -285,7 +278,6 @@ class Skill {
   final String domain;
   final String parentDescription;
   final bool isActive;
-  final int orderIndex;
 
   factory Skill.fromMap(String id, Map<String, dynamic> map) => Skill(
     id: id,
@@ -294,7 +286,6 @@ class Skill {
     domain: '${map['domain'] ?? ''}',
     parentDescription: '${map['parentDescription'] ?? ''}',
     isActive: map['isActive'] != false,
-    orderIndex: readInt(map['orderIndex']),
   );
 }
 
@@ -350,7 +341,6 @@ class LearningPath {
     this.description = '',
     this.targetProfileRules = const {},
     this.level = LearningLevel.beginner,
-    this.orderIndex = 0,
     this.accessType = AccessType.free,
     this.status = PublishStatus.draft,
   });
@@ -361,7 +351,6 @@ class LearningPath {
   final String description;
   final Map<String, dynamic> targetProfileRules;
   final LearningLevel level;
-  final int orderIndex;
   final AccessType accessType;
   final PublishStatus status;
 
@@ -373,7 +362,6 @@ class LearningPath {
         description: '${map['description'] ?? ''}',
         targetProfileRules: readMap(map['targetProfileRules']),
         level: learningLevelFromString(map['level']),
-        orderIndex: readInt(map['orderIndex']),
         accessType: accessTypeFromString(map['accessType']),
         status: publishStatusFromString(map['status']),
       );
@@ -505,7 +493,6 @@ class Activity {
     required this.id,
     required this.lessonId,
     this.activityType = ActivityType.multipleChoice,
-    this.orderIndex = 0,
     this.prompt = '',
     this.instruction = '',
     this.mediaRefs = const [],
@@ -528,7 +515,6 @@ class Activity {
   final String id;
   final String lessonId;
   final ActivityType activityType;
-  final int orderIndex;
   final String prompt;
   final String instruction;
   final List<ActivityMediaRef> mediaRefs;
@@ -551,7 +537,6 @@ class Activity {
     id: id,
     lessonId: '${map['lessonId'] ?? ''}',
     activityType: activityTypeFromString(map['activityType']),
-    orderIndex: readInt(map['orderIndex']),
     prompt: '${map['prompt'] ?? ''}',
     instruction: '${map['instruction'] ?? ''}',
     mediaRefs: (map['mediaRefs'] as List? ?? const [])

@@ -12,7 +12,6 @@ class ActivityAdapters {
     id: item.id,
     lessonId: item.lessonId,
     activityType: ActivityType.multipleChoice,
-    orderIndex: item.orderIndex,
     prompt: item.questionText,
     mediaRefs: (item.imageUrl ?? '').isEmpty
         ? const []
@@ -40,7 +39,6 @@ class ActivityAdapters {
     id: item.id,
     lessonId: item.lessonId,
     activityType: ActivityType.flashcardReview,
-    orderIndex: item.orderIndex,
     prompt: item.frontText,
     instruction: item.backText,
     mediaRefs: [

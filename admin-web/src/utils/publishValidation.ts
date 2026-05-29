@@ -47,8 +47,6 @@ export function validateActivityRequired(activity: Partial<Activity>): string[] 
   const errors: string[] = [];
   if (!activity.activityType) errors.push("Loại hoạt động không được để trống.");
   if (!activity.lessonId) errors.push("Bài học không được để trống.");
-  if (activity.orderIndex === undefined || activity.orderIndex === null)
-    errors.push("Thứ tự không được để trống.");
 
   const type = activity.activityType;
   const options = activity.options || [];

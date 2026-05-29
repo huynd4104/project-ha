@@ -18,7 +18,7 @@ public class LearningRepository {
     }
 
     public List<Map<String, Object>> publishedPrograms() {
-        return Db.rows(jdbc.queryForList("SELECT * FROM programs WHERE status = 'PUBLISHED' AND is_active = true ORDER BY sort_order, title"));
+        return Db.rows(jdbc.queryForList("SELECT * FROM programs WHERE status = 'PUBLISHED' AND is_active = true ORDER BY title ASC, id ASC"));
     }
 
     public List<Map<String, Object>> publishedPaths() {

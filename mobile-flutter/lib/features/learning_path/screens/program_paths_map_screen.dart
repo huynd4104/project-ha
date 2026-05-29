@@ -71,7 +71,7 @@ class _ProgramPathsMapScreenState extends State<ProgramPathsMapScreen> {
     final paths = allPaths
         .where((p) => p.programId == child.currentProgramId)
         .toList()
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+      ..sort((a, b) => a.title.compareTo(b.title));
 
     // For each path, load its lessons to determine completion
     final Map<String, List<Lesson>> pathLessons = {};

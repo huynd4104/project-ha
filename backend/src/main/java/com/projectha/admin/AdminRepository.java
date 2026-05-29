@@ -147,7 +147,7 @@ public class AdminRepository {
     }
 
     public List<Map<String, Object>> listActivitiesByLesson(UUID lessonId) {
-        return Db.rows(jdbc.queryForList("SELECT * FROM activities WHERE lesson_id = ? ORDER BY order_index ASC", lessonId));
+        return Db.rows(jdbc.queryForList("SELECT * FROM activities WHERE lesson_id = ? ORDER BY created_at ASC, id ASC", lessonId));
     }
 
 

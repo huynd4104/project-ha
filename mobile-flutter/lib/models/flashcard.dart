@@ -8,7 +8,6 @@ class Flashcard {
     required this.backText,
     this.imageUrl,
     this.audioUrl,
-    this.orderIndex = 0,
   });
   final String id;
   final String lessonId;
@@ -16,7 +15,6 @@ class Flashcard {
   final String backText;
   final String? imageUrl;
   final String? audioUrl;
-  final int orderIndex;
 
   factory Flashcard.fromMap(String id, Map<String, dynamic> map) => Flashcard(
     id: id,
@@ -25,7 +23,6 @@ class Flashcard {
     backText: '${map['backText'] ?? ''}',
     imageUrl: map['imageUrl']?.toString(),
     audioUrl: map['audioUrl']?.toString(),
-    orderIndex: readInt(map['orderIndex']),
   );
 
   Map<String, dynamic> toMap() => {
@@ -34,6 +31,5 @@ class Flashcard {
     'backText': backText,
     'imageUrl': imageUrl,
     'audioUrl': audioUrl,
-    'orderIndex': orderIndex,
   };
 }

@@ -136,7 +136,6 @@ const columnLabels: Record<string, string> = {
   name: "Tên",
   note: "Ghi chú",
   npcId: "ID nhân vật",
-  orderIndex: "Thứ tự",
   primaryDifficulty: "Khó khăn chính",
   programId: "ID chương trình",
   publishStatus: "Trạng thái xuất bản",

@@ -9,7 +9,6 @@ class MathQuestion {
     required this.correctOption,
     this.imageUrl,
     this.explanation = '',
-    this.orderIndex = 0,
   });
   final String id;
   final String lessonId;
@@ -18,7 +17,6 @@ class MathQuestion {
   final String correctOption;
   final String? imageUrl;
   final String explanation;
-  final int orderIndex;
 
   factory MathQuestion.fromMap(String id, Map<String, dynamic> map) =>
       MathQuestion(
@@ -34,7 +32,6 @@ class MathQuestion {
         correctOption: '${map['correctOption'] ?? 'A'}',
         imageUrl: map['imageUrl']?.toString(),
         explanation: '${map['explanation'] ?? ''}',
-        orderIndex: readInt(map['orderIndex']),
       );
 
   Map<String, dynamic> toMap() => {
@@ -47,6 +44,5 @@ class MathQuestion {
     'correctOption': correctOption,
     'imageUrl': imageUrl,
     'explanation': explanation,
-    'orderIndex': orderIndex,
   };
 }

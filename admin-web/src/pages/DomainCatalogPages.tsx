@@ -8,7 +8,7 @@ export function DevelopmentCategoriesPage() {
       readonly
       library
       fields={[]}
-      columns={["key", "label", "parentDescription", "isActive", "orderIndex"]}
+      columns={["key", "label", "parentDescription", "isActive"]}
     />
   );
 }
@@ -21,7 +21,7 @@ export function LearningGoalsPage() {
       readonly
       library
       fields={[]}
-      columns={["key", "label", "parentDescription", "isActive", "orderIndex"]}
+      columns={["key", "label", "parentDescription", "isActive"]}
     />
   );
 }
@@ -34,7 +34,7 @@ export function SkillsPage() {
       readonly
       library
       fields={[]}
-      columns={["key", "label", "domain", "parentDescription", "isActive", "orderIndex"]}
+      columns={["key", "label", "domain", "parentDescription", "isActive"]}
     />
   );
 }
@@ -76,7 +76,6 @@ export function LearningPathsPage() {
         "title",
         "programId",
         "level",
-        "orderIndex",
         "accessType",
         "status"
       ]}

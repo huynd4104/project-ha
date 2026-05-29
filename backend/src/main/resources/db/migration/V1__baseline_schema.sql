@@ -137,7 +137,6 @@ CREATE TABLE programs (
   description TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'DRAFT',
   is_active BOOLEAN NOT NULL DEFAULT true,
-  sort_order INT NOT NULL DEFAULT 0,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -166,7 +165,6 @@ CREATE TABLE learning_paths (
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  order_index INT,
   target_profile_rules JSONB NOT NULL DEFAULT '{}'::jsonb,
   level TEXT NOT NULL DEFAULT 'BEGINNER',
   access_type TEXT NOT NULL DEFAULT 'FREE'
@@ -210,7 +208,6 @@ CREATE TABLE lessons (
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  order_index INT,
   level TEXT NOT NULL DEFAULT 'BEGINNER',
   difficulty_categories JSONB NOT NULL DEFAULT '[]'::jsonb,
   learning_goals JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -236,7 +233,6 @@ CREATE TABLE activities (
   activity_type TEXT NOT NULL,
   prompt TEXT NOT NULL DEFAULT '',
   instruction TEXT NOT NULL DEFAULT '',
-  order_index INT NOT NULL DEFAULT 0,
   access_type TEXT NOT NULL DEFAULT 'FREE',
   image_url TEXT,
   audio_url TEXT,
@@ -301,7 +297,6 @@ CREATE TABLE development_categories (
   label TEXT NOT NULL,
   parent_description TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  order_index INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -314,7 +309,6 @@ CREATE TABLE learning_goals (
   parent_description TEXT,
   skill_tags JSONB NOT NULL DEFAULT '[]'::jsonb,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  order_index INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -326,7 +320,6 @@ CREATE TABLE skills (
   parent_description TEXT,
   domain TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  order_index INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -707,7 +700,6 @@ CREATE TABLE ai_conversation_topics (
   mascot_reaction TEXT NOT NULL DEFAULT 'welcome',
   estimated_duration_seconds INT NOT NULL DEFAULT 180,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -733,7 +725,6 @@ CREATE TABLE ai_conversation_questions (
   retry_feedback TEXT DEFAULT NULL,
   max_attempts INT NOT NULL DEFAULT 2,
   difficulty_level TEXT NOT NULL DEFAULT 'BEGINNER',
-  sort_order INT NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -824,7 +815,7 @@ CREATE TABLE ai_conversation_topic_progress (
 -- Indexes
 CREATE INDEX idx_children_user ON children(user_id);
 CREATE INDEX idx_path_items_path ON path_items(path_id, sequence);
-CREATE INDEX idx_activities_lesson ON activities(lesson_id, order_index);
+CREATE INDEX idx_activities_lesson ON activities(lesson_id, id);
 CREATE INDEX idx_progress_child ON progress(user_id, child_id);
 CREATE INDEX idx_xp_logs_child ON xp_logs(user_id, child_id);
 CREATE INDEX idx_daily_progress_date ON user_mission_progress(user_id, child_id, date);

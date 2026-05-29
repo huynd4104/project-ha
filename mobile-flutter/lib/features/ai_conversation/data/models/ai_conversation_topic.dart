@@ -12,7 +12,6 @@ class AiConversationTopic {
     required this.mascotReaction,
     required this.estimatedDurationSeconds,
     required this.isActive,
-    required this.sortOrder,
   });
 
   final String id;
@@ -25,7 +24,6 @@ class AiConversationTopic {
   final String mascotReaction;
   final int estimatedDurationSeconds;
   final bool isActive;
-  final int sortOrder;
 
   factory AiConversationTopic.fromMap(Map<String, dynamic> map) =>
       AiConversationTopic(
@@ -43,6 +41,5 @@ class AiConversationTopic {
         mascotReaction: '${map['mascotReaction'] ?? 'welcome'}',
         estimatedDurationSeconds: readInt(map['estimatedDurationSeconds'], 180),
         isActive: map['isActive'] != false,
-        sortOrder: readInt(map['sortOrder']),
       );
 }

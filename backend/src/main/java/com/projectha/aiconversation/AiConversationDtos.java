@@ -18,8 +18,7 @@ public final class AiConversationDtos {
         String iconName,
         String mascotReaction,
         int estimatedDurationSeconds,
-        boolean isActive,
-        int sortOrder
+        boolean isActive
     ) {}
 
     public record AiConversationQuestionResponse(
@@ -37,7 +36,7 @@ public final class AiConversationDtos {
         String hintText,
         int maxAttempts,
         String difficultyLevel,
-        int sortOrder
+        boolean isActive
     ) {}
 
     public record StartAiConversationSessionRequest(UUID childId, UUID topicId) {}
@@ -187,8 +186,7 @@ public final class AiConversationDtos {
         String iconName,
         String mascotReaction,
         Integer estimatedDurationSeconds,
-        Boolean isActive,
-        Integer sortOrder
+        Boolean isActive
     ) {}
 
     public record AdminAiConversationTopicResponse(
@@ -202,7 +200,6 @@ public final class AiConversationDtos {
         String mascotReaction,
         int estimatedDurationSeconds,
         boolean isActive,
-        int sortOrder,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
     ) {}
@@ -224,7 +221,6 @@ public final class AiConversationDtos {
         String positiveFeedback,
         Integer maxAttempts,
         String difficultyLevel,
-        Integer sortOrder,
         Boolean isActive
     ) {}
 
@@ -247,7 +243,6 @@ public final class AiConversationDtos {
         String positiveFeedback,
         int maxAttempts,
         String difficultyLevel,
-        int sortOrder,
         boolean isActive,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt

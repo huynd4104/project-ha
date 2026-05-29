@@ -347,8 +347,8 @@ export function developmentCategoriesImportConfig(existingItems: NamedRecord[]):
   return {
     title: "Import CSV Nhóm khó khăn",
     templateFilename: "dev-categories-template.csv",
-    templateHeaders: ["key", "label", "description", "isActive", "orderIndex"],
-    templateExampleRows: [{ key: "language_delay", label: "Chậm nói", description: "Trẻ chậm phát triển ngôn ngữ", isActive: "true", orderIndex: "1" }],
+    templateHeaders: ["key", "label", "description", "isActive"],
+    templateExampleRows: [{ key: "language_delay", label: "Chậm nói", description: "Trẻ chậm phát triển ngôn ngữ", isActive: "true" }],
     validateRow(row) {
       const errors: string[] = [];
       const key = normalizeString(row.key);
@@ -358,8 +358,7 @@ export function developmentCategoriesImportConfig(existingItems: NamedRecord[]):
         key,
         label: normalizeString(row.label),
         description: normalizeString(row.description),
-        isActive: boolField(row.isActive, "isActive", true, errors),
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+        isActive: boolField(row.isActive, "isActive", true, errors)
       }, errors);
     }
   };
@@ -370,8 +369,8 @@ export function learningGoalsImportConfig(existingItems: NamedRecord[]): ImportC
   return {
     title: "Import CSV Mục tiêu học tập",
     templateFilename: "learning-goals-template.csv",
-    templateHeaders: ["key", "label", "description", "skillTags", "isActive", "orderIndex"],
-    templateExampleRows: [{ key: "expressive_lang", label: "Ngôn ngữ diễn đạt", description: "Cải thiện diễn đạt", skillTags: "naming,requesting", isActive: "true", orderIndex: "1" }],
+    templateHeaders: ["key", "label", "description", "skillTags", "isActive"],
+    templateExampleRows: [{ key: "expressive_lang", label: "Ngôn ngữ diễn đạt", description: "Cải thiện diễn đạt", skillTags: "naming,requesting", isActive: "true" }],
     validateRow(row) {
       const errors: string[] = [];
       const key = normalizeString(row.key);
@@ -382,8 +381,7 @@ export function learningGoalsImportConfig(existingItems: NamedRecord[]): ImportC
         label: normalizeString(row.label),
         description: normalizeString(row.description),
         skillTags: normalizeString(row.skillTags).split(",").filter(Boolean),
-        isActive: boolField(row.isActive, "isActive", true, errors),
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+        isActive: boolField(row.isActive, "isActive", true, errors)
       }, errors);
     }
   };
@@ -394,8 +392,8 @@ export function skillsImportConfig(existingItems: NamedRecord[]): ImportConfig {
   return {
     title: "Import CSV Kỹ năng",
     templateFilename: "skills-template.csv",
-    templateHeaders: ["key", "label", "domain", "parentDescription", "isActive", "orderIndex"],
-    templateExampleRows: [{ key: "naming_objects", label: "Gọi tên đồ vật", domain: "LANGUAGE", parentDescription: "Trẻ có thể gọi tên", isActive: "true", orderIndex: "1" }],
+    templateHeaders: ["key", "label", "domain", "parentDescription", "isActive"],
+    templateExampleRows: [{ key: "naming_objects", label: "Gọi tên đồ vật", domain: "LANGUAGE", parentDescription: "Trẻ có thể gọi tên", isActive: "true" }],
     validateRow(row) {
       const errors: string[] = [];
       const key = normalizeString(row.key);
@@ -406,8 +404,7 @@ export function skillsImportConfig(existingItems: NamedRecord[]): ImportConfig {
         label: normalizeString(row.label),
         domain: normalizeString(row.domain),
         parentDescription: normalizeString(row.parentDescription),
-        isActive: boolField(row.isActive, "isActive", true, errors),
-        orderIndex: requiredNumberField(row.orderIndex, "orderIndex", errors)
+        isActive: boolField(row.isActive, "isActive", true, errors)
       }, errors);
     }
   };

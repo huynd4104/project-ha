@@ -37,7 +37,6 @@ interface TaxItem {
   domain?: string;
   skillTags?: string[];
   isActive: boolean;
-  orderIndex: number;
 }
 
 export function TaxonomyPage() {
@@ -58,7 +57,6 @@ export function TaxonomyPage() {
   const [domain, setDomain] = useState("");
   const [skillTags, setSkillTags] = useState<string[]>([]);
   const [isActive, setIsActive] = useState(true);
-  const [orderIndex, setOrderIndex] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const collectionPath =
@@ -78,7 +76,7 @@ export function TaxonomyPage() {
     try {
       const res = await adminApi.list(collectionPath);
       const rows = (res.data.data || []) as TaxItem[];
-      rows.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      rows.sort((a, b) => (a.label || "").localeCompare(b.label || ""));
       setItems(rows);
     } catch (e) {
       console.error(e);
@@ -95,7 +93,7 @@ export function TaxonomyPage() {
       try {
         const res = await adminApi.list("/skills");
         const rows = (res.data.data || []) as TaxItem[];
-        rows.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+        rows.sort((a, b) => (a.label || "").localeCompare(b.label || ""));
         setSkills(rows);
       } catch (e) {
         console.error(e);
@@ -122,12 +120,11 @@ export function TaxonomyPage() {
     setTimeout(() => setToastMsg(""), 3000);
   };
   const table = useTableControls(filtered, [
-    { value: "order", label: "Thứ tự", getValue: (item) => item.orderIndex },
     { value: "key", label: "Mã định danh", getValue: (item) => item.key },
     { value: "label", label: "Nhãn", getValue: (item) => item.label },
     { value: "domain", label: "Nhóm kỹ năng", getValue: (item) => getDomainLabel(item.domain) },
     { value: "status", label: "Trạng thái", getValue: (item) => item.isActive !== false }
-  ], "order");
+  ], "label");
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -137,7 +134,6 @@ export function TaxonomyPage() {
     setDomain("");
     setSkillTags([]);
     setIsActive(true);
-    setOrderIndex(items.length ? Math.max(...items.map((i) => i.orderIndex ?? 0)) + 1 : 1);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -150,7 +146,6 @@ export function TaxonomyPage() {
     setDomain(item.domain || "");
     setSkillTags(item.skillTags || []);
     setIsActive(item.isActive !== false);
-    setOrderIndex(item.orderIndex ?? 0);
     setErrors({});
     setIsModalOpen(true);
   };
@@ -175,8 +170,7 @@ export function TaxonomyPage() {
     const payload: any = {
       key: key.trim(),
       label: label.trim(),
-      isActive,
-      orderIndex: Number(orderIndex)
+      isActive
     };
 
     if (tab === "categories") {
@@ -284,7 +278,6 @@ export function TaxonomyPage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "60px" }}>#</th>
                 <th>Mã định danh</th>
                 <th>Nhãn</th>
                 {tab === "skills" && <th>Nhóm kỹ năng</th>}
@@ -297,7 +290,6 @@ export function TaxonomyPage() {
             <tbody>
               {table.pagedItems.map((item) => (
                 <tr key={item.id}>
-                  <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                   <td><code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "12px" }}>{item.key}</code></td>
                   <td style={{ fontWeight: "600" }}>{item.label}</td>
                   {tab === "skills" && <td><span className="badge info">{getDomainLabel(item.domain)}</span></td>}
@@ -391,14 +383,6 @@ export function TaxonomyPage() {
                 )}
 
                 <div className="form-grid">
-                  <div className="field">
-                    <label>Thứ tự hiển thị</label>
-                    <input
-                      type="number"
-                      value={orderIndex}
-                      onChange={(e) => setOrderIndex(Number(e.target.value))}
-                    />
-                  </div>
                   <div className="field" style={{ justifyContent: "end" }}>
                     <ToggleSwitch id="taxIsActive" label="Đang hoạt động" checked={isActive} onChange={setIsActive} />
                   </div>

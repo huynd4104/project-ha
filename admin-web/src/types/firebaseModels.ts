@@ -58,7 +58,6 @@ export type Lesson = {
   description: string;
   type: "MATH" | "FLASHCARD" | "THINKING" | "SPELLING" | "RHYME";
   lessonType?: string;
-  orderIndex: number;
   programId?: string | null;
   pathId?: string | null;
   level?: LearningLevel;
@@ -113,7 +112,6 @@ export type DevelopmentCategory = {
   label: string;
   parentDescription: string;
   isActive: boolean;
-  orderIndex: number;
   createdAt: any;
   updatedAt: any;
 };
@@ -126,7 +124,6 @@ export type LearningGoal = {
   parentDescription: string;
   skillTags?: string[];
   isActive: boolean;
-  orderIndex: number;
   createdAt: any;
   updatedAt: any;
 };
@@ -138,7 +135,6 @@ export type Skill = {
   domain: string;
   parentDescription: string;
   isActive: boolean;
-  orderIndex: number;
   createdAt: any;
   updatedAt: any;
 };
@@ -166,7 +162,6 @@ export type LearningPath = {
   description: string;
   targetProfileRules: Record<string, unknown>;
   level: LearningLevel;
-  orderIndex: number;
   accessType: AccessType;
   status: PublishStatus;
   createdAt: any;
@@ -216,7 +211,6 @@ export type Activity = {
   id: string;
   lessonId: string;
   activityType: ActivityType;
-  orderIndex: number;
   prompt: string;
   instruction?: string;
   audioUrl?: string;

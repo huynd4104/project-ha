@@ -116,7 +116,6 @@ public class AiConversationAdminService {
         payload.put("mascotReaction", text(request.mascotReaction(), "welcome"));
         payload.put("estimatedDurationSeconds", request.estimatedDurationSeconds() == null ? 180 : request.estimatedDurationSeconds());
         payload.put("isActive", request.isActive() == null || request.isActive());
-        payload.put("sortOrder", request.sortOrder() == null ? 0 : request.sortOrder());
         return payload;
     }
 
@@ -138,7 +137,6 @@ public class AiConversationAdminService {
         payload.put("retryFeedback", text(request.retryFeedback(), ""));
         payload.put("maxAttempts", request.maxAttempts() == null ? 3 : request.maxAttempts());
         payload.put("difficultyLevel", text(request.difficultyLevel(), "BEGINNER"));
-        payload.put("sortOrder", request.sortOrder() == null ? 0 : request.sortOrder());
         payload.put("isActive", request.isActive() == null || request.isActive());
         return payload;
     }

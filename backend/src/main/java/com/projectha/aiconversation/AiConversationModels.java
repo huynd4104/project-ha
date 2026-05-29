@@ -45,7 +45,6 @@ record AiConversationTopic(
     String mascotReaction,
     int estimatedDurationSeconds,
     boolean isActive,
-    int sortOrder,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}
@@ -69,7 +68,6 @@ record AiConversationQuestion(
     String positiveFeedback,
     String difficultyLevel,
     int maxAttempts,
-    int sortOrder,
     boolean isActive,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt

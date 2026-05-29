@@ -318,7 +318,6 @@ class AiConversationEvaluationServiceIntegrationTest {
             "Giỏi lắm!",
             "EASY",
             3,
-            1,
             true,
             null,
             null

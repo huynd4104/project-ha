@@ -18,7 +18,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
   const [mascotReaction, setMascotReaction] = useState("welcome");
   const [estimatedDurationSeconds, setEstimatedDurationSeconds] = useState("180");
   const [isActive, setIsActive] = useState(true);
-  const [sortOrder, setSortOrder] = useState("0");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -32,7 +31,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
     setMascotReaction(topic?.mascotReaction ?? "welcome");
     setEstimatedDurationSeconds(`${topic?.estimatedDurationSeconds ?? 180}`);
     setIsActive(topic?.isActive ?? true);
-    setSortOrder(`${topic?.sortOrder ?? 0}`);
     setErrors({});
   }, [topic]);
 
@@ -42,9 +40,6 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
     const duration = Number(estimatedDurationSeconds);
     if (!Number.isFinite(duration) || duration < 30) {
       next.estimatedDurationSeconds = "Thời lượng tối thiểu là 30 giây.";
-    }
-    if (!Number.isFinite(Number(sortOrder))) {
-      next.sortOrder = "Thứ tự phải là một số hợp lệ.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -64,8 +59,7 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
         iconName: iconName.trim() || null,
         mascotReaction: mascotReaction.trim() || "welcome",
         estimatedDurationSeconds: Number(estimatedDurationSeconds),
-        isActive,
-        sortOrder: Number(sortOrder)
+        isActive
       });
     } finally {
       setSaving(false);
@@ -145,18 +139,13 @@ export function AiConversationTopicFormPage({ topic, onCancel, onSubmit }: Props
             {/* Section C: Trạng thái & sắp xếp */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <h3 style={{ margin: "0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                c. Trạng thái & sắp xếp
+                c. Trạng thái
               </h3>
               <div className="form-grid">
                 <div className="field">
                   <label>Thời lượng ước tính (giây) <span style={{ color: "red" }}>*</span></label>
                   <input type="number" value={estimatedDurationSeconds} onChange={(event) => setEstimatedDurationSeconds(event.target.value)} min="30" />
                   {errors.estimatedDurationSeconds && <span className="error-msg">{errors.estimatedDurationSeconds}</span>}
-                </div>
-                <div className="field">
-                  <label>Thứ tự hiển thị</label>
-                  <input type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
-                  {errors.sortOrder && <span className="error-msg">{errors.sortOrder}</span>}
                 </div>
               </div>
               <div style={{ marginTop: "8px", display: "flex", justifyContent: "flex-end" }}>

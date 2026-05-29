@@ -27,7 +27,6 @@ class Lesson {
     required this.title,
     required this.description,
     required this.type,
-    required this.orderIndex,
     this.programId,
     this.pathId,
     this.lessonType = 'MATH',
@@ -47,7 +46,6 @@ class Lesson {
   final String title;
   final String description;
   final LessonType type;
-  final int orderIndex;
   final String? programId;
   final String? pathId;
   final String lessonType;
@@ -70,7 +68,6 @@ class Lesson {
       title: '${map['title'] ?? ''}',
       description: '${map['description'] ?? ''}',
       type: lessonTypeFromString(rawType),
-      orderIndex: readInt(map['orderIndex']),
       programId: map['programId']?.toString(),
       pathId: map['pathId']?.toString(),
       lessonType: rawType.toUpperCase(),
@@ -96,7 +93,6 @@ class Lesson {
     'description': description,
     'type': lessonTypeToString(type),
     'lessonType': lessonType,
-    'orderIndex': orderIndex,
     'programId': programId,
     'pathId': pathId,
     'level': level.apiValue,

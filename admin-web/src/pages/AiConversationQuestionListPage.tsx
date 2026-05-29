@@ -55,10 +55,9 @@ export function AiConversationQuestionListPage() {
   }, [questions, search]);
 
   const table = useTableControls(filtered, [
-    { value: "sortOrder", label: "Thứ tự", getValue: (item) => item.sortOrder },
     { value: "question", label: "Câu hỏi", getValue: (item) => item.questionText },
     { value: "evaluation", label: "Kiểu đánh giá", getValue: (item) => item.evaluationType }
-  ], "sortOrder");
+  ], "question");
 
   const openCreate = () => {
     setEditingQuestion(null);
@@ -143,7 +142,6 @@ export function AiConversationQuestionListPage() {
                   <th>Từ khóa chính</th>
                   <th>Độ khó</th>
                   <th>Trạng thái</th>
-                  <th>Thứ tự</th>
                   <th style={{ width: "210px" }}>Thao tác</th>
                 </tr>
               </thead>
@@ -190,7 +188,6 @@ export function AiConversationQuestionListPage() {
                         <span className="badge inactive">Đã tắt</span>
                       )}
                     </td>
-                    <td>{question.sortOrder}</td>
                     <td>
                       <div className="actions">
                         <button className="secondary" onClick={() => openEdit(question)}>Sửa</button>

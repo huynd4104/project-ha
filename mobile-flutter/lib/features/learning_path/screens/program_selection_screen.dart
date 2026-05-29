@@ -223,7 +223,7 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
 
       // Find paths belonging to the selected program
       final programPaths = paths.where((p) => p.programId == _selectedProgramId).toList()
-        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+        ..sort((a, b) => a.title.compareTo(b.title));
 
       if (programPaths.isEmpty) {
         throw Exception('Chương trình này chưa cấu hình lộ trình học. Vui lòng chọn chương trình khác.');

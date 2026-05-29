@@ -197,7 +197,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
   const [retryFeedback, setRetryFeedback] = useState("");
   const [maxAttempts, setMaxAttempts] = useState("3");
   const [difficultyLevel, setDifficultyLevel] = useState("BEGINNER");
-  const [sortOrder, setSortOrder] = useState("0");
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -222,7 +221,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     setRetryFeedback(templateToDisplay(question?.retryFeedback));
     setMaxAttempts(`${question?.maxAttempts ?? 3}`);
     setDifficultyLevel(question?.difficultyLevel ?? "BEGINNER");
-    setSortOrder(`${question?.sortOrder ?? 0}`);
     setIsActive(question?.isActive ?? true);
     setErrors({});
     
@@ -279,9 +277,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
     const attempts = Number(maxAttempts);
     if (!Number.isFinite(attempts) || attempts < 1) {
       next.maxAttempts = "Số lần thử tối đa phải từ 1 trở lên.";
-    }
-    if (!Number.isFinite(Number(sortOrder))) {
-      next.sortOrder = "Thứ tự phải là một số hợp lệ.";
     }
 
     if ((evaluationType === "SEMANTIC" || evaluationType === "EXACT") && !expectedAnswer.trim()) {
@@ -341,7 +336,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
         retryFeedback: displayToTemplate(retryFeedback.trim()) || null,
         maxAttempts: Number(maxAttempts),
         difficultyLevel,
-        sortOrder: Number(sortOrder),
         isActive
       });
     } finally {
@@ -599,7 +593,7 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
               </div>
 
               <h3 style={{ margin: "20px 0 0 0", fontSize: "15px", borderBottom: "1px solid var(--border)", paddingBottom: "6px", color: "var(--text-main)" }}>
-                d. Cấu hình khác
+                d. Cấu hình độ khó
               </h3>
               <div className="form-grid">
                 <div className="field">
@@ -609,11 +603,6 @@ export function AiConversationQuestionFormPage({ question, onCancel, onSubmit }:
                     <option value="BASIC">Trung bình (Basic)</option>
                     <option value="INTERMEDIATE">Khó (Intermediate)</option>
                   </select>
-                </div>
-                <div className="field">
-                  <label>Thứ tự sắp xếp</label>
-                  <input type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
-                  {errors.sortOrder && <span className="error-msg">{errors.sortOrder}</span>}
                 </div>
               </div>
 

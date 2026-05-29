@@ -18,7 +18,6 @@ interface Lesson {
   title: string;
   description: string;
   type: "MATH" | "FLASHCARD" | "THINKING" | "SPELLING" | "RHYME";
-  orderIndex: number;
   npcId?: string | null;
   isActive: boolean;
 }
@@ -40,7 +39,6 @@ export function LessonsPage() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<Lesson["type"]>("MATH");
   const [npcId, setNpcId] = useState("");
-  const [orderIndex, setOrderIndex] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -84,7 +82,6 @@ export function LessonsPage() {
     setDescription("");
     setType("MATH");
     setNpcId("");
-    setOrderIndex(items.length ? Math.max(...items.map(i => i.orderIndex ?? 0)) + 10 : 10);
     setIsActive(true);
     setErrors({});
     setIsModalOpen(true);
@@ -96,7 +93,6 @@ export function LessonsPage() {
     setDescription(item.description || "");
     setType(item.type || "MATH");
     setNpcId(item.npcId || "");
-    setOrderIndex(item.orderIndex ?? 0);
     setIsActive(item.isActive !== false);
     setErrors({});
     setIsModalOpen(true);
@@ -148,7 +144,6 @@ export function LessonsPage() {
       description: description.trim(),
       type,
       npcId: npcId || null,
-      orderIndex: Number(orderIndex),
       isActive
     };
 
@@ -216,7 +211,6 @@ export function LessonsPage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "80px" }}>Thứ tự</th>
                 <th>Tiêu đề bài học</th>
                 <th>Mô tả</th>
                 <th>Loại bài</th>
@@ -231,7 +225,6 @@ export function LessonsPage() {
                 const badgeClass = item.type === "MATH" || item.type === "THINKING" ? "blue" : item.type === "FLASHCARD" ? "purple" : item.type === "SPELLING" ? "green" : item.type === "RHYME" ? "yellow" : "";
                 return (
                   <tr key={item.id}>
-                    <td style={{ fontWeight: "700", textAlign: "center" }}>{item.orderIndex}</td>
                     <td style={{ fontWeight: "600" }}>{item.title}</td>
                     <td style={{ color: "var(--text-muted)", fontSize: "13px" }}>{item.description}</td>
                     <td>
@@ -325,16 +318,6 @@ export function LessonsPage() {
                 </div>
 
                 <div className="form-grid">
-                  <div className="field">
-                    <label>Thứ tự hiển thị *</label>
-                    <input
-                      type="number"
-                      value={orderIndex}
-                      onChange={(e) => setOrderIndex(Number(e.target.value))}
-                    />
-                    <span className="helper">Số nhỏ hiển thị trước trong lộ trình học.</span>
-                  </div>
-
                   <div className="field" style={{ justifyContent: "end" }}>
                     <ToggleSwitch id="isActiveLesson" label="Bài học này đang hoạt động" checked={isActive} onChange={setIsActive} />
                   </div>

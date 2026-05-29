@@ -41,10 +41,9 @@ export function AiConversationTopicListPage() {
   }, [search, topics]);
 
   const table = useTableControls(filtered, [
-    { value: "sortOrder", label: "Thứ tự", getValue: (item) => item.sortOrder },
     { value: "title", label: "Tên chủ đề", getValue: (item) => item.title },
     { value: "difficulty", label: "Độ khó", getValue: (item) => item.difficultyLevel }
-  ], "sortOrder");
+  ], "title");
 
   const openCreate = () => {
     setEditingTopic(null);
@@ -125,7 +124,6 @@ export function AiConversationTopicListPage() {
                   <th>Độ tuổi</th>
                   <th>Thời lượng</th>
                   <th>Trạng thái</th>
-                  <th>Thứ tự</th>
                   <th style={{ width: "260px" }}>Thao tác</th>
                 </tr>
               </thead>
@@ -148,7 +146,6 @@ export function AiConversationTopicListPage() {
                         <span className="badge inactive">Đã tắt</span>
                       )}
                     </td>
-                    <td>{topic.sortOrder}</td>
                     <td>
                       <div className="actions">
                         <button className="secondary" onClick={() => navigate(`/ai-conversations/topics/${topic.id}/questions`)}>

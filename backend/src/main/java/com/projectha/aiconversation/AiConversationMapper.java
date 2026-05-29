@@ -28,7 +28,6 @@ final class AiConversationMapper {
             str(row.get("mascotReaction"), "welcome"),
             intValue(row.get("estimatedDurationSeconds"), 180),
             bool(row.get("isActive"), true),
-            intValue(row.get("sortOrder"), 0),
             offset(row.get("createdAt")),
             offset(row.get("updatedAt"))
         );
@@ -55,7 +54,6 @@ final class AiConversationMapper {
             str(row.get("positiveFeedback")),
             str(row.get("difficultyLevel"), "BEGINNER"),
             intValue(row.get("maxAttempts"), 2),
-            intValue(row.get("sortOrder"), 0),
             bool(row.get("isActive"), true),
             offset(row.get("createdAt")),
             offset(row.get("updatedAt"))

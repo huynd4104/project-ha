@@ -15,7 +15,6 @@ class AiConversationQuestion {
     required this.retryFeedback,
     required this.maxAttempts,
     required this.difficultyLevel,
-    required this.sortOrder,
     required this.isActive,
   });
 
@@ -32,7 +31,6 @@ class AiConversationQuestion {
   final String retryFeedback;
   final int maxAttempts;
   final int difficultyLevel;
-  final int sortOrder;
   final bool isActive;
 
   factory AiConversationQuestion.fromMap(Map<String, dynamic> map) =>
@@ -51,7 +49,6 @@ class AiConversationQuestion {
         retryFeedback: '${map['retryFeedback'] ?? ''}',
         maxAttempts: readInt(map['maxAttempts'], 2),
         difficultyLevel: readInt(map['difficultyLevel'], 1),
-        sortOrder: readInt(map['sortOrder']),
         isActive: map['isActive'] != false,
       );
 }

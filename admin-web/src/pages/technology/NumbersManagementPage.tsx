@@ -13,7 +13,6 @@ interface NumberItem {
   title: string;
   imageUrl?: string;
   isActive: boolean;
-  sortOrder: number;
 }
 
 interface CountingQuestion {
@@ -22,7 +21,6 @@ interface CountingQuestion {
   imageUrl?: string;
   correctNumber: number;
   isActive: boolean;
-  sortOrder: number;
 }
 
 export function NumbersManagementPage() {

@@ -20,14 +20,14 @@ public class AiConversationTopicRepository {
         return jdbc.queryForList("""
             SELECT * FROM ai_conversation_topics
             WHERE is_active = true
-            ORDER BY sort_order, title
+            ORDER BY title ASC, id ASC
             """).stream().map(AiConversationMapper::topic).toList();
     }
 
     public List<AiConversationTopic> findAll() {
         return jdbc.queryForList("""
             SELECT * FROM ai_conversation_topics
-            ORDER BY sort_order, title
+            ORDER BY title ASC, id ASC
             """).stream().map(AiConversationMapper::topic).toList();
     }
 
@@ -41,9 +41,9 @@ public class AiConversationTopicRepository {
         return AiConversationMapper.topic(jdbc.queryForMap("""
             INSERT INTO ai_conversation_topics(
               title, description, age_range_min, age_range_max, difficulty_level,
-              icon_name, mascot_reaction, estimated_duration_seconds, is_active, sort_order
+              icon_name, mascot_reaction, estimated_duration_seconds, is_active
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
             """,
             payload.get("title"),
@@ -54,8 +54,7 @@ public class AiConversationTopicRepository {
             payload.getOrDefault("iconName", "chat_bubble"),
             payload.getOrDefault("mascotReaction", "welcome"),
             payload.getOrDefault("estimatedDurationSeconds", 180),
-            payload.getOrDefault("isActive", true),
-            payload.getOrDefault("sortOrder", 0)
+            payload.getOrDefault("isActive", true)
         ));
     }
 
@@ -71,8 +70,7 @@ public class AiConversationTopicRepository {
               icon_name = ?,
               mascot_reaction = ?,
               estimated_duration_seconds = ?,
-              is_active = ?,
-              sort_order = ?
+              is_active = ?
             WHERE id = ?
             RETURNING *
             """,
@@ -85,7 +83,6 @@ public class AiConversationTopicRepository {
             payload.getOrDefault("mascotReaction", "welcome"),
             payload.getOrDefault("estimatedDurationSeconds", 180),
             payload.getOrDefault("isActive", true),
-            payload.getOrDefault("sortOrder", 0),
             id
         ));
     }

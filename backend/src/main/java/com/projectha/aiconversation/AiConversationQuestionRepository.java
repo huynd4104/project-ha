@@ -20,7 +20,7 @@ public class AiConversationQuestionRepository {
         return jdbc.queryForList("""
             SELECT * FROM ai_conversation_questions
             WHERE topic_id = ? AND is_active = true
-            ORDER BY sort_order, question_text
+            ORDER BY created_at ASC, id ASC
             """, topicId).stream().map(AiConversationMapper::question).toList();
     }
 
@@ -28,7 +28,7 @@ public class AiConversationQuestionRepository {
         return jdbc.queryForList("""
             SELECT * FROM ai_conversation_questions
             WHERE topic_id = ?
-            ORDER BY sort_order, question_text
+            ORDER BY created_at ASC, id ASC
             """, topicId).stream().map(AiConversationMapper::question).toList();
     }
 
@@ -45,9 +45,9 @@ public class AiConversationQuestionRepository {
               accepted_keywords, alternative_answers, evaluation_type, advance_policy, allow_skip, skip_after_attempts,
               retry_prompt_text, correct_feedback, hint_text,
               positive_feedback, retry_feedback, max_attempts,
-              difficulty_level, sort_order, is_active
+              difficulty_level, is_active
             )
-            VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
             """,
             topicId,
@@ -67,7 +67,6 @@ public class AiConversationQuestionRepository {
             payload.getOrDefault("retryFeedback", ""),
             payload.getOrDefault("maxAttempts", 3),
             payload.getOrDefault("difficultyLevel", "BEGINNER"),
-            payload.getOrDefault("sortOrder", 0),
             payload.getOrDefault("isActive", true)
         ));
     }
@@ -92,7 +91,6 @@ public class AiConversationQuestionRepository {
               retry_feedback = ?,
               max_attempts = ?,
               difficulty_level = ?,
-              sort_order = ?,
               is_active = ?
             WHERE id = ?
             RETURNING *
@@ -113,7 +111,6 @@ public class AiConversationQuestionRepository {
             payload.getOrDefault("retryFeedback", ""),
             payload.getOrDefault("maxAttempts", 3),
             payload.getOrDefault("difficultyLevel", "BEGINNER"),
-            payload.getOrDefault("sortOrder", 0),
             payload.getOrDefault("isActive", true),
             id
         ));

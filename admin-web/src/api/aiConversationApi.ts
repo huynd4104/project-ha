@@ -13,7 +13,6 @@ export interface AiConversationTopic {
   mascotReaction?: string | null;
   estimatedDurationSeconds: number;
   isActive: boolean;
-  sortOrder: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -39,7 +38,6 @@ export interface AiConversationQuestion {
   retryFeedback?: string | null;
   maxAttempts: number;
   difficultyLevel: string;
-  sortOrder: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;

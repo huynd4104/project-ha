@@ -89,7 +89,7 @@ public class LearningService {
     }
 
     public List<Map<String, Object>> activities(UUID lessonId) {
-        return repo.byLesson("activities", lessonId, "order_index");
+        return repo.byLesson("activities", lessonId, "created_at ASC, id ASC");
     }
 
     public List<Map<String, Object>> mathQuestions(UUID lessonId) {

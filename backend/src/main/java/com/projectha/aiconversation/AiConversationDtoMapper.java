@@ -23,8 +23,7 @@ final class AiConversationDtoMapper {
             item.iconName(),
             item.mascotReaction(),
             item.estimatedDurationSeconds(),
-            item.isActive(),
-            item.sortOrder()
+            item.isActive()
         );
     }
 
@@ -44,7 +43,7 @@ final class AiConversationDtoMapper {
             item.hintText(),
             item.maxAttempts(),
             item.difficultyLevel(),
-            item.sortOrder()
+            item.isActive()
         );
     }
 
@@ -60,7 +59,6 @@ final class AiConversationDtoMapper {
             item.mascotReaction(),
             item.estimatedDurationSeconds(),
             item.isActive(),
-            item.sortOrder(),
             item.createdAt(),
             item.updatedAt()
         );
@@ -86,7 +84,6 @@ final class AiConversationDtoMapper {
             item.positiveFeedback(),
             item.maxAttempts(),
             item.difficultyLevel(),
-            item.sortOrder(),
             item.isActive(),
             item.createdAt(),
             item.updatedAt()
