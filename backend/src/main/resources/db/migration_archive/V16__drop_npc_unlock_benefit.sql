@@ -1,1 +1,0 @@
-ALTER TABLE npcs DROP COLUMN IF EXISTS unlock_benefit;

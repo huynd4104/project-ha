@@ -1,7 +1,0 @@
-ALTER TABLE programs ADD COLUMN target_age_min INT NOT NULL DEFAULT 2;
-ALTER TABLE programs ADD COLUMN target_age_max INT NOT NULL DEFAULT 6;
-ALTER TABLE programs ADD COLUMN difficulty_categories JSONB NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE programs ADD COLUMN learning_goals JSONB NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE programs ADD COLUMN skill_tags JSONB NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE programs ADD COLUMN level TEXT NOT NULL DEFAULT 'BEGINNER';
-ALTER TABLE programs ADD COLUMN access_type TEXT NOT NULL DEFAULT 'FREE';

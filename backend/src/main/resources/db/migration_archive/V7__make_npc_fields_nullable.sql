@@ -1,2 +1,0 @@
-ALTER TABLE npcs ALTER COLUMN default_dialogue DROP NOT NULL;
-ALTER TABLE npcs ALTER COLUMN dialogue_templates DROP NOT NULL;

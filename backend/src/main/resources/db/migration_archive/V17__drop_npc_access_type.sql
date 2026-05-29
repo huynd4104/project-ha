@@ -1,1 +1,0 @@
-ALTER TABLE npcs DROP COLUMN IF EXISTS access_type;
