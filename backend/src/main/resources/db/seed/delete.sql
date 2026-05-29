@@ -44,6 +44,7 @@ TRUNCATE TABLE
   ai_conversation_topic_progress,
   ai_conversation_questions,
   ai_conversation_topics,
+  child_development_profiles,
   children,
   path_items,
   activities,
@@ -67,7 +68,8 @@ TRUNCATE TABLE
   password_reset_tokens,
   development_categories,
   learning_goals,
-  skills
+  skills,
+  ai_provider_configs
 RESTART IDENTITY CASCADE;
 
 DELETE FROM users u
