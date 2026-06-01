@@ -58,6 +58,8 @@ class MascotImage extends StatelessWidget {
       path,
       width: width,
       height: height,
+      cacheWidth: width != null ? (width * MediaQuery.of(context).devicePixelRatio).round() : null,
+      cacheHeight: height != null ? (height * MediaQuery.of(context).devicePixelRatio).round() : null,
       fit: fit,
       alignment: alignment,
       semanticLabel: label.isEmpty ? null : label,
