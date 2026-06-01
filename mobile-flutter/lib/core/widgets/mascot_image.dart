@@ -53,13 +53,16 @@ class MascotImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = reaction?.assetPath ?? assetPath!;
     final label = semanticLabel ?? reaction?.semanticLabel ?? '';
+    final double? localWidth = width;
+    final double? localHeight = height;
+    final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
 
     Widget image = Image.asset(
       path,
-      width: width,
-      height: height,
-      cacheWidth: width != null ? (width * MediaQuery.of(context).devicePixelRatio).round() : null,
-      cacheHeight: height != null ? (height * MediaQuery.of(context).devicePixelRatio).round() : null,
+      width: localWidth,
+      height: localHeight,
+      cacheWidth: localWidth != null ? (localWidth * devicePixelRatio).round() : null,
+      cacheHeight: localHeight != null ? (localHeight * devicePixelRatio).round() : null,
       fit: fit,
       alignment: alignment,
       semanticLabel: label.isEmpty ? null : label,
@@ -67,8 +70,8 @@ class MascotImage extends StatelessWidget {
       filterQuality: FilterQuality.medium,
       gaplessPlayback: true,
       errorBuilder: (_, _, _) => _MascotFallback(
-        width: width,
-        height: height,
+        width: localWidth,
+        height: localHeight,
       ),
     );
 
