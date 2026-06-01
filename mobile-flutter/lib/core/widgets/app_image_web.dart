@@ -1,5 +1,5 @@
 import 'dart:html' as html;
-import 'dart:ui' as ui;
+import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 
 final Set<String> _registeredViews = {};
@@ -10,8 +10,7 @@ Widget createWebImageWidget(String url, double? width, double? height, BoxFit fi
 
   if (!_registeredViews.contains(viewType)) {
     _registeredViews.add(viewType);
-    // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory(viewType, (int viewId) {
+    ui_web.platformViewRegistry.registerViewFactory(viewType, (int viewId) {
       final html.ImageElement element = html.ImageElement()
         ..src = url
         ..style.border = 'none'
@@ -43,9 +42,6 @@ Widget createWebImageWidget(String url, double? width, double? height, BoxFit fi
           break;
       }
 
-      // If color is specified, we can apply a CSS filter or wrap it.
-      // For simplicity, a standard CSS tint / filter can be applied if color is not null, 
-      // but simple image rendering is usually sufficient.
       return element;
     });
   }
