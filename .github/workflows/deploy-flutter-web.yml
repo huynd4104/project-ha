@@ -37,7 +37,7 @@ jobs:
       - name: Build Flutter Web
         run: |
           cd mobile-flutter
-          flutter build web --release
+          flutter build web --release --dart-define=API_BASE_URL=https://project-ha-backend.onrender.com
 
       - name: Copy Vercel Configuration
         run: cp mobile-flutter/vercel.json mobile-flutter/build/web/vercel.json
