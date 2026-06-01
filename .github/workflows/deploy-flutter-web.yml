@@ -1,0 +1,52 @@
+name: Deploy Flutter Web to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile-flutter/**'
+      - '.github/workflows/deploy-flutter-web.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          cd mobile-flutter
+          flutter pub get
+
+      - name: Build Flutter Web
+        run: |
+          cd mobile-flutter
+          flutter build web --release
+
+      - name: Copy Vercel Configuration
+        run: cp mobile-flutter/vercel.json mobile-flutter/build/web/vercel.json
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: mobile-flutter/build/web
+          vercel-args: '--prod'
