@@ -31,7 +31,7 @@ echo "=== BIÊN DỊCH FLUTTER WEB (RELEASE) ==="
 # Lấy API_BASE_URL từ biến môi trường Vercel, nếu không có sẽ mặc định là URL backend đã deploy trên Render
 API_URL=${API_BASE_URL:-"https://project-ha-backend.onrender.com"}
 echo "Sử dụng API_BASE_URL: $API_URL"
-flutter build web --release --dart-define=API_BASE_URL=$API_URL
+flutter build web --release --web-renderer html --dart-define=API_BASE_URL=$API_URL
 
 echo "=== THIẾT LẬP CẤU HÌNH VERCEL ==="
 # Copy file vercel.json vào thư mục build đầu ra
