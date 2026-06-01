@@ -4,6 +4,9 @@ import 'package:permission_handler/permission_handler.dart';
 class AiConversationPermissionService {
   /// Checks status of Microphone permission.
   static Future<PermissionStatus> getMicrophoneStatus() async {
+    if (kIsWeb) {
+      return PermissionStatus.granted;
+    }
     final status = await Permission.microphone.status;
     if (kDebugMode) {
       print('[AI Permission] microphone = $status');
@@ -14,6 +17,9 @@ class AiConversationPermissionService {
   /// Checks status of Speech Recognition permission.
   /// On platforms other than iOS, it automatically returns [PermissionStatus.granted].
   static Future<PermissionStatus> getSpeechStatus() async {
+    if (kIsWeb) {
+      return PermissionStatus.granted;
+    }
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       return PermissionStatus.granted;
     }
@@ -26,6 +32,9 @@ class AiConversationPermissionService {
 
   /// Requests Microphone permission.
   static Future<PermissionStatus> requestMicrophone() async {
+    if (kIsWeb) {
+      return PermissionStatus.granted;
+    }
     if (kDebugMode) {
       print('[AI Permission] retry request microphone = calling request()...');
     }
@@ -38,6 +47,9 @@ class AiConversationPermissionService {
 
   /// Requests Speech Recognition permission.
   static Future<PermissionStatus> requestSpeech() async {
+    if (kIsWeb) {
+      return PermissionStatus.granted;
+    }
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       return PermissionStatus.granted;
     }

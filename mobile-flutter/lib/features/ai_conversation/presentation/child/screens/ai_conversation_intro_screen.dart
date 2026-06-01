@@ -53,7 +53,7 @@ class _AiConversationIntroScreenState extends State<AiConversationIntroScreen> {
       }
 
       // 2. Check & request Speech Recognition permission (only on iOS)
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (defaultTargetPlatform == TargetPlatform.iOS && !kIsWeb) {
         var speechStatus = await AiConversationPermissionService.getSpeechStatus();
         if (!speechStatus.isGranted) {
           speechStatus = await AiConversationPermissionService.requestSpeech();

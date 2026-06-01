@@ -61,7 +61,7 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
 
   Future<void> _configureTts() async {
     try {
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (defaultTargetPlatform == TargetPlatform.iOS && !kIsWeb) {
         await _tts.setSharedInstance(true);
         await _tts.setIosAudioCategory(
           IosTextToSpeechAudioCategory.playAndRecord,
@@ -89,6 +89,7 @@ class DeviceSttTtsConversationService implements AiLiveConversationService {
 
   @override
   Future<bool> requestMicPermission() async {
+    if (kIsWeb) return true;
     final micStatus = await Permission.microphone.request();
     if (!micStatus.isGranted) return false;
 

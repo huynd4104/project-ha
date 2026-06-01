@@ -320,7 +320,7 @@ class _AiConversationLiveScreenState extends State<AiConversationLiveScreen> {
     if (!micGranted && micPermanentlyDenied) {
       showOpenSettings = true;
     }
-    if (defaultTargetPlatform == TargetPlatform.iOS && !speechGranted && speechPermanentlyDenied) {
+    if (defaultTargetPlatform == TargetPlatform.iOS && !kIsWeb && !speechGranted && speechPermanentlyDenied) {
       showOpenSettings = true;
     }
 

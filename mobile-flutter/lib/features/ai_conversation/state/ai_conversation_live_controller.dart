@@ -151,7 +151,7 @@ class AiConversationLiveController extends ChangeNotifier {
       }
 
       // 2. Check & request Speech Recognition permission (only on iOS)
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (defaultTargetPlatform == TargetPlatform.iOS && !kIsWeb) {
         speechPermissionStatus = await AiConversationPermissionService.getSpeechStatus();
         if (!speechPermissionStatus.isGranted) {
           speechPermissionStatus = await AiConversationPermissionService.requestSpeech();
