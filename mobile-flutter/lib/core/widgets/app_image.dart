@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/app_colors.dart';
+import 'app_image_stub.dart'
+    if (dart.library.html) 'app_image_web.dart'
+    if (dart.library.io) 'app_image_mobile.dart';
 
 class AppImage extends StatelessWidget {
   const AppImage({
@@ -64,7 +68,12 @@ class AppImage extends StatelessWidget {
       }
     }
 
-    // Handle SVG URLs
+    // Handle network images for Web to bypass CORS
+    if (kIsWeb) {
+      return createWebImageWidget(cleanUrl, width, height, fit, color);
+    }
+
+    // Handle SVG URLs for mobile
     if (cleanUrl.toLowerCase().endsWith('.svg') || cleanUrl.contains('twemoji') || cleanUrl.contains('/svg/')) {
       return SvgPicture.network(
         cleanUrl,
@@ -78,7 +87,7 @@ class AppImage extends StatelessWidget {
       );
     }
 
-    // Handle standard network images
+    // Handle standard network images for mobile
     return CachedNetworkImage(
       imageUrl: cleanUrl,
       width: width,
