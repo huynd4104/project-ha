@@ -1,5 +1,8 @@
 # Project HA - Hệ Thống Quản Lý & Học Tập Cho Trẻ Em
 
+https://github.com/user-attachments/assets/778d7909-a1f4-49b7-99ec-3bef4bcaf8bf
+
+
 Chào mừng bạn đến với tài liệu hướng dẫn và mô tả hệ thống của **Project HA**. Đây là một nền tảng giáo dục tương tác và hỗ trợ phát triển ngôn ngữ toàn diện dành cho trẻ em, kết hợp với các công cụ quản trị mạnh mẽ dành cho nhà trường, quản trị viên và bảng điều khiển chi tiết cho phụ huynh.
 
 Dự án được xây dựng dựa trên kiến trúc **Backend-Centered (hướng backend)** để đảm bảo tính an toàn dữ liệu, tính nhất quán nghiệp vụ và hiệu năng hoạt động cao trên mọi nền tảng thiết bị.
